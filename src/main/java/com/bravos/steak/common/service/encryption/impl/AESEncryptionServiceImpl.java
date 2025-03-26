@@ -1,6 +1,6 @@
-package com.steak.common.service.encryption.impl;
+package com.bravos.steak.common.service.encryption.impl;
 
-import com.steak.common.service.encryption.AESEncryptionService;
+import com.bravos.steak.common.service.encryption.AESEncryptionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -57,7 +57,7 @@ public class AESEncryptionServiceImpl implements AESEncryptionService {
             return new String(plainText);
         } catch (BadPaddingException | IllegalBlockSizeException |
                  InvalidAlgorithmParameterException | InvalidKeyException
-                | NoSuchPaddingException | NoSuchAlgorithmException e) {
+                 | NoSuchPaddingException | NoSuchAlgorithmException e) {
             log.error(e.getMessage());
             throw new IllegalArgumentException("Lỗi giải mã: " + e.getMessage(), e);
         }
