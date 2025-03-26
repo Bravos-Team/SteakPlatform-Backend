@@ -1,4 +1,4 @@
-package com.steak.common.service.encryption;
+package com.bravos.steak.common.service.encryption;
 
 public interface AESEncryptionService {
 
