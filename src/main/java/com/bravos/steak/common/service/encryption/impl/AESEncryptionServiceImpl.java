@@ -1,6 +1,6 @@
-package com.steak.common.service.encryption.impl;
+package com.bravos.steak.common.service.encryption.impl;
 
-import com.steak.common.service.encryption.AESEncryptionService;
+import com.bravos.steak.common.service.encryption.AESEncryptionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
