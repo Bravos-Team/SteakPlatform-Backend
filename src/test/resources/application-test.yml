@@ -1,6 +1,9 @@
 server:
   port: 8888
 spring:
+  sql:
+    init:
+      mode: always
   application:
     name: steak-platform
   datasource:
@@ -13,7 +16,6 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
-    open-in-view: false # <- if true :: hieu xuat kem, giu ket noi db lau
   data:
     mongodb:
       uri: mongodb://localhost:27017/
