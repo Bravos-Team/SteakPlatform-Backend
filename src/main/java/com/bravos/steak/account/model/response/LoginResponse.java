@@ -1,4 +1,4 @@
-package com.bravos.steak.account.dto.response;
+package com.bravos.steak.account.model.response;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;

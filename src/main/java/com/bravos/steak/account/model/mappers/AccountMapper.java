@@ -1,12 +1,14 @@
-package com.bravos.steak.account.dto.mappers;
+package com.bravos.steak.account.model.mappers;
 
-import com.bravos.steak.account.dto.response.AccountDTO;
+import com.bravos.steak.account.model.response.AccountDTO;
 import com.bravos.steak.account.entity.Account;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.factory.Mappers;
+import org.springframework.stereotype.Component;
 
 @Mapper(componentModel = "spring")
+@Component
 public interface AccountMapper {
 
     AccountMapper INSTANCE = Mappers.getMapper(AccountMapper.class);
@@ -15,4 +17,5 @@ public interface AccountMapper {
     AccountDTO toAccountDTO(Account account);
 
     Account toAccount(AccountDTO accountDTO);
+
 }

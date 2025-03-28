@@ -1,4 +1,4 @@
-package com.bravos.steak.account.dto.request;
+package com.bravos.steak.account.model.request;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;

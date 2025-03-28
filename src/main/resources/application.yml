@@ -11,7 +11,7 @@ spring:
   jpa:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: update
+      ddl-auto: none # <- cái này true bậy nha
     show-sql: true
     open-in-view: false # <- if true :: hieu xuat kem, giu ket noi db lau
   data:
@@ -24,3 +24,5 @@ spring:
     redis:
       host: localhost
       port: 6379
+      connect-timeout: 30000
+      database: 0

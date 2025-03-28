@@ -1,8 +1,8 @@
-package com.bravos.steak.account.controllers;
+package com.bravos.steak.account.controller;
 
-import com.bravos.steak.account.dto.response.AccountDTO;
-import com.bravos.steak.account.dto.response.ResponseObject;
-import com.bravos.steak.account.service.AccountService;
+import com.bravos.steak.account.model.response.AccountDTO;
+import com.bravos.steak.account.model.response.ResponseObject;
+import com.bravos.steak.account.service.impl.AccountServiceImpl;
 import com.bravos.steak.exceptions.ResourceNotFoundException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +22,7 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE,makeFinal = true)
 public class AccountController {
 
-    AccountService accountService;
+    AccountServiceImpl accountService;
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getAccountById(@PathVariable Long id) {
