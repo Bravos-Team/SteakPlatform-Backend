@@ -39,7 +39,7 @@
 
 ## Cách dùng git/github cơ bản
 - Xem trên Tips JavaScript [ở đây ](https://www.youtube.com/watch?v=vQgcl8VouLU)
-- Khi code một chức năng nào đó thì đẩy lên branch feature-{tên chức năng} xong tạo pull request merge vô **develop** rồi hú mình hoặc ai đó review code
+- Khi code một chức năng nào đó thì đẩy lên branch feature/{tên chức năng} xong tạo pull request merge vô **develop** rồi hú mình hoặc ai đó review code
 - Không tạo pull request vô **master** (trừ khi hotfix)
 - Message commit nếu có trong issue thì viết kiểu git commit -m '#{number} - {thông điệp gì đó}'
 
