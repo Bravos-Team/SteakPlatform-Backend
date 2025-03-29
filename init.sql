@@ -24,29 +24,12 @@ create table refresh_token
 (
     id         bigint                              not null primary key,
     account_id bigint                              not null,
-    token      varchar(255)                        not null,
     device_id  bigint                              not null,
     issues_at  timestamp default current_timestamp not null,
     expires_at timestamp                           not null,
     revoked    boolean   default false             not null,
-    foreign key (account_id) references account(id)
-);
-
-create table profile
-(
-    id           bigint      not null primary key,
-    account_id   bigint      not null unique,
-    display_name varchar(64) not null,
-    phone        varchar(16),
-    avatar       varchar(255),
-    sex          bit,
-    birth_date   date        not null,
-    bio          varchar(255),
     foreign key (account_id) references account (id)
 );
-
--- END ACCOUNT --
-
 
 -- PUBLISHER --
 

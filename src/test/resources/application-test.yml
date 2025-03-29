@@ -1,8 +1,9 @@
 server:
   port: 8888
-  error:
-    include-binding-errors: on_param
 spring:
+  sql:
+    init:
+      mode: always
   application:
     name: steak-platform
   datasource:
@@ -11,10 +12,10 @@ spring:
     password: ${POSTGRES_PASSWORD}
     url: jdbc:postgresql://localhost:5432/steakdb
   jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
-      ddl-auto: none # <- cái này true bậy nha
+      ddl-auto: update
     show-sql: true
-    open-in-view: false # <- if true :: hieu xuat kem, giu ket noi db lau
   data:
     mongodb:
       uri: mongodb://localhost:27017/
@@ -25,5 +26,3 @@ spring:
     redis:
       host: localhost
       port: 6379
-      connect-timeout: 30000
-      database: 0
