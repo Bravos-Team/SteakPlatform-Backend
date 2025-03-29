@@ -14,11 +14,10 @@ import java.time.LocalDateTime;
 public class ResponseObject<T>{
 
     String status;
-    String message;
     T data;
     LocalDateTime currentTimeLog;
-    public ResponseObject(String status, String message, T data){
-        this.message = message;
+
+    public ResponseObject(String status, T data){
         this.data = data;
         this.status = status;
         this.currentTimeLog = LocalDateTime.now();
