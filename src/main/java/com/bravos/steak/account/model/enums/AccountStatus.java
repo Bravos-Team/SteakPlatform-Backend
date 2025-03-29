@@ -1,4 +1,4 @@
-package com.bravos.steak.account.model;
+package com.bravos.steak.account.model.enums;
 
 public enum AccountStatus {
 

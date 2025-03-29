@@ -1,6 +1,6 @@
 package com.bravos.steak.account.service;
 
-import com.bravos.steak.account.exception.AccountAlreadyExistsException;
+import com.bravos.steak.exceptions.AccountAlreadyExistsException;
 import com.bravos.steak.account.model.request.RegistrationRequest;
 
 public interface RegistrationService {
@@ -14,5 +14,11 @@ public interface RegistrationService {
     String preRegisterAccount(RegistrationRequest registrationRequest)
             throws AccountAlreadyExistsException;
 
+    /**
+     * Xác minh email nhận và đăng ký tài khoản
+     * @param token token để xác minh tài khoản
+     * @return thành công hay thất bại
+     */
+    boolean verificateRegisterAccount(String token);
 
 }

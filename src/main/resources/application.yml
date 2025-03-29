@@ -1,5 +1,7 @@
 server:
   port: 8888
+  error:
+    include-binding-errors: on_param
 spring:
   application:
     name: steak-platform
@@ -9,7 +11,6 @@ spring:
     password: ${POSTGRES_PASSWORD}
     url: jdbc:postgresql://localhost:5432/steakdb
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: none # <- cái này true bậy nha
     show-sql: true

@@ -1,53 +1,57 @@
 package com.bravos.steak.account.service.impl;
 
+import com.bravos.steak.account.entity.AccountProfile;
 import com.bravos.steak.account.model.mappers.AccountMapper;
 import com.bravos.steak.account.model.response.AccountDTO;
-import com.bravos.steak.account.entity.Account;
 import com.bravos.steak.account.repo.AccountRepository;
+import com.bravos.steak.account.repo.ProfileRepository;
 import com.bravos.steak.account.service.AccountService;
-import com.bravos.steak.account.specifications.AccountSpecification;
-import com.bravos.steak.exceptions.ResourceNotFoundException;
-import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.jpa.domain.Specification;
+import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import java.util.Optional;
 
 @Service
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class AccountServiceImpl implements AccountService {
 
-    AccountMapper accountMapper;
-    AccountRepository accountRepository;
-
-    @Override
-    @Transactional
-    public AccountDTO getAccountById(Long id) {
-        return accountMapper
-                .toAccountDTO(accountRepository.findById(id)
-                        .orElseThrow( () -> new ResourceNotFoundException("Account with ID " + id + " not found")));
-    }
-
-    @Override
-    @Transactional
-    public List<AccountDTO> getAllAccounts() {
-        return accountRepository.findAll().stream().map(accountMapper::toAccountDTO).toList();
-    }
-
-
-    @Override
-    @Transactional
-    public AccountDTO getAccountByUsername(String username){
-        Specification<Account> spec = AccountSpecification.hasUsername(username);
-        return accountMapper.toAccountDTO(
-                accountRepository.findOne(spec).orElseThrow(() -> new ResourceNotFoundException("Account with username " + username + " not found"))
-        );
-    }
+    private final AccountRepository accountRepository;
+    private final ProfileRepository profileRepository;
+    private final AccountMapper accountMapper;
 
     @Override
     public boolean isExistByUsernameEmail(String username, String email) {
         return accountRepository.existsByUsernameAndEmail(username,email);
+    }
+
+    @Override
+    public boolean isExistByUsername(String username) {
+        return accountRepository.existsByUsername(username);
+    }
+
+    @Override
+    public boolean isExistByEmail(String email) {
+        return accountRepository.existsByEmail(email);
+    }
+
+    @Override
+    public AccountDTO getAccountById(Long id) {
+        return accountMapper.toAccountDTO(accountRepository.findById(id).orElse(null));
+    }
+
+    @Override
+    public AccountDTO getAccountByUsername(String username) {
+        return accountMapper.toAccountDTO(accountRepository.findByUsername(username));
+    }
+
+    @Override
+    public AccountDTO getAccountByEmail(String email) {
+        return accountMapper.toAccountDTO(accountRepository.findByEmail(email));
+    }
+
+    @Override
+    public Optional<AccountProfile> getAccountProfileById(Long id) {
+        return profileRepository.findById(id);
     }
 
 }

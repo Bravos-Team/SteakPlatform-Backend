@@ -1,4 +1,4 @@
-package com.bravos.steak.account.model.response;
+package com.bravos.steak.common.model;
 
 
 import lombok.*;

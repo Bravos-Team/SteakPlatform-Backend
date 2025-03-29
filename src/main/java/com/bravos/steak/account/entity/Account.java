@@ -1,6 +1,6 @@
 package com.bravos.steak.account.entity;
 
-import com.bravos.steak.account.model.AccountStatus;
+import com.bravos.steak.account.model.enums.AccountStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -36,6 +36,7 @@ public class Account {
     private LocalDateTime createdTime = LocalDateTime.now();
 
     @Column(nullable = false, name = "updated_at")
+    @Builder.Default
     private LocalDateTime updatedTime = LocalDateTime.now();
 
 }
