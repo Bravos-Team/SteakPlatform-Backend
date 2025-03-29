@@ -1,46 +1,60 @@
 package com.bravos.steak.account.service;
 
-import com.bravos.steak.account.dto.mappers.AccountMapper;
-import com.bravos.steak.account.dto.response.AccountDTO;
-import com.bravos.steak.account.entity.Account;
-import com.bravos.steak.account.repo.AccountRepository;
-import com.bravos.steak.account.specifications.AccountSpecification;
-import com.bravos.steak.exceptions.ResourceNotFoundException;
-import jakarta.transaction.Transactional;
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.stereotype.Service;
+import com.bravos.steak.account.entity.AccountProfile;
+import com.bravos.steak.account.model.response.AccountDTO;
 
-import java.util.List;
 import java.util.Optional;
 
-@Service
-@RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-public class AccountService {
-    AccountMapper accountMapper;
-    AccountRepository accountRepository;
+public interface AccountService {
 
-    @Transactional
-    public AccountDTO getAccountById(Long id) {
-        return accountMapper
-                .toAccountDTO(accountRepository.findById(id)
-                        .orElseThrow( () -> new ResourceNotFoundException("Account with ID " + id + " not found")));
-    }
+    /**
+     * Kiểm tra tài khoản tồn tại theo username hoặc email
+     * @param username tên tài khoản
+     * @param email i meow
+     * @return true nếu tồn tại
+     */
+    boolean isExistByUsernameEmail(String username, String email);
 
-    @Transactional
-    public List<AccountDTO> getAllAccounts() {
-        return accountRepository.findAll().stream().map(accountMapper::toAccountDTO).toList();
-    }
+    /**
+     * Kiểm tra tài khoản tồn tại theo username
+     * @param username tên tài khoản
+     * @return true nếu tồn tại
+     */
+    boolean isExistByUsername(String username);
 
+    /**
+     * Kiểm tra tài khoản tồn tại theo email
+     * @param email email
+     * @return true nếu tồn tại
+     */
+    boolean isExistByEmail(String email);
 
-    @Transactional
-    public AccountDTO getAccountByUsername(String username){
-        Specification<Account> spec = AccountSpecification.hasUsername(username);
-        return accountMapper.toAccountDTO(
-                accountRepository.findOne(spec).orElseThrow(() -> new ResourceNotFoundException("Account with username " + username + " not found"))
-        );
-    }
+    /**
+     * Lấy AccountDTO bằng ID
+     * @param id id
+     * @return tài khoản
+     */
+    AccountDTO getAccountById(Long id);
+
+    /**
+     * Lấy AccountDTO bằng username
+     * @param username username
+     * @return tài khoản
+     */
+    AccountDTO getAccountByUsername(String username);
+
+    /**
+     * Lấy AccountDTO bằng email
+     * @param email email
+     * @return tài khoản
+     */
+    AccountDTO getAccountByEmail(String email);
+
+    /**
+     * Trả về profile của user
+     * @param id id
+     * @return profile của user
+     */
+    Optional<AccountProfile> getAccountProfileById(Long id);
+
 }

@@ -1,6 +1,6 @@
 package com.bravos.steak.common.service.encryption.impl;
 
-import com.bravos.steak.common.service.encryption.AESEncryptionService;
+import com.bravos.steak.common.service.encryption.AesEncryptionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -16,7 +16,7 @@ import java.util.Base64;
 
 @Slf4j
 @Service
-public class AESEncryptionServiceImpl implements AESEncryptionService {
+public class AesEncryptionServiceImpl implements AesEncryptionService {
 
     private static final int GCM_TAG_LENGTH = 16;
     private static final int IV_LENGTH = 12;

@@ -23,7 +23,6 @@ import java.util.Base64;
 public class RSAServiceImpl implements RSAService {
 
     private static final String ALGORITHM = "RSA";
-    private static final KeyFactory KEY_FACTORY;
 
     private static final ThreadLocal<KeyPairGenerator> KEY_PAIR_GENERATOR = ThreadLocal.withInitial(() -> {
         try {
@@ -34,14 +33,6 @@ public class RSAServiceImpl implements RSAService {
             throw new RuntimeException("Error initializing KeyPairGenerator", e);
         }
     });
-
-    static {
-        try {
-            KEY_FACTORY = KeyFactory.getInstance(ALGORITHM);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     @Override
     public String encrypt(String plainText, String publicKey) {
@@ -114,12 +105,15 @@ public class RSAServiceImpl implements RSAService {
         try {
             byte[] privateKeyBytes = Base64.getDecoder().decode(privateKey);
             PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
-            RSAPrivateKey rsaPrivateKey = (RSAPrivateKey) KEY_FACTORY.generatePrivate(keySpec);
+            KeyFactory keyFactory = KeyFactory.getInstance(ALGORITHM);
+            RSAPrivateKey rsaPrivateKey = (RSAPrivateKey) keyFactory.generatePrivate(keySpec);
             RSAPublicKeySpec publicKeySpec = new RSAPublicKeySpec(rsaPrivateKey.getModulus(), BigInteger.valueOf(65537));
-            RSAPublicKey publicKey = (RSAPublicKey) KEY_FACTORY.generatePublic(publicKeySpec);
+            RSAPublicKey publicKey = (RSAPublicKey) keyFactory.generatePublic(publicKeySpec);
             return Base64.getEncoder().encodeToString(publicKey.getEncoded());
         } catch (InvalidKeySpecException e) {
             throw new IllegalArgumentException("Invalid private key");
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalArgumentException("Invalid algorithm");
         }
     }
 
@@ -142,9 +136,12 @@ public class RSAServiceImpl implements RSAService {
         try {
             byte[] publicKeyBytes = Base64.getDecoder().decode(publicKey);
             X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKeyBytes);
-            return KEY_FACTORY.generatePublic(keySpec);
+            KeyFactory keyFactory = KeyFactory.getInstance(ALGORITHM);
+            return keyFactory.generatePublic(keySpec);
         } catch (InvalidKeySpecException e) {
             throw new IllegalArgumentException("Invalid public key");
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalArgumentException("Invalid algorithm");
         }
     }
 
@@ -152,9 +149,12 @@ public class RSAServiceImpl implements RSAService {
         try {
             byte[] privateKeyBytes = Base64.getDecoder().decode(privateKey);
             PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
-            return KEY_FACTORY.generatePrivate(keySpec);
+            KeyFactory keyFactory = KeyFactory.getInstance(ALGORITHM);
+            return keyFactory.generatePrivate(keySpec);
         } catch (InvalidKeySpecException e) {
             throw new IllegalArgumentException("Invalid private key");
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalArgumentException("Invalid algorithm");
         }
     }
 

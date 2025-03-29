@@ -1,4 +1,4 @@
-package com.bravos.steak.account.dto.response;
+package com.bravos.steak.common.model;
 
 
 import lombok.*;
@@ -12,12 +12,12 @@ import java.time.LocalDateTime;
 @Setter
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ResponseObject<T>{
+
     String status;
-    String message;
     T data;
     LocalDateTime currentTimeLog;
-    public ResponseObject(String status, String message, T data){
-        this.message = message;
+
+    public ResponseObject(String status, T data){
         this.data = data;
         this.status = status;
         this.currentTimeLog = LocalDateTime.now();

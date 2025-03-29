@@ -1,6 +1,6 @@
 package com.bravos.steak.common.service.encryption;
 
-public interface AESEncryptionService {
+public interface AesEncryptionService {
 
     /**
      * Dùng để mã hóa dữ liệu
