@@ -6,18 +6,24 @@ import com.bravos.steak.account.model.response.AccountDTO;
 import com.bravos.steak.account.repo.AccountRepository;
 import com.bravos.steak.account.repo.ProfileRepository;
 import com.bravos.steak.account.service.AccountService;
-import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
 @Service
-@AllArgsConstructor
 public class AccountServiceImpl implements AccountService {
 
     private final AccountRepository accountRepository;
     private final ProfileRepository profileRepository;
     private final AccountMapper accountMapper;
+
+    @Autowired
+    public AccountServiceImpl(AccountRepository accountRepository, ProfileRepository profileRepository, AccountMapper accountMapper) {
+        this.accountRepository = accountRepository;
+        this.profileRepository = profileRepository;
+        this.accountMapper = accountMapper;
+    }
 
     @Override
     public boolean isExistByUsernameEmail(String username, String email) {
