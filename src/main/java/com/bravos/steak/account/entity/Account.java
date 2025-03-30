@@ -3,8 +3,13 @@ package com.bravos.steak.account.entity;
 import com.bravos.steak.account.model.enums.AccountStatus;
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.List;
 
 @Builder
 @Entity
@@ -38,5 +43,9 @@ public class Account {
     @Column(nullable = false, name = "updated_at")
     @Builder.Default
     private LocalDateTime updatedTime = LocalDateTime.now();
+
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority("USER"));
+    }
 
 }

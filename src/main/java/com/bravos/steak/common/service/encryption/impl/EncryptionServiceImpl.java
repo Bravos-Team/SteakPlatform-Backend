@@ -4,6 +4,8 @@ import com.bravos.steak.common.service.encryption.AesEncryptionService;
 import com.bravos.steak.common.service.encryption.EncryptionService;
 import org.springframework.stereotype.Service;
 
+import javax.crypto.SecretKey;
+
 @Service
 public class EncryptionServiceImpl implements EncryptionService {
 

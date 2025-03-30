@@ -1,11 +1,11 @@
 package com.bravos.steak.account.service;
 
-import com.bravos.steak.account.model.request.LoginRequest;
+import com.bravos.steak.account.model.request.UsernameLoginRequest;
 import com.bravos.steak.account.model.response.LoginResponse;
 
 public interface AuthService {
 
-    LoginResponse login(LoginRequest loginRequest);
+    LoginResponse login(UsernameLoginRequest usernameLoginRequest);
 
     String renewToken(String refreshToken);
 

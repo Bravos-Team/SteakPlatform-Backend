@@ -1,7 +1,7 @@
 package com.bravos.steak.account.service;
 
+import com.bravos.steak.account.entity.Account;
 import com.bravos.steak.account.entity.AccountProfile;
-import com.bravos.steak.account.model.response.AccountDTO;
 
 import java.util.Optional;
 
@@ -30,31 +30,24 @@ public interface AccountService {
     boolean isExistByEmail(String email);
 
     /**
-     * Lấy AccountDTO bằng ID
-     * @param id id
-     * @return tài khoản
-     */
-    AccountDTO getAccountById(Long id);
-
-    /**
-     * Lấy AccountDTO bằng username
-     * @param username username
-     * @return tài khoản
-     */
-    AccountDTO getAccountByUsername(String username);
-
-    /**
-     * Lấy AccountDTO bằng email
-     * @param email email
-     * @return tài khoản
-     */
-    AccountDTO getAccountByEmail(String email);
-
-    /**
      * Trả về profile của user
      * @param id id
      * @return profile của user
      */
     Optional<AccountProfile> getAccountProfileById(Long id);
+
+    /**
+     * Tìm account bằng username
+     * @param username username
+     * @return account tương ứng
+     */
+    Account getAccountByUsername(String username);
+
+    /**
+     * Tìm account bằng email
+     * @param email email
+     * @return account tương ứng
+     */
+    Account getAccountByEmail(String email);
 
 }
