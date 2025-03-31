@@ -17,6 +17,7 @@ import java.util.List;
 @AllArgsConstructor
 @Getter
 @Setter
+@ToString
 public class Account {
 
     @Id
@@ -43,6 +44,9 @@ public class Account {
     @Column(nullable = false, name = "updated_at")
     @Builder.Default
     private LocalDateTime updatedTime = LocalDateTime.now();
+
+    @OneToMany(mappedBy = "account", fetch = FetchType.EAGER)
+    private List<RefreshToken> refreshTokens;
 
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("USER"));

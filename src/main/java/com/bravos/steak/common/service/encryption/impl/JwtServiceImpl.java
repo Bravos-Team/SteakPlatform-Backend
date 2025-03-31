@@ -2,10 +2,12 @@ package com.bravos.steak.common.service.encryption.impl;
 
 import com.bravos.steak.common.model.JwtTokenClaims;
 import com.bravos.steak.common.service.encryption.JwtService;
+import com.bravos.steak.common.utils.JwtUtils;
 import com.bravos.steak.common.utils.KeyLoader;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.security.PrivateKey;
@@ -37,15 +39,7 @@ public class JwtServiceImpl implements JwtService {
                     .parseSignedClaims(token)
                     .getPayload();
 
-            return JwtTokenClaims.builder()
-                    .id(Long.valueOf(claims.getSubject()))
-                    .roles(claims.get("roles",String[].class))
-                    .permissions(claims.get("permissions",String[].class))
-                    .iat(claims.get("iat", Date.class))
-                    .exp(claims.get("exp", Date.class))
-                    .jti(claims.get("jti", String.class))
-                    .deviceId(claims.get("device_id", String.class))
-                    .build();
+            return JwtUtils.parseClaims(claims);
         } catch (IllegalArgumentException | JwtException e) {
             throw new IllegalArgumentException(e);
         }

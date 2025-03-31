@@ -34,7 +34,7 @@ public class JwtTokenClaims {
 
     public Map<String,Object> toMap() {
         return Map.of(
-                "sub", id,
+                "sub", String.valueOf(id),
                 "roles", roles,
                 "permissions", permissions,
                 "iat", iat,

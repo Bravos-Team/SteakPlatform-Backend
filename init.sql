@@ -32,6 +32,8 @@ create table account_refresh_token
     foreign key (account_id) references account (id)
 );
 
+create table account_
+
 -- PUBLISHER --
 
 create table publisher
