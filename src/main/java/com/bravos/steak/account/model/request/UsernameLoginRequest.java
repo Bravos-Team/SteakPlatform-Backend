@@ -13,7 +13,7 @@ import lombok.experimental.FieldDefaults;
 @Getter
 @Setter
 @Valid
-public class LoginRequest {
+public class UsernameLoginRequest {
 
     @NotNull
     @Pattern(
@@ -30,5 +30,7 @@ public class LoginRequest {
             message = "Password must be 6-32 characters long, include at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&). No spaces allowed."
     )
     String password;
+
+
 
 }

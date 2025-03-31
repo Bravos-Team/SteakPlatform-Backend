@@ -25,11 +25,16 @@ public class AesEncryptionServiceImpl implements AesEncryptionService {
 
     @Override
     public String encrypt(String plainText, String secretKey) {
+        return encrypt(plainText,convertSecretKey(secretKey));
+    }
+
+    @Override
+    public String encrypt(String plainText, SecretKey secretKey) {
         try {
             byte[] iv = generateIV();
             GCMParameterSpec spec = new GCMParameterSpec(GCM_TAG_LENGTH * 8, iv);
             Cipher cipher = Cipher.getInstance(ALGORITHM);
-            cipher.init(Cipher.ENCRYPT_MODE, convertSecretKey(secretKey), spec);
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey, spec);
             byte[] cipherText = cipher.doFinal(plainText.getBytes());
             ByteBuffer byteBuffer = ByteBuffer.allocate(IV_LENGTH + cipherText.length);
             byteBuffer.put(iv);
@@ -44,6 +49,11 @@ public class AesEncryptionServiceImpl implements AesEncryptionService {
 
     @Override
     public String decrypt(String encryptedText, String secretKey) {
+        return decrypt(encryptedText,convertSecretKey(secretKey));
+    }
+
+    @Override
+    public String decrypt(String encryptedText, SecretKey secretKey) {
         try {
             ByteBuffer byteBuffer = ByteBuffer.wrap(Base64.getDecoder().decode(encryptedText));
             byte[] iv = new byte[IV_LENGTH];
@@ -52,7 +62,7 @@ public class AesEncryptionServiceImpl implements AesEncryptionService {
             byteBuffer.get(cypherText);
             GCMParameterSpec spec = new GCMParameterSpec(GCM_TAG_LENGTH * 8, iv);
             Cipher cipher = Cipher.getInstance(ALGORITHM);
-            cipher.init(Cipher.DECRYPT_MODE, convertSecretKey(secretKey), spec);
+            cipher.init(Cipher.DECRYPT_MODE, secretKey, spec);
             byte[] plainText = cipher.doFinal(cypherText);
             return new String(plainText);
         } catch (BadPaddingException | IllegalBlockSizeException |
@@ -74,7 +84,8 @@ public class AesEncryptionServiceImpl implements AesEncryptionService {
         }
     }
 
-    private SecretKey convertSecretKey(String secretKey) {
+    @Override
+    public SecretKey convertSecretKey(String secretKey) {
         byte[] decodedKey = Base64.getDecoder().decode(secretKey);
         if (decodedKey.length != 32) {
             throw new IllegalArgumentException("Khóa AES không hợp lệ (phải là 256-bit)");

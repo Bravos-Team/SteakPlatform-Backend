@@ -14,11 +14,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.json.JSONObject;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -52,7 +52,7 @@ public class RegistrationServiceImpl implements RegistrationService {
                 registrationRequest.getEmail(),
                 "Email Verification",
                 EmailTemplate.VERIFICATE_EMAIL,
-                new JSONObject().put("verification_link", verificationLink).toMap()
+                Map.of("verification_link",verificationLink)
         );
 
         return registrationRequest.getEmail();

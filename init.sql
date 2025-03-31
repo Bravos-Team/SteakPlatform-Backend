@@ -20,7 +20,7 @@ create table account
     updated_at timestamp             default current_timestamp
 );
 
-create table refresh_token
+create table account_refresh_token
 (
     id         bigint                              not null primary key,
     account_id bigint                              not null,
@@ -28,6 +28,7 @@ create table refresh_token
     issues_at  timestamp default current_timestamp not null,
     expires_at timestamp                           not null,
     revoked    boolean   default false             not null,
+    jti        bigint                              not null,
     foreign key (account_id) references account (id)
 );
 

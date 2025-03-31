@@ -1,23 +1,28 @@
 package com.bravos.steak.account.service.impl;
 
+import com.bravos.steak.account.entity.Account;
 import com.bravos.steak.account.entity.AccountProfile;
 import com.bravos.steak.account.model.mappers.AccountMapper;
 import com.bravos.steak.account.model.response.AccountDTO;
 import com.bravos.steak.account.repo.AccountRepository;
 import com.bravos.steak.account.repo.ProfileRepository;
 import com.bravos.steak.account.service.AccountService;
-import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
 @Service
-@AllArgsConstructor
 public class AccountServiceImpl implements AccountService {
 
     private final AccountRepository accountRepository;
     private final ProfileRepository profileRepository;
-    private final AccountMapper accountMapper;
+
+    @Autowired
+    public AccountServiceImpl(AccountRepository accountRepository, ProfileRepository profileRepository) {
+        this.accountRepository = accountRepository;
+        this.profileRepository = profileRepository;
+    }
 
     @Override
     public boolean isExistByUsernameEmail(String username, String email) {
@@ -35,23 +40,18 @@ public class AccountServiceImpl implements AccountService {
     }
 
     @Override
-    public AccountDTO getAccountById(Long id) {
-        return accountMapper.toAccountDTO(accountRepository.findById(id).orElse(null));
-    }
-
-    @Override
-    public AccountDTO getAccountByUsername(String username) {
-        return accountMapper.toAccountDTO(accountRepository.findByUsername(username));
-    }
-
-    @Override
-    public AccountDTO getAccountByEmail(String email) {
-        return accountMapper.toAccountDTO(accountRepository.findByEmail(email));
-    }
-
-    @Override
     public Optional<AccountProfile> getAccountProfileById(Long id) {
         return profileRepository.findById(id);
+    }
+
+    @Override
+    public Account getAccountByUsername(String username) {
+        return accountRepository.findByUsername(username);
+    }
+
+    @Override
+    public Account getAccountByEmail(String email) {
+        return accountRepository.findByEmail(email);
     }
 
 }

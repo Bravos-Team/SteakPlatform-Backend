@@ -12,7 +12,6 @@ import java.time.LocalDate;
 @Getter
 @Setter
 @NoArgsConstructor
-@Builder
 public class AccountProfile {
 
     @Id
