@@ -1,56 +1,58 @@
 package com.bravos.steak.common.utils;
 
+import lombok.extern.slf4j.Slf4j;
+import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
+import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
+import org.bouncycastle.openssl.PEMKeyPair;
+import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.openssl.jcajce.JcaPEMKeyConverter;
+
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.FileReader;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.security.KeyFactory;
-import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
-import java.util.Objects;
 
+@Slf4j
 public class KeyLoader {
 
     public static final PrivateKey PRIVATE_KEY = loadPrivateKey();
     public static final PublicKey PUBLIC_KEY = loadPublicKey();
     public static final SecretKey SECRET_KEY = loadSecretKey();
 
-    private static PrivateKey loadPrivateKey() {
-        try {
-            String key = new String(Files.readAllBytes(Path.of(Objects.requireNonNull(KeyLoader.class.getResource("private.pem")).toURI())));
-            key = key.replace("-----BEGIN PRIVATE KEY-----", "")
-                    .replace("-----END PRIVATE KEY-----", "")
-                    .replaceAll("\\s", "");
-
-            byte[] keyBytes = Base64.getDecoder().decode(key);
-            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(keyBytes);
-            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-            return keyFactory.generatePrivate(keySpec);
-        } catch (NoSuchAlgorithmException | InvalidKeySpecException | IOException | URISyntaxException e) {
+    public static PrivateKey loadPrivateKey() {
+        final String path = "private.pem";
+        try (FileReader fileReader = new FileReader(path)) {
+            PEMParser pemParser = new PEMParser(fileReader);
+            JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
+            Object object = pemParser.readObject();
+            switch (object) {
+                case PEMKeyPair pemKeyPair -> {
+                    PrivateKeyInfo privateKeyInfo = pemKeyPair.getPrivateKeyInfo();
+                    log.info("Private key loaded");
+                    return converter.getPrivateKey(privateKeyInfo);
+                }
+                case PrivateKeyInfo privateKeyInfo -> {
+                    log.info("Private key info loaded");
+                    return converter.getPrivateKey(privateKeyInfo);
+                }
+                default -> throw new RuntimeException("Unknown object type: " + object.getClass().getName());
+            }
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private static PublicKey loadPublicKey() {
-        try {
-            String key = new String(Files.readAllBytes(Paths.get(Objects.requireNonNull(KeyLoader.class.getResource("public.pem")).toURI())));
-            key = key.replace("-----BEGIN PUBLIC KEY-----", "")
-                    .replace("-----END PUBLIC KEY-----", "")
-                    .replaceAll("\\s", "");
-
-            byte[] keyBytes = Base64.getDecoder().decode(key);
-            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(keyBytes);
-            KeyFactory keyFactory = KeyFactory.getInstance("RSA");
-            return keyFactory.generatePublic(keySpec);
-        } catch (IOException | URISyntaxException | NoSuchAlgorithmException | InvalidKeySpecException e) {
+    public static PublicKey loadPublicKey() {
+        final String path = "public.pem";
+        try (FileReader fileReader = new FileReader(path)) {
+            PEMParser pemParser = new PEMParser(fileReader);
+            JcaPEMKeyConverter converter = new JcaPEMKeyConverter();
+            Object object = pemParser.readObject();
+            return converter.getPublicKey(SubjectPublicKeyInfo.getInstance(object));
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
