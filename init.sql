@@ -20,17 +20,23 @@ create table account
     updated_at timestamp             default current_timestamp
 );
 
+CREATE INDEX idx_username ON account(username);
+CREATE INDEX idx_email ON account(username);
+CREATE INDEX idx_username_email ON account(username,email);
+
+
 create table account_refresh_token
 (
     id         bigint                              not null primary key,
     account_id bigint                              not null,
-    device_id  bigint                              not null,
+    device_id  varchar(64)                         not null,
     issues_at  timestamp default current_timestamp not null,
     expires_at timestamp                           not null,
     revoked    boolean   default false             not null,
-    jti        bigint                              not null,
+    token      varchar(64)                             not null,
     foreign key (account_id) references account (id)
 );
+
 
 -- PUBLISHER --
 

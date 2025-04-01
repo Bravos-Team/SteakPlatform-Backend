@@ -54,4 +54,6 @@ public class AccountServiceImpl implements AccountService {
         return accountRepository.findByEmail(email);
     }
 
+    @Override
+    public Optional<Account> getAccountById(Long id){return accountRepository.findById(id);}
 }

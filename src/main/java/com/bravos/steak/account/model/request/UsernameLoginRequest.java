@@ -13,6 +13,7 @@ import lombok.experimental.FieldDefaults;
 @Getter
 @Setter
 @Valid
+@ToString
 public class UsernameLoginRequest {
 
     @NotNull
@@ -26,11 +27,13 @@ public class UsernameLoginRequest {
 
     @NotNull
     @Pattern(
-            regexp = "^(?=\\S{6,32})(?=\\S*\\d)(?=\\S*[A-Z])(?=\\S*[a-z])(?=\\S*[!@#$%^&*? ])\\S*$",
-            message = "Password must be 6-32 characters long, include at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&). No spaces allowed."
+            regexp = "^(?=.*\\d)(?=.*[A-Z])(?=.*[a-z])(?=.*[^\\w\\s:])(\\S){8,32}$",
+            message = "Password must be 8-32 characters long, include at least one uppercase letter, one lowercase letter, one number, and one special character (@$!%*?&). No spaces allowed."
     )
     String password;
 
-
+    @NotNull
+    @NotBlank
+    String deviceId;
 
 }

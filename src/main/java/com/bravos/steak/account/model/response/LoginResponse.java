@@ -9,8 +9,9 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class LoginResponse {
-    String username;
-    String password;
+    @Builder.Default
     String tokenType = "Bearer";
-    String token;
+    String accessToken;
+    String refreshToken;
+    AccountDTO accountDTO;
 }
