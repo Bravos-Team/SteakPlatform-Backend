@@ -32,7 +32,7 @@ public class GlobalExceptionHandler {
         problemDetail.setTitle("Internal Server Error");
         problemDetail.setDetail(ex.getMessage());
 
-        return ResponseEntity.badRequest().body(problemDetail);
+        return ResponseEntity.internalServerError().body(problemDetail);
     }
 
     @ExceptionHandler(BadRequestException.class)
@@ -52,7 +52,7 @@ public class GlobalExceptionHandler {
         problemDetail.setTitle("Unauthorize");
         problemDetail.setDetail(ex.getMessage());
 
-        return ResponseEntity.badRequest().body(problemDetail);
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problemDetail);
     }
 
     @ExceptionHandler(ForbiddenException.class)
@@ -62,7 +62,7 @@ public class GlobalExceptionHandler {
         problemDetail.setTitle("Forbidden");
         problemDetail.setDetail(ex.getMessage());
 
-        return ResponseEntity.badRequest().body(problemDetail);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problemDetail);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

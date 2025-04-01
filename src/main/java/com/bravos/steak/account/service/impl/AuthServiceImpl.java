@@ -16,6 +16,7 @@ import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
 import com.bravos.steak.exceptions.ForbiddenException;
 import com.bravos.steak.exceptions.UnauthorizeException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,7 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
@@ -40,11 +42,23 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public LoginResponse login(UsernameLoginRequest usernameLoginRequest) {
 
+        long getAccountTime = System.currentTimeMillis();
+
         Account account = accountService.getAccountByUsername(usernameLoginRequest.getUsername());
+
+        long endGetAccountTime = System.currentTimeMillis();
+
+        log.info("Query an account in {} ms", endGetAccountTime - getAccountTime);
+
+        long a = System.currentTimeMillis();
 
         if(account == null || !passwordEncoder.matches(usernameLoginRequest.getPassword(), account.getPassword())) {
             throw new UnauthorizeException("Username or password is invalid");
         }
+
+        long b = System.currentTimeMillis();
+
+        log.info("Check password in {} ms", b - a);
 
         if(account.getStatus() == AccountStatus.BANNED) {
             throw new ForbiddenException("Your account is banned");
@@ -77,7 +91,13 @@ public class AuthServiceImpl implements AuthService {
                         .toList()
                 ).build();
 
+        long st = System.currentTimeMillis();
+
         String token = jwtService.generateToken(jwtTokenClaims);
+
+        long et = System.currentTimeMillis();
+
+        log.info("Generate a token in {} ms",et - st);
 
         return LoginResponse.builder()
                 .accountDTO(accountMapper.toAccountDTO(account))

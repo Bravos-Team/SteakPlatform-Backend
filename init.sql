@@ -109,7 +109,6 @@ create table game
     price        money               not null,
     age          smallint            not null,
     status       smallint  default 0 not null,
-    showcase_id  varchar(64)         not null,
     created_at   timestamp default current_timestamp,
     updated_at   timestamp default current_timestamp
 );

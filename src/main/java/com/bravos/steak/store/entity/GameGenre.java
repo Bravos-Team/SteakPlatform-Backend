@@ -12,7 +12,7 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Game_Genre {
+public class GameGenre {
 
     @Id
     @Column(name = "id", nullable = false)

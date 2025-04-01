@@ -44,13 +44,13 @@ public class JwtServiceImpl implements JwtService {
                     .permissions(claims.get("permissions", List.class))
                     .iat(claims.get("iat", Long.class))
                     .exp(claims.get("exp", Long.class))
-                    .jti(claims.get("jti", Long.class))
+                    .jti(Long.valueOf(claims.get("jti", String.class)))
                     .deviceId(claims.get("device_id", String.class))
                     .build();
         } catch (ExpiredJwtException e) {
             throw new UnauthorizeException("Token has expired");
-        } catch (JwtException e) {
-            throw new IllegalArgumentException(e);
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new UnauthorizeException("Token is invalid");
         }
     }
 

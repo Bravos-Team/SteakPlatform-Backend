@@ -26,6 +26,6 @@ public class Genre {
     String slug;
 
     @OneToMany(mappedBy = "genre", cascade = CascadeType.ALL)
-    List<Game_Genre> gameGenres;
+    List<GameGenre> gameGenres;
 
 }
