@@ -49,5 +49,5 @@ public interface AccountService {
      * @return account tương ứng
      */
     Account getAccountByEmail(String email);
-
+    Optional<Account> getAccountById(Long id);
 }

@@ -16,6 +16,7 @@ public class RefreshRequest {
     @NotNull
     String refreshToken;
 
+    @NotNull
     String deviceId;
 
 }
