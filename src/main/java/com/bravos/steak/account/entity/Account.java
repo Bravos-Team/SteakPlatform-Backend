@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
@@ -46,7 +45,7 @@ public class Account {
     private LocalDateTime updatedTime = LocalDateTime.now();
 
     @OneToMany(mappedBy = "account", fetch = FetchType.EAGER)
-    private List<RefreshToken> refreshTokens;
+    private List<AccountRefreshToken> accountRefreshTokens;
 
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("USER"));

@@ -22,10 +22,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/auth/user")
 public class AuthController {
 
-    private final AccountService accountService;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtService jwtService;
-    private final SnowflakeGenerator generalIdGenerator;
     private final AuthService authService;
 
     @PostMapping("/username-login")

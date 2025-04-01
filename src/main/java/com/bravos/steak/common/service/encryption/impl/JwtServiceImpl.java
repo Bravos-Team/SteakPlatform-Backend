@@ -2,17 +2,17 @@ package com.bravos.steak.common.service.encryption.impl;
 
 import com.bravos.steak.common.model.JwtTokenClaims;
 import com.bravos.steak.common.service.encryption.JwtService;
-import com.bravos.steak.common.utils.JwtUtils;
 import com.bravos.steak.common.utils.KeyLoader;
+import com.bravos.steak.exceptions.UnauthorizeException;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.util.Date;
+import java.util.List;
 
 @Service
 public class JwtServiceImpl implements JwtService {
@@ -20,7 +20,6 @@ public class JwtServiceImpl implements JwtService {
     private final PrivateKey privateKey = KeyLoader.PRIVATE_KEY;
 
     private final PublicKey publicKey = KeyLoader.PUBLIC_KEY;
-
 
     @Override
     public String generateToken(JwtTokenClaims jwtTokenClaims) {
@@ -39,12 +38,20 @@ public class JwtServiceImpl implements JwtService {
                     .parseSignedClaims(token)
                     .getPayload();
 
-            return JwtUtils.parseClaims(claims);
-        } catch (IllegalArgumentException | JwtException e) {
+            return JwtTokenClaims.builder()
+                    .id(Long.valueOf(claims.getSubject()))
+                    .roles(claims.get("roles", List.class))
+                    .permissions(claims.get("permissions", List.class))
+                    .iat(claims.get("iat", Long.class))
+                    .exp(claims.get("exp", Long.class))
+                    .jti(claims.get("jti", Long.class))
+                    .deviceId(claims.get("device_id", String.class))
+                    .build();
+        } catch (ExpiredJwtException e) {
+            throw new UnauthorizeException("Token has expired");
+        } catch (JwtException e) {
             throw new IllegalArgumentException(e);
         }
     }
-
-
 
 }

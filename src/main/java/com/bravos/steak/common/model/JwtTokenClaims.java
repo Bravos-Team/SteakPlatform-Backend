@@ -2,7 +2,7 @@ package com.bravos.steak.common.model;
 
 import lombok.*;
 
-import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 @Getter
@@ -16,30 +16,30 @@ public class JwtTokenClaims {
     private Long id;
 
     @NonNull
-    private String[] roles;
+    private List<String> roles;
 
-    private String[] permissions;
-
-    @NonNull
-    private Date iat;
+    private List<String> permissions;
 
     @NonNull
-    private Date exp;
+    private Long iat;
 
     @NonNull
-    private String jti;
+    private Long exp;
+
+    @NonNull
+    private Long jti;
 
     @NonNull
     private String deviceId;
 
-    public Map<String,Object> toMap() {
+    public Map<String, Object> toMap() {
         return Map.of(
-                "sub", String.valueOf(id),
+                "sub", id + "",
                 "roles", roles,
                 "permissions", permissions,
                 "iat", iat,
                 "exp", exp,
-                "jti",jti,
+                "jti", jti +"",
                 "device_id", deviceId
         );
     }

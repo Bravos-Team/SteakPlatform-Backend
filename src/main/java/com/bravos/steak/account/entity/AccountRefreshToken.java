@@ -1,45 +1,44 @@
 package com.bravos.steak.account.entity;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.CreationTimestamp;
-import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.sql.Timestamp;
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@Getter
+@Setter
+@Builder
 @Table(name = "account_refresh_token")
-public class RefreshToken {
+public class AccountRefreshToken {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long id;
+    Long id; // jti, snowflake id
 
-    @ManyToOne()
+    @ManyToOne
     @JoinColumn(name = "account_id", nullable = false)
-     Account account;
+    Account account;
 
     @Column(nullable = false)
-    Long deviceId = 106102005L;
+    String deviceId;
 
     @Column(nullable = false, updatable = false)
     @CreationTimestamp
-     Timestamp issueAt;
+    Timestamp issuesAt;
 
     @Column(nullable = false)
     Timestamp expiresAt;
 
     @Column(nullable = false)
+    @Builder.Default
     Boolean revoked = false;
 
     @Column(nullable = false)
-    Long jti;
+    String token;
+
 }
