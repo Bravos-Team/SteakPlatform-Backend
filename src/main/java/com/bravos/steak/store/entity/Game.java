@@ -31,6 +31,10 @@ public class Game {
     @Column(name = "age", nullable = false)
     int age;
 
+    @ManyToOne
+    @JoinColumn(name = "publisher_id", nullable = false)
+    Publisher publisher;
+
     @Column(name = "status", nullable = false)
     @Enumerated(EnumType.ORDINAL)
     GameStatus status = GameStatus.OPENING;

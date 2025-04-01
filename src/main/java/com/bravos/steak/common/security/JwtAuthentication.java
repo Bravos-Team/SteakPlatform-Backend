@@ -5,8 +5,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 public class JwtAuthentication implements Authentication {
 
@@ -18,7 +19,9 @@ public class JwtAuthentication implements Authentication {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return jwtTokenClaims.getRoles().stream().map(SimpleGrantedAuthority::new).toList();
+        List<SimpleGrantedAuthority> authorities = new ArrayList<>(jwtTokenClaims.getRoles().stream().map(SimpleGrantedAuthority::new).toList());
+        jwtTokenClaims.getPermissions().forEach(role -> authorities.add(new SimpleGrantedAuthority(role)));
+        return authorities;
     }
 
     @Override
