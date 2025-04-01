@@ -49,8 +49,8 @@ public class JwtServiceImpl implements JwtService {
                     .build();
         } catch (ExpiredJwtException e) {
             throw new UnauthorizeException("Token has expired");
-        } catch (JwtException e) {
-            throw new IllegalArgumentException(e);
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new UnauthorizeException("Token is invalid");
         }
     }
 
