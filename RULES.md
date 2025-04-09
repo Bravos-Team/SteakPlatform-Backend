@@ -1,4 +1,4 @@
-# Quy tắc code chung (sửa đổi gần nhất 29/03/2025)
+# Quy tắc code chung (sửa đổi gần nhất 09/04/2025)
 ## Quy tắc đặt tên
 - Tên class tuân theo PascalCase. Eg: MyClass, Student
 - Tên biến bình thường tuân theo camelCase và không đặt biến kiểu vô nghĩa. Eg: studentAge, accountProfile, account
