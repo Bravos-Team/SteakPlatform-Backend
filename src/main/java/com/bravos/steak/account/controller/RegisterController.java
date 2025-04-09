@@ -2,7 +2,7 @@ package com.bravos.steak.account.controller;
 
 import com.bravos.steak.account.model.request.RegistrationRequest;
 import com.bravos.steak.account.service.RegistrationService;
-import com.bravos.steak.exceptions.AccountAlreadyExistsException;
+import com.bravos.steak.exceptions.ConflictDataException;
 import com.bravos.steak.exceptions.BadRequestException;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +25,7 @@ public class RegisterController {
     public ResponseEntity<?> register(@Valid @RequestBody RegistrationRequest registrationRequest) {
         try {
             return ResponseEntity.ok(registrationService.preRegisterAccount(registrationRequest));
-        } catch (AccountAlreadyExistsException e) {
+        } catch (ConflictDataException e) {
             throw new BadRequestException(e.getMessage());
         }
     }

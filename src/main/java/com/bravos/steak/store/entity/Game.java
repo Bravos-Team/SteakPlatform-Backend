@@ -35,6 +35,10 @@ public class Game {
     @Enumerated(EnumType.ORDINAL)
     GameStatus status = GameStatus.OPENING;
 
+    @ManyToOne
+    @JoinColumn(name = "publisher_id")
+    Publisher publisher;
+
     @Builder.Default
     @Column(name = "created_at")
     @CreationTimestamp

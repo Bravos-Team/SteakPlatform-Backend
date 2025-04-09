@@ -17,8 +17,8 @@ public class UrlVerificateController {
     @GetMapping("/verificate/{token}")
     public String verificateRegisterRequest(@PathVariable("token") String token) {
         try {
-            boolean success = registrationService.verificateRegisterAccount(token);
-            return success ? "redirect:" : "redirect:/";
+            registrationService.verificateRegisterAccount(token);
+            return "redirect:";
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

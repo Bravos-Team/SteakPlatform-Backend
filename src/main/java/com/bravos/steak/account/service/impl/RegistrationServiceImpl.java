@@ -8,8 +8,10 @@ import com.bravos.steak.account.service.RegistrationService;
 import com.bravos.steak.common.service.email.EmailService;
 import com.bravos.steak.common.service.email.EmailTemplate;
 import com.bravos.steak.common.service.encryption.EncryptionService;
+import com.bravos.steak.common.service.redis.RedisService;
 import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
-import com.bravos.steak.exceptions.AccountAlreadyExistsException;
+import com.bravos.steak.exceptions.ConflictDataException;
+import com.bravos.steak.exceptions.BadRequestException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
@@ -31,17 +33,17 @@ public class RegistrationServiceImpl implements RegistrationService {
     private final EmailService emailService;
     private final ObjectMapper objectMapper;
     private final PasswordEncoder passwordEncoder;
-    private final RedisTemplate<String, Object> redisTemplate;
     private final EncryptionService encryptionService;
     private final SnowflakeGenerator accountIdGenerator;
     private final AccountRepository accountRepository;
+    private final RedisService redisService;
 
     @Override
     public String preRegisterAccount(RegistrationRequest registrationRequest) throws
-            AccountAlreadyExistsException {
+            ConflictDataException {
 
         if (accountService.isExistByUsernameEmail(registrationRequest.getUsername(), registrationRequest.getEmail())) {
-            throw new AccountAlreadyExistsException("Email or username already exists");
+            throw new ConflictDataException("Email or username already exists");
         }
 
         registrationRequest.setPassword(passwordEncoder.encode(registrationRequest.getPassword()));
@@ -60,32 +62,39 @@ public class RegistrationServiceImpl implements RegistrationService {
     }
 
     @Override
-    public boolean verificateRegisterAccount(String token) {
+    public void verificateRegisterAccount(String token) {
+
         String key = "register:" + token;
         RegistrationRequest registerRequest;
-        String encrypyedRegisterRequestData = (String) redisTemplate.opsForValue().get(key);
-        String decryptedRegisterRequestData;
+        String encrypyedRegisterRequestData = redisService.get(key, String.class); // encrypted data
+        String decryptedRegisterRequestData; // json
 
         if (encrypyedRegisterRequestData == null) {
-            return false;
+            throw new BadRequestException("Token is invalid or expired");
         }
 
         try {
             decryptedRegisterRequestData = encryptionService.aesDecrypt(encrypyedRegisterRequestData);
         } catch (Exception e) {
-            log.error("Failed when decrypted register request {}", e.getMessage());
-            return false;
+            log.warn(e.getMessage());
+            throw new BadRequestException("Token is invalid or expired");
         }
 
         try {
             registerRequest = objectMapper.readValue(decryptedRegisterRequestData, RegistrationRequest.class);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            log.error(e.getMessage());
+            throw new RuntimeException("Error when converting data");
         }
 
-        if (accountService.isExistByUsernameEmail(registerRequest.getUsername(), registerRequest.getEmail())) {
-            redisTemplate.opsForValue().getAndDelete(key);
-            return false;
+        try {
+            if (accountService.isExistByUsernameEmail(registerRequest.getUsername(), registerRequest.getEmail())) {
+                redisService.delete(key);
+                throw new ConflictDataException("Username or email exists");
+            }
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            throw new RuntimeException("Error when trying to check username and email");
         }
 
         try {
@@ -96,23 +105,25 @@ public class RegistrationServiceImpl implements RegistrationService {
                             .password(registerRequest.getPassword())
                             .email(registerRequest.getEmail())
                             .build());
-            redisTemplate.opsForValue().getAndDelete(key);
-            return true;
+            redisService.delete(key);
         } catch (Exception e) {
             log.error(e.getMessage());
-            return false;
+            throw new RuntimeException("Error when trying to save data");
         }
+
     }
 
     private String generateVerificationLink(RegistrationRequest registrationRequest) {
         String token = UUID.randomUUID().toString().toLowerCase();
+        String jsonData;
+        String encryptedData;
         try {
-            String jsonData = objectMapper.writeValueAsString(registrationRequest);
-            String encryptedData = encryptionService.aesEncrypt(jsonData);
-            redisTemplate.opsForValue().set("register:" + token, encryptedData, 30, TimeUnit.MINUTES);
+            jsonData = objectMapper.writeValueAsString(registrationRequest);
+            encryptedData = encryptionService.aesEncrypt(jsonData);
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Error when creating verification URL");
         }
+        redisService.save("register:" + token, encryptedData, 30, TimeUnit.MINUTES);
         return "http://localhost:8888/verificate/" + token;
     }
 
