@@ -9,7 +9,6 @@ import java.util.List;
 
 @Entity
 @Table(name = "publisher")
-@Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor

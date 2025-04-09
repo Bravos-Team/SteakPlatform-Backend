@@ -25,6 +25,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problemDetail);
     }
 
+    @ExceptionHandler(ConflictDataException.class)
+    public ResponseEntity<ProblemDetail> handleConflictData(ConflictDataException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.CONFLICT);
+
+        problemDetail.setTitle("Data conflict");
+        problemDetail.setDetail(ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ProblemDetail> handleInternalServerError(RuntimeException ex) {
         ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -32,7 +42,7 @@ public class GlobalExceptionHandler {
         problemDetail.setTitle("Internal Server Error");
         problemDetail.setDetail(ex.getMessage());
 
-        return ResponseEntity.badRequest().body(problemDetail);
+        return ResponseEntity.internalServerError().body(problemDetail);
     }
 
     @ExceptionHandler(BadRequestException.class)
@@ -52,7 +62,7 @@ public class GlobalExceptionHandler {
         problemDetail.setTitle("Unauthorize");
         problemDetail.setDetail(ex.getMessage());
 
-        return ResponseEntity.badRequest().body(problemDetail);
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problemDetail);
     }
 
     @ExceptionHandler(ForbiddenException.class)
@@ -62,7 +72,17 @@ public class GlobalExceptionHandler {
         problemDetail.setTitle("Forbidden");
         problemDetail.setDetail(ex.getMessage());
 
-        return ResponseEntity.badRequest().body(problemDetail);
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problemDetail);
+    }
+
+    @ExceptionHandler(TooManyRequestException.class)
+    public ResponseEntity<ProblemDetail> handleTooManyRequestException(TooManyRequestException ex) {
+        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.TOO_MANY_REQUESTS);
+
+        problemDetail.setTitle("Too many request");
+        problemDetail.setDetail(ex.getMessage());
+
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(problemDetail);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -84,5 +104,6 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.badRequest().body(problemDetail);
     }
+
 
 }
