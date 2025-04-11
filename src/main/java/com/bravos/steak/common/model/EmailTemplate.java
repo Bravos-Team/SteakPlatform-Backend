@@ -1,6 +1,4 @@
-package com.bravos.steak.common.service.email;
-
-import org.springframework.http.HttpStatus;
+package com.bravos.steak.common.model;
 
 public class EmailTemplate {
 

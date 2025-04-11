@@ -26,7 +26,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     public boolean isExistByUsernameEmail(String username, String email) {
-        return accountRepository.existsByUsernameAndEmail(username,email);
+        return accountRepository.existsByUsernameOrEmail(username,email);
     }
 
     @Override

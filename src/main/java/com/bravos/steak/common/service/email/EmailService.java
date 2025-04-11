@@ -1,9 +1,11 @@
 package com.bravos.steak.common.service.email;
 
+import com.bravos.steak.common.model.EmailPayload;
+
 import java.util.Map;
 
 public interface EmailService {
 
-    void sendEmailUsingTemplate(String to, String subject, String templateID, Map<String, Object> params);
+    void sendEmailUsingTemplate(EmailPayload emailPayload);
 
 }

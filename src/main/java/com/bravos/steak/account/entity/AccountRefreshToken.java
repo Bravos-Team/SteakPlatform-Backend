@@ -20,7 +20,7 @@ public class AccountRefreshToken {
     @Id
     Long id; // jti, snowflake id
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "account_id", nullable = false)
     Account account;
 
