@@ -1,55 +1,74 @@
 package com.bravos.steak.common.service.email.impl;
 
+import com.bravos.steak.common.model.EmailPayload;
 import com.bravos.steak.common.service.email.EmailService;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.annotation.PreDestroy;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
 
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class EmailServiceImpl implements EmailService {
 
-    private final WebClient webClient;
     private final String apiKeyPublic = System.getProperty("EMAIL_API_KEY");
+
     private final String apiKeyPrivate = System.getProperty("EMAIL_SECRET_KEY");
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public EmailServiceImpl() {
-        this.webClient = WebClient.builder()
-                .baseUrl("https://api.mailjet.com/v3.1/send")
-                .defaultHeaders(headers -> headers.setBasicAuth(apiKeyPublic, apiKeyPrivate))
-                .build();
-    }
+    private final ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
 
-    public void sendEmailUsingTemplate(String to, String subject, String templateID, Map<String, Object> params) {
-        try {
+    private final WebClient webClient = WebClient.builder()
+            .baseUrl("https://api.mailjet.com/v3.1/send")
+            .defaultHeaders(headers -> headers.setBasicAuth(apiKeyPublic, apiKeyPrivate))
+            .build();
 
-            String jsonBody = objectMapper.writeValueAsString(Map.of(
-                    "Messages", new Object[]{
-                            Map.of(
-                                    "From", Map.of("Email", "steak@bravos.io.vn", "Name", "Steak"),
-                                    "To", new Object[]{Map.of("Email", to)},
-                                    "TemplateID", Integer.parseInt(templateID),
-                                    "TemplateLanguage", true,
-                                    "Subject", subject,
-                                    "Variables", params
-                            )
-                    }
-            ));
-
-            webClient.post()
-                    .header("Content-Type", "application/json")
-                    .bodyValue(jsonBody)
-                    .retrieve()
-                    .bodyToMono(String.class)
+    @Override
+    public void sendEmailUsingTemplate(EmailPayload emailPayload) {
+        executorService.submit(() -> {
+            this.sendEmail(emailPayload)
                     .doOnSuccess(response -> log.info("Email sent: {}", response))
                     .doOnError(error -> log.error("Failed to send email: {}", error.getMessage()))
+                    .retry(3)
                     .subscribe();
+        });
+    }
 
-        } catch (Exception e) {
+    private Mono<String> sendEmail(EmailPayload emailPayload) {
+        Map<String, Object> jsonBody = Map.of(
+                "Messages", new Object[]{
+                        Map.of(
+                                "From", Map.of("Email", emailPayload.getFrom(), "Name", "Steak"),
+                                "To", new Object[]{Map.of("Email", emailPayload.getTo())},
+                                "TemplateID", Integer.parseInt(emailPayload.getTemplateID()),
+                                "TemplateLanguage", true,
+                                "Subject", emailPayload.getSubject(),
+                                "Variables", emailPayload.getParams()
+                        )
+                }
+        );
+
+        return webClient.post()
+                .header("Content-Type", "application/json")
+                .bodyValue(jsonBody)
+                .retrieve()
+                .bodyToMono(String.class);
+    }
+
+    @PreDestroy
+    public void shutdown() {
+        try {
+            if (executorService.awaitTermination(5000, TimeUnit.SECONDS)) {
+                log.info("Email service is terminated");
+            }
+        } catch (InterruptedException e) {
             log.error(e.getMessage());
         }
     }

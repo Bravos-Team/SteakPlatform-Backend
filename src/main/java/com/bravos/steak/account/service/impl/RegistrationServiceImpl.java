@@ -5,8 +5,9 @@ import com.bravos.steak.account.model.request.RegistrationRequest;
 import com.bravos.steak.account.repo.AccountRepository;
 import com.bravos.steak.account.service.AccountService;
 import com.bravos.steak.account.service.RegistrationService;
+import com.bravos.steak.common.model.EmailPayload;
 import com.bravos.steak.common.service.email.EmailService;
-import com.bravos.steak.common.service.email.EmailTemplate;
+import com.bravos.steak.common.model.EmailTemplate;
 import com.bravos.steak.common.service.encryption.EncryptionService;
 import com.bravos.steak.common.service.redis.RedisService;
 import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
@@ -16,11 +17,9 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -39,8 +38,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     private final RedisService redisService;
 
     @Override
-    public String preRegisterAccount(RegistrationRequest registrationRequest) throws
-            ConflictDataException {
+    public String preRegisterAccount(RegistrationRequest registrationRequest) {
 
         if (accountService.isExistByUsernameEmail(registrationRequest.getUsername(), registrationRequest.getEmail())) {
             throw new ConflictDataException("Email or username already exists");
@@ -50,12 +48,14 @@ public class RegistrationServiceImpl implements RegistrationService {
 
         String verificationLink = generateVerificationLink(registrationRequest);
 
-        emailService.sendEmailUsingTemplate(
-                registrationRequest.getEmail(),
-                "Email Verification",
-                EmailTemplate.VERIFICATE_EMAIL,
-                Map.of("verification_link",verificationLink)
-        );
+        EmailPayload emailPayload = EmailPayload.builder()
+                .to(registrationRequest.getEmail())
+                .subject("Email Verification")
+                .templateID(EmailTemplate.VERIFICATE_EMAIL)
+                .param("verification_link",verificationLink)
+                .build();
+
+        emailService.sendEmailUsingTemplate(emailPayload);
 
         return registrationRequest.getEmail();
 

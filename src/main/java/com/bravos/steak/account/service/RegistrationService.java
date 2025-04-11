@@ -11,13 +11,11 @@ public interface RegistrationService {
      * @return email dùng để đăng ký
      * @throws ConflictDataException trùng username
      */
-    String preRegisterAccount(RegistrationRequest registrationRequest)
-            throws ConflictDataException;
+    String preRegisterAccount(RegistrationRequest registrationRequest);
 
     /**
      * Xác minh email nhận và đăng ký tài khoản
      * @param token token để xác minh tài khoản
-     * @return thành công hay thất bại
      */
     void verificateRegisterAccount(String token);
 
