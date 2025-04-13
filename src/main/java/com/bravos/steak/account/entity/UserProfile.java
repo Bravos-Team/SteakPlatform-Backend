@@ -8,11 +8,11 @@ import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDate;
 
-@Document("account_profile")
+@Document("user_profile")
 @Getter
 @Setter
 @NoArgsConstructor
-public class AccountProfile {
+public class UserProfile {
 
     @Id
     @NonNull

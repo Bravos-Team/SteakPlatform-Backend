@@ -8,7 +8,7 @@ servers:
 paths:
   /api/v1/account/auth/username-login:
     post:
-      summary: Đăng nhập
+      summary: Đăng nhập username
       description: Đăng nhập bằng username
       requestBody:
         content:
@@ -29,7 +29,30 @@ paths:
         403:
           description: Tài khoản bị khóa
 
-  /api/v1/public/register:
+  /api/v1/account/auth/email-login:
+    post:
+      summary: Đăng nhập email
+      description: Đăng nhập bằng email
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UsernameLoginRequest"
+      responses:
+        200:
+          description: Đăng nhập, lấy token và accessToken
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        400:
+          description: Sai cú pháp, hay sai cái gì đó
+        401:
+          description: Sai tài khoản mật khẩu
+        403:
+          description: Tài khoản bị khóa<
+
+  /api/v1/account/auth/register:
     post:
       summary: Đăng ký
       description: Gửi yêu cầu đăng ký tài khoản
@@ -46,6 +69,39 @@ paths:
               example: "email@meow.com"
         409:
           description: Tài khoản đã tồn tại
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Lỗi không xác định
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/v1/account/auth/refresh:
+    post:
+      summary: Lấy lại token cho user
+      description: Lấy lại token bằng refreshToken
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshRequest"
+      responses:
+        200:
+          description: Lấy lại token thành công
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        default:
+          description: Lỗi không xác định
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
 
 
 components:
@@ -54,6 +110,21 @@ components:
       description: Lỗi trả về
       type: object
       properties:
+        title:
+          type: string
+          example: "Bad Request"
+        status:
+          type: integer
+          example: 400
+        detail:
+          type: string
+          example: "Sai cú pháp, hay sai cái gì đó"
+        instance:
+          type: string
+          example: "/api/v1/account/auth/username-login"
+        type:
+          type: string
+          example: "about:blank"
 
     UsernameLoginRequest:
       description: Đăng nhập bằng username
@@ -93,5 +164,14 @@ components:
         password:
           type: password
           example: PassworD2@
+    RefreshRequest:
+      type: object
+      properties:
+        refreshToken:
+          type: string
+          example: 07b90a5568c94c0f849a7ca7b09ad296
+        deviceId:
+          type: string
+          example: 1q2w3whj4j3nk
 
   

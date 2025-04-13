@@ -5,7 +5,7 @@ import com.bravos.steak.account.model.request.RefreshRequest;
 import com.bravos.steak.account.model.request.RegistrationRequest;
 import com.bravos.steak.account.model.request.UsernameLoginRequest;
 import com.bravos.steak.account.model.response.LoginResponse;
-import com.bravos.steak.account.service.AuthService;
+import com.bravos.steak.common.service.auth.AuthService;
 import com.bravos.steak.account.service.RegistrationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ public class UserAuthController {
     private final RegistrationService registrationService;
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@Valid @RequestBody RegistrationRequest registrationRequest) {
+    public ResponseEntity<?> register(@RequestBody @Valid RegistrationRequest registrationRequest) {
         return ResponseEntity.ok(registrationService.preRegisterAccount(registrationRequest));
     }
 
@@ -41,10 +41,9 @@ public class UserAuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<?> renewToken(@RequestBody RefreshRequest refreshRequest) {
+    public ResponseEntity<?> renewToken(@RequestBody @Valid RefreshRequest refreshRequest) {
         LoginResponse loginResponse = authService.renewToken(refreshRequest);
         return ResponseEntity.ok(loginResponse);
     }
-
-
+    
 }

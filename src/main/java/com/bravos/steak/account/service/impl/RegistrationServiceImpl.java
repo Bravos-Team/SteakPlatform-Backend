@@ -1,8 +1,8 @@
 package com.bravos.steak.account.service.impl;
 
-import com.bravos.steak.account.entity.Account;
+import com.bravos.steak.account.entity.UserAccount;
 import com.bravos.steak.account.model.request.RegistrationRequest;
-import com.bravos.steak.account.repo.AccountRepository;
+import com.bravos.steak.account.repo.UserAccountRepository;
 import com.bravos.steak.account.service.AccountService;
 import com.bravos.steak.account.service.RegistrationService;
 import com.bravos.steak.common.model.EmailPayload;
@@ -34,7 +34,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     private final PasswordEncoder passwordEncoder;
     private final EncryptionService encryptionService;
     private final SnowflakeGenerator accountIdGenerator;
-    private final AccountRepository accountRepository;
+    private final UserAccountRepository userAccountRepository;
     private final RedisService redisService;
 
     @Override
@@ -49,6 +49,7 @@ public class RegistrationServiceImpl implements RegistrationService {
         String verificationLink = generateVerificationLink(registrationRequest);
 
         EmailPayload emailPayload = EmailPayload.builder()
+                .from("no-reply@steak.io.vn")
                 .to(registrationRequest.getEmail())
                 .subject("Email Verification")
                 .templateID(EmailTemplate.VERIFICATE_EMAIL)
@@ -98,8 +99,8 @@ public class RegistrationServiceImpl implements RegistrationService {
         }
 
         try {
-            accountRepository.save(
-                    Account.builder()
+            userAccountRepository.save(
+                    UserAccount.builder()
                             .id(accountIdGenerator.generateId())
                             .username(registerRequest.getUsername())
                             .password(registerRequest.getPassword())

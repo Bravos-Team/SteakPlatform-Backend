@@ -10,11 +10,20 @@ spring:
     username: bravos
     password: ${POSTGRES_PASSWORD}
     url: jdbc:postgresql://localhost:5432/steakdb
+    hikari:
+      auto-commit: true
+      connection-timeout: 250
+      max-lifetime: 600000
+      maximum-pool-size: 20
+      minimum-idle: 10
+      pool-name: master
+      idle-timeout: 30000
   jpa:
     hibernate:
-      ddl-auto: none # <- cái này true bậy nha
+      ddl-auto: none
     show-sql: true
-    open-in-view: false # <- if true :: hieu xuat kem, giu ket noi db lau
+    open-in-view: false
+    database: postgresql
   data:
     mongodb:
       uri: mongodb://localhost:27017/

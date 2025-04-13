@@ -16,7 +16,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(SpringExtension.class)
-public class AccountServiceTest {
+public class UserAccountServiceTest {
 
     @Autowired
     AccountServiceImpl accountService;
