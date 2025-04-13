@@ -1,9 +1,9 @@
 package com.bravos.steak.common.service.auth.impl;
 
-import com.bravos.steak.account.repo.AccountRefreshTokenRepository;
+import com.bravos.steak.account.repo.UserRefreshTokenRepository;
 import com.bravos.steak.common.model.JwtTokenClaims;
 import com.bravos.steak.common.security.JwtAuthentication;
-import com.bravos.steak.common.service.auth.LogoutService;
+import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.common.service.redis.RedisService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,19 +15,18 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class LogoutServiceImpl implements LogoutService {
+public class SessionServiceImpl implements SessionService {
 
     private final RedisService redisService;
-    private final AccountRefreshTokenRepository accountRefreshTokenRepository;
+    private final UserRefreshTokenRepository userRefreshTokenRepository;
 
     @Override
     public void killRefreshToken(long jti, String role) {
         try {
-
             if(role.equalsIgnoreCase("USER")) {
-                accountRefreshTokenRepository.findById(jti).ifPresent(accountRefreshToken -> {
+                userRefreshTokenRepository.findById(jti).ifPresent(accountRefreshToken -> {
                     accountRefreshToken.setRevoked(true);
-                    accountRefreshTokenRepository.save(accountRefreshToken);
+                    userRefreshTokenRepository.save(accountRefreshToken);
                 });
                 return;
             }
@@ -49,7 +48,7 @@ public class LogoutServiceImpl implements LogoutService {
     }
 
     @Override
-    public boolean isRefreshTokenBlacklisted(long jti) {
+    public boolean isTokenBlacklisted(long jti) {
         String key = "blacklist:jti:" + jti;
         return redisService.hasKey(key);
     }
@@ -57,23 +56,29 @@ public class LogoutServiceImpl implements LogoutService {
     @Override
     public void logout() {
 
-        JwtAuthentication authentication = (JwtAuthentication) SecurityContextHolder.getContext().getAuthentication();
-
+        JwtAuthentication authentication;
         try {
-            JwtTokenClaims jwtTokenClaims = (JwtTokenClaims) authentication.getDetails();
+            authentication = (JwtAuthentication) SecurityContextHolder.getContext().getAuthentication();
+        } catch (ClassCastException e) {
+            log.error(e.getMessage());
+            return;
+        }
 
-            if (jwtTokenClaims != null) {
+        if (authentication != null && authentication.getDetails() != null) {
+            try {
+                JwtTokenClaims jwtTokenClaims = (JwtTokenClaims) authentication.getDetails();
+
                 Thread.startVirtualThread(() -> {
                     long jti = jwtTokenClaims.getJti();
 
                     this.killRefreshToken(jti, jwtTokenClaims.getRoles().getFirst());
 
                     this.addBlacklistRefreshToken(jti);
-                }).start();
-            }
+                });
 
-        } catch (Exception e) {
-            log.error(e.getMessage());
+            } catch (Exception e) {
+                log.error(e.getMessage());
+            }
         }
 
     }

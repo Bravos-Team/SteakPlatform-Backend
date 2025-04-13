@@ -1,28 +1,26 @@
-package com.bravos.steak.account.entity;
+package com.bravos.steak.common.entity;
 
+import com.bravos.steak.common.model.AccountInfo;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.sql.Timestamp;
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@NoArgsConstructor
-@AllArgsConstructor
-@Entity
 @Getter
 @Setter
-@Builder
-@Table(name = "account_refresh_token")
-public class AccountRefreshToken {
+@NoArgsConstructor
+@AllArgsConstructor
+@SuperBuilder
+@Entity
+@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
+public abstract class RefreshToken {
 
     @Id
     Long id; // jti, snowflake id
-
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "account_id", nullable = false)
-    Account account;
 
     @Column(nullable = false)
     String deviceId;
@@ -35,10 +33,13 @@ public class AccountRefreshToken {
     Timestamp expiresAt;
 
     @Column(nullable = false)
-    @Builder.Default
     Boolean revoked = false;
 
     @Column(nullable = false)
     String token;
+
+    public abstract AccountInfo getAccountInfo();
+
+    public abstract void setAccountInfo(AccountInfo accountInfo);
 
 }

@@ -1,11 +1,9 @@
 package com.bravos.steak.account.service.impl;
 
-import com.bravos.steak.account.entity.Account;
-import com.bravos.steak.account.entity.AccountProfile;
-import com.bravos.steak.account.model.mappers.AccountMapper;
-import com.bravos.steak.account.model.response.AccountDTO;
-import com.bravos.steak.account.repo.AccountRepository;
-import com.bravos.steak.account.repo.ProfileRepository;
+import com.bravos.steak.account.entity.UserAccount;
+import com.bravos.steak.account.entity.UserProfile;
+import com.bravos.steak.account.repo.UserAccountRepository;
+import com.bravos.steak.account.repo.UserProfileRepository;
 import com.bravos.steak.account.service.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -15,45 +13,45 @@ import java.util.Optional;
 @Service
 public class AccountServiceImpl implements AccountService {
 
-    private final AccountRepository accountRepository;
-    private final ProfileRepository profileRepository;
+    private final UserAccountRepository userAccountRepository;
+    private final UserProfileRepository userProfileRepository;
 
     @Autowired
-    public AccountServiceImpl(AccountRepository accountRepository, ProfileRepository profileRepository) {
-        this.accountRepository = accountRepository;
-        this.profileRepository = profileRepository;
+    public AccountServiceImpl(UserAccountRepository userAccountRepository, UserProfileRepository userProfileRepository) {
+        this.userAccountRepository = userAccountRepository;
+        this.userProfileRepository = userProfileRepository;
     }
 
     @Override
     public boolean isExistByUsernameEmail(String username, String email) {
-        return accountRepository.existsByUsernameOrEmail(username,email);
+        return userAccountRepository.existsByUsernameOrEmail(username,email);
     }
 
     @Override
     public boolean isExistByUsername(String username) {
-        return accountRepository.existsByUsername(username);
+        return userAccountRepository.existsByUsername(username);
     }
 
     @Override
     public boolean isExistByEmail(String email) {
-        return accountRepository.existsByEmail(email);
+        return userAccountRepository.existsByEmail(email);
     }
 
     @Override
-    public Optional<AccountProfile> getAccountProfileById(Long id) {
-        return profileRepository.findById(id);
+    public Optional<UserProfile> getAccountProfileById(Long id) {
+        return userProfileRepository.findById(id);
     }
 
     @Override
-    public Account getAccountByUsername(String username) {
-        return accountRepository.findByUsername(username);
+    public UserAccount getAccountByUsername(String username) {
+        return userAccountRepository.findByUsername(username);
     }
 
     @Override
-    public Account getAccountByEmail(String email) {
-        return accountRepository.findByEmail(email);
+    public UserAccount getAccountByEmail(String email) {
+        return userAccountRepository.findByEmail(email);
     }
 
     @Override
-    public Optional<Account> getAccountById(Long id){return accountRepository.findById(id);}
+    public Optional<UserAccount> getAccountById(Long id){return userAccountRepository.findById(id);}
 }

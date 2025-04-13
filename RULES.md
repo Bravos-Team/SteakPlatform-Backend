@@ -1,7 +1,7 @@
 # Quy tắc code chung (sửa đổi gần nhất 09/04/2025)
 ## Quy tắc đặt tên
 - Tên class tuân theo PascalCase. Eg: MyClass, Student
-- Tên biến bình thường tuân theo camelCase và không đặt biến kiểu vô nghĩa. Eg: studentAge, accountProfile, account
+- Tên biến bình thường tuân theo camelCase và không đặt biến kiểu vô nghĩa. Eg: studentAge, accountProfile, userAccount
 - Tên biến static + final tuân theo SCREAMING_SNAKE_CASE. Eg: SECRET_KEY, PRIVATE_KEY
 - Tên bảng, trường dữ liệu, collections trong database tuân theo snake_case. Eg: account_profile
 - Tên package code tuân theo lowercase, no space. Eg: common, accountmanager

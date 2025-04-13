@@ -1,6 +1,7 @@
 package com.bravos.steak.account.entity;
 
 import com.bravos.steak.account.model.enums.AccountStatus;
+import com.bravos.steak.common.model.AccountInfo;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -16,8 +17,8 @@ import java.util.List;
 @AllArgsConstructor
 @Getter
 @Setter
-@ToString
-public class Account {
+@Table(name = "user_account")
+public class UserAccount implements AccountInfo {
 
     @Id
     private Long id;
@@ -43,9 +44,6 @@ public class Account {
     @Column(nullable = false, name = "updated_at")
     @Builder.Default
     private LocalDateTime updatedTime = LocalDateTime.now();
-
-    @OneToMany(mappedBy = "account", fetch = FetchType.EAGER)
-    private List<AccountRefreshToken> accountRefreshTokens;
 
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("USER"));

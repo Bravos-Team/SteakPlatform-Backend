@@ -2,6 +2,7 @@ package com.bravos.steak.common.filter;
 
 import com.bravos.steak.common.model.JwtTokenClaims;
 import com.bravos.steak.common.security.JwtAuthentication;
+import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.common.service.encryption.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -31,6 +32,7 @@ public class JwtFilter extends OncePerRequestFilter {
             "/api/v1/hub/public",
             "/api/v1/support/public"
     );
+    private final SessionService sessionService;
 
     @Override
     protected void doFilterInternal(
@@ -61,6 +63,11 @@ public class JwtFilter extends OncePerRequestFilter {
 
         if(tokenClaims == null) {
             filterChain.doFilter(request,response);
+            return;
+        }
+
+        if(sessionService.isTokenBlacklisted(tokenClaims.getJti())) {
+            filterChain.doFilter(request, response);
             return;
         }
 

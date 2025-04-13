@@ -1,7 +1,7 @@
 package com.bravos.steak.account.service;
 
-import com.bravos.steak.account.entity.Account;
-import com.bravos.steak.account.entity.AccountProfile;
+import com.bravos.steak.account.entity.UserAccount;
+import com.bravos.steak.account.entity.UserProfile;
 
 import java.util.Optional;
 
@@ -34,20 +34,21 @@ public interface AccountService {
      * @param id id
      * @return profile của user
      */
-    Optional<AccountProfile> getAccountProfileById(Long id);
+    Optional<UserProfile> getAccountProfileById(Long id);
 
     /**
      * Tìm account bằng username
      * @param username username
      * @return account tương ứng
      */
-    Account getAccountByUsername(String username);
+    UserAccount getAccountByUsername(String username);
 
     /**
      * Tìm account bằng email
      * @param email email
      * @return account tương ứng
      */
-    Account getAccountByEmail(String email);
-    Optional<Account> getAccountById(Long id);
+    UserAccount getAccountByEmail(String email);
+    Optional<UserAccount> getAccountById(Long id);
+
 }

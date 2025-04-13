@@ -1,14 +1,12 @@
 package com.bravos.steak.account.repo;
 
-import com.bravos.steak.account.entity.Account;
+import com.bravos.steak.account.entity.UserAccount;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
-
 @Repository
-public interface AccountRepository extends JpaRepository<Account,Long>, JpaSpecificationExecutor<Account> {
+public interface UserAccountRepository extends JpaRepository<UserAccount,Long>, JpaSpecificationExecutor<UserAccount> {
 
     boolean existsByUsername(String username);
 
@@ -16,9 +14,9 @@ public interface AccountRepository extends JpaRepository<Account,Long>, JpaSpeci
 
     boolean existsByUsernameAndEmail(String username, String email);
 
-    Account findByUsername(String username);
+    UserAccount findByUsername(String username);
 
-    Account findByEmail(String email);
+    UserAccount findByEmail(String email);
 
     boolean existsByUsernameOrEmail(String username, String email);
 }

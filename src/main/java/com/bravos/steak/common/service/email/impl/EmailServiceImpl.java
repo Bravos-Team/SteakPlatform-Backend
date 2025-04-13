@@ -34,7 +34,7 @@ public class EmailServiceImpl implements EmailService {
     public void sendEmailUsingTemplate(EmailPayload emailPayload) {
         executorService.submit(() -> {
             this.sendEmail(emailPayload)
-                    .doOnSuccess(response -> log.info("Email sent: {}", response))
+                    .doOnSuccess(response -> log.info("Email was sent to: {}", emailPayload.getTo()))
                     .doOnError(error -> log.error("Failed to send email: {}", error.getMessage()))
                     .retry(3)
                     .subscribe();

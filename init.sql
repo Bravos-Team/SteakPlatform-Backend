@@ -9,7 +9,7 @@ $$;
 
 -- ACCOUNT --
 
-create table account
+create table user_account
 (
     id         bigint       not null primary key,
     username   varchar(32)  not null unique,
@@ -20,12 +20,11 @@ create table account
     updated_at timestamp             default current_timestamp
 );
 
-CREATE INDEX idx_username ON account(username);
-CREATE INDEX idx_email ON account(username);
-CREATE INDEX idx_username_email ON account(username,email);
+CREATE INDEX idx_username ON user_account(username);
+CREATE INDEX idx_email ON user_account(username);
+CREATE INDEX idx_username_email ON user_account(username,email);
 
-
-create table account_refresh_token
+create table user_refresh_token
 (
     id         bigint                              not null primary key,
     account_id bigint                              not null,
@@ -33,10 +32,12 @@ create table account_refresh_token
     issues_at  timestamp default current_timestamp not null,
     expires_at timestamp                           not null,
     revoked    boolean   default false             not null,
-    token      varchar(64)                             not null,
-    foreign key (account_id) references account (id)
+    token      varchar(64)                         not null,
+    foreign key (account_id) references user_account (id)
 );
 
+CREATE INDEX idx_account_id ON user_refresh_token(account_id);
+CREATE INDEX idx_token_device_id ON user_refresh_token(token, device_id);
 
 -- PUBLISHER --
 
@@ -130,7 +131,7 @@ create table game_genre
 );
 
 ALTER TABLE game_genre
-    ADD CONSTRAINT game_genre.unique UNIQUE (game_id, genre_id);
+    ADD CONSTRAINT game_genre UNIQUE (game_id, genre_id);
 
 
 

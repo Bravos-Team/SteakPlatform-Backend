@@ -24,11 +24,13 @@ public interface RedisService {
 
     <T> T getAndDelete(String key, Class<T> clazz);
 
-    <T extends Number> T increment(String key, long delta, Class<T> type);
+    Long increment(String key, long delta);
 
-    <T extends Number> T decrement(String key, long delta, Class<T> type);
+    Long decrement(String key, long delta);
 
-    <T extends Number> T increment(String key, double delta, Class<T> type);
+    Double increment(String key, double delta);
+
+    void expire(String key, long timeout, TimeUnit timeUnit);
 
     void delete(String key);
 

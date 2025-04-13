@@ -1,12 +1,12 @@
 package com.bravos.steak.common.service.auth;
 
-public interface LogoutService {
+public interface SessionService {
 
     void killRefreshToken(long jti, String role);
 
     void addBlacklistRefreshToken(long jti);
 
-    boolean isRefreshTokenBlacklisted(long jti);
+    boolean isTokenBlacklisted(long jti);
 
     void logout();
 
