@@ -4,14 +4,12 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 @AllArgsConstructor
-@NoArgsConstructor
-@Builder
 @Getter
 @Setter
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class LoginResponse {
 
-    String accessToken;
-    String refreshToken;
+    String name;
+    String avatar;
 
 }

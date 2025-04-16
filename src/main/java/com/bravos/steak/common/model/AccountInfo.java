@@ -5,6 +5,7 @@ import org.springframework.security.core.GrantedAuthority;
 
 import java.time.LocalDateTime;
 import java.util.Collection;
+import java.util.List;
 
 public interface AccountInfo {
 
@@ -23,5 +24,7 @@ public interface AccountInfo {
     LocalDateTime getUpdatedTime();
 
     Collection<? extends GrantedAuthority> getAuthorities();
+
+    List<String> getPermissions();
 
 }

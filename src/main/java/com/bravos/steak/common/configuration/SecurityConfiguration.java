@@ -18,13 +18,14 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.List;
 
 @Configuration
 @RequiredArgsConstructor
 @EnableWebSecurity
-public class SecurityConfiguration {
+public class SecurityConfiguration implements WebMvcConfigurer {
 
     private final JwtFilter jwtFilter;
     private final AdminFilter adminFilter;
@@ -46,6 +47,8 @@ public class SecurityConfiguration {
             request.requestMatchers("/api/v1/support/public/**").permitAll();
             request.anyRequest().authenticated();
         });
+
+        http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
         http.csrf(CsrfConfigurer::disable);
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         http.formLogin(AbstractHttpConfigurer::disable)
@@ -56,33 +59,22 @@ public class SecurityConfiguration {
         return http.build();
     }
 
-    /**
-     * Tránh Việc Spring Security chặn request
-     * trước khi đến được tới addCorsMapping
-     *
-     * @return CorsConfigurationSource
-     */
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowCredentials(true);
-        configuration.setAllowedOrigins(
-                List.of(
-                        System.getProperty("BASE_URL_FRONTEND"),
-                        System.getProperty("BASE_URL_PREVIEW_FRONTEND")
-                )
-        );
-        configuration.addAllowedHeader("*");
-        configuration.addAllowedMethod("*");
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
-
     @Bean
     public UserDetailsService userDetailsService() {
         return username -> null;
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of(System.getProperty("BASE_URL_FRONTEND",System.getProperty("BASE_URL_PREVIEW_FRONTEND"))));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 
 }

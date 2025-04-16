@@ -6,6 +6,7 @@ import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.common.service.encryption.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -15,13 +16,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 @Component
 @RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
-
-    private final JwtService jwtService;
 
     private final List<String> whiteList = List.of(
             "/verificate",
@@ -33,6 +33,7 @@ public class JwtFilter extends OncePerRequestFilter {
             "/api/v1/support/public"
     );
     private final SessionService sessionService;
+    private final JwtService jwtService;
 
     @Override
     protected void doFilterInternal(
@@ -80,11 +81,8 @@ public class JwtFilter extends OncePerRequestFilter {
     }
 
     private String getTokenFromRequest(HttpServletRequest request) {
-        String headerAuth = request.getHeader("Authorization");
-        return (headerAuth != null && headerAuth.startsWith("Bearer "))
-                ? headerAuth.substring(7) : null;
+        Cookie jwtCookie = Arrays.stream(request.getCookies()).filter(cookie -> cookie.getName().equals("jwt")).findFirst().orElse(null);
+        return jwtCookie != null ? jwtCookie.getValue() : null;
     }
-
-
 
 }

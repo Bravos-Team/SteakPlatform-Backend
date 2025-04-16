@@ -1,8 +1,10 @@
 package com.bravos.steak.account.service.impl;
 
 import com.bravos.steak.account.entity.UserAccount;
+import com.bravos.steak.account.entity.UserProfile;
 import com.bravos.steak.account.model.request.RegistrationRequest;
 import com.bravos.steak.account.repo.UserAccountRepository;
+import com.bravos.steak.account.repo.UserProfileRepository;
 import com.bravos.steak.account.service.AccountService;
 import com.bravos.steak.account.service.RegistrationService;
 import com.bravos.steak.common.model.EmailPayload;
@@ -36,6 +38,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     private final SnowflakeGenerator accountIdGenerator;
     private final UserAccountRepository userAccountRepository;
     private final RedisService redisService;
+    private final UserProfileRepository userProfileRepository;
 
     @Override
     public String preRegisterAccount(RegistrationRequest registrationRequest) {
@@ -99,14 +102,21 @@ public class RegistrationServiceImpl implements RegistrationService {
         }
 
         try {
-            userAccountRepository.save(
+
+            UserAccount account = userAccountRepository.save(
                     UserAccount.builder()
                             .id(accountIdGenerator.generateId())
                             .username(registerRequest.getUsername())
                             .password(registerRequest.getPassword())
                             .email(registerRequest.getEmail())
                             .build());
+
+            UserProfile userProfile = new UserProfile();
+            userProfile.setId(account.getId());
+            userProfile.setDisplayName(account.getUsername());
+            userProfileRepository.save(userProfile);
             redisService.delete(key);
+
         } catch (Exception e) {
             log.error(e.getMessage());
             throw new RuntimeException("Error when trying to save data");
@@ -125,7 +135,7 @@ public class RegistrationServiceImpl implements RegistrationService {
             throw new RuntimeException("Error when creating verification URL");
         }
         redisService.save("register:" + token, encryptedData, 30, TimeUnit.MINUTES);
-        return "http://localhost:8888/verificate/" + token;
+        return System.getProperty("DOMAIN") + "/verificate/" + token;
     }
 
 }

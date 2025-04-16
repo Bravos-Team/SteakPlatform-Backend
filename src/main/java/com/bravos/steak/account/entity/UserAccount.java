@@ -45,8 +45,14 @@ public class UserAccount implements AccountInfo {
     @Builder.Default
     private LocalDateTime updatedTime = LocalDateTime.now();
 
+    @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("USER"));
+    }
+
+    @Override
+    public List<String> getPermissions() {
+        return List.of();
     }
 
 }

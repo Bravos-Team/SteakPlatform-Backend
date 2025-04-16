@@ -1,6 +1,6 @@
 package com.bravos.steak.account;
 
-import com.bravos.steak.account.service.impl.AccountServiceImpl;
+import com.bravos.steak.account.service.impl.UserAccountServiceImpl;
 import io.github.cdimascio.dotenv.Dotenv;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -19,7 +19,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 public class UserAccountServiceTest {
 
     @Autowired
-    AccountServiceImpl accountService;
+    UserAccountServiceImpl accountService;
 
     @Test
     public void getAccountById(){

@@ -11,13 +11,13 @@ import org.springframework.stereotype.Service;
 import java.util.Optional;
 
 @Service
-public class AccountServiceImpl implements AccountService {
+public class UserAccountServiceImpl implements AccountService {
 
     private final UserAccountRepository userAccountRepository;
     private final UserProfileRepository userProfileRepository;
 
     @Autowired
-    public AccountServiceImpl(UserAccountRepository userAccountRepository, UserProfileRepository userProfileRepository) {
+    public UserAccountServiceImpl(UserAccountRepository userAccountRepository, UserProfileRepository userProfileRepository) {
         this.userAccountRepository = userAccountRepository;
         this.userProfileRepository = userProfileRepository;
     }

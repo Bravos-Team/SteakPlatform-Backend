@@ -5,8 +5,8 @@ import com.bravos.steak.account.model.request.RefreshRequest;
 import com.bravos.steak.account.model.request.RegistrationRequest;
 import com.bravos.steak.account.model.request.UsernameLoginRequest;
 import com.bravos.steak.account.model.response.LoginResponse;
-import com.bravos.steak.common.service.auth.AuthService;
 import com.bravos.steak.account.service.RegistrationService;
+import com.bravos.steak.account.service.impl.UserAuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/account/auth")
 public class UserAuthController {
 
-    private final AuthService authService;
+    private final UserAuthService userAuthService;
     private final RegistrationService registrationService;
 
     @PostMapping("/register")
@@ -30,19 +30,19 @@ public class UserAuthController {
 
     @PostMapping("/username-login")
     public ResponseEntity<?> login(@RequestBody @Valid UsernameLoginRequest usernameLoginRequest) {
-        LoginResponse loginResponse = authService.login(usernameLoginRequest);
-        return ResponseEntity.ok(loginResponse);
+        LoginResponse loginResponse = userAuthService.login(usernameLoginRequest);
+        return ResponseEntity.ok().body(loginResponse);
     }
 
     @PostMapping("/email-login")
     public ResponseEntity<?> login(@RequestBody @Valid EmailLoginRequest emailLoginRequest) {
-        LoginResponse loginResponse = authService.login(emailLoginRequest);
+        LoginResponse loginResponse = userAuthService.login(emailLoginRequest);
         return ResponseEntity.ok(loginResponse);
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<?> renewToken(@RequestBody @Valid RefreshRequest refreshRequest) {
-        LoginResponse loginResponse = authService.renewToken(refreshRequest);
+        LoginResponse loginResponse = userAuthService.renewToken(refreshRequest);
         return ResponseEntity.ok(loginResponse);
     }
     
