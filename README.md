@@ -7,7 +7,7 @@ Steak is a **digital game marketplace** designed to provide a seamless platform 
 - **Steak Store** – A storefront where users can purchase and download licensed games.
 - **Steak Dev** – A dedicated portal for game publishers to upload, manage, and monetize their games.
 - **Steak Hub** – A social hub for gamers to **chat, create groups, and receive game news & updates**.
-- **Steak Account** – A central system for user authentication, account management, and security.
+- **Steak Account** – A central system for user authentication, userAccount management, and security.
 - **Steak Support** – A customer support system for resolving game-related and transaction issues.
 
 ## 🔧 Technologies Used

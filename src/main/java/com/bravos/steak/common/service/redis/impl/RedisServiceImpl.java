@@ -127,9 +127,9 @@ public class RedisServiceImpl implements RedisService {
     }
 
     @Override
-    public <T extends Number> T increment(String key, long delta, Class<T> type) {
+    public Long increment(String key, long delta) {
         try {
-            return type.cast(redisTemplate.opsForValue().increment(key,delta));
+            return redisTemplate.opsForValue().increment(key,delta);
         } catch (ClassCastException e) {
             log.error(e.getMessage());
             throw new RuntimeException("Error when convert data");
@@ -140,9 +140,9 @@ public class RedisServiceImpl implements RedisService {
     }
 
     @Override
-    public <T extends Number> T decrement(String key, long delta, Class<T> type) {
+    public Long decrement(String key, long delta) {
         try {
-            return type.cast(redisTemplate.opsForValue().decrement(key,delta));
+            return redisTemplate.opsForValue().decrement(key,delta);
         } catch (ClassCastException e) {
             log.error(e.getMessage());
             throw new RuntimeException("Error when convert data");
@@ -153,9 +153,9 @@ public class RedisServiceImpl implements RedisService {
     }
 
     @Override
-    public <T extends Number> T increment(String key, double delta, Class<T> type) {
+    public Double increment(String key, double delta) {
         try {
-            return type.cast(redisTemplate.opsForValue().increment(key,delta));
+            return redisTemplate.opsForValue().increment(key,delta);
         } catch (ClassCastException e) {
             log.error(e.getMessage());
             throw new RuntimeException("Error when convert data");
@@ -163,6 +163,11 @@ public class RedisServiceImpl implements RedisService {
             log.error(e.getMessage());
             throw new RuntimeException("Error when getting data");
         }
+    }
+
+    @Override
+    public void expire(String key, long timeout, TimeUnit timeUnit) {
+        redisTemplate.expire(key, timeout, timeUnit);
     }
 
     @Override

@@ -2,7 +2,6 @@ package com.bravos.steak.common.service.email.impl;
 
 import com.bravos.steak.common.model.EmailPayload;
 import com.bravos.steak.common.service.email.EmailService;
-import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -12,7 +11,6 @@ import reactor.core.publisher.Mono;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -34,7 +32,7 @@ public class EmailServiceImpl implements EmailService {
     public void sendEmailUsingTemplate(EmailPayload emailPayload) {
         executorService.submit(() -> {
             this.sendEmail(emailPayload)
-                    .doOnSuccess(response -> log.info("Email sent: {}", response))
+                    .doOnSuccess(response -> log.info("Email was sent to: {}", emailPayload.getTo()))
                     .doOnError(error -> log.error("Failed to send email: {}", error.getMessage()))
                     .retry(3)
                     .subscribe();
@@ -60,17 +58,6 @@ public class EmailServiceImpl implements EmailService {
                 .bodyValue(jsonBody)
                 .retrieve()
                 .bodyToMono(String.class);
-    }
-
-    @PreDestroy
-    public void shutdown() {
-        try {
-            if (executorService.awaitTermination(5000, TimeUnit.SECONDS)) {
-                log.info("Email service is terminated");
-            }
-        } catch (InterruptedException e) {
-            log.error(e.getMessage());
-        }
     }
 
 }

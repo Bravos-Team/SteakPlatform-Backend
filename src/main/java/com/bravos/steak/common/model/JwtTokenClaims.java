@@ -2,7 +2,7 @@ package com.bravos.steak.common.model;
 
 import lombok.*;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 
 @Getter
@@ -16,9 +16,9 @@ public class JwtTokenClaims {
     private Long id;
 
     @NonNull
-    private List<String> roles;
+    private Collection<String> roles;
 
-    private List<String> permissions;
+    private Collection<String> permissions;
 
     @NonNull
     private Long iat;
