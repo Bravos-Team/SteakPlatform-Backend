@@ -1,16 +1,16 @@
 package com.bravos.steak.common.model;
 
+import lombok.NoArgsConstructor;
 import lombok.NonNull;
 
 import java.util.*;
 
+@NoArgsConstructor
 public class Trie {
 
     private final TrieNode root = new TrieNode();
 
     private Set<String> words = new HashSet<>();
-
-    public Trie() {}
 
     /**
      *

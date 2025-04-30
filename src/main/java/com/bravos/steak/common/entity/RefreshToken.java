@@ -1,6 +1,5 @@
 package com.bravos.steak.common.entity;
 
-import com.bravos.steak.common.model.AccountInfo;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -33,13 +32,14 @@ public abstract class RefreshToken {
     Timestamp expiresAt;
 
     @Column(nullable = false)
+    @Builder.Default
     Boolean revoked = false;
 
     @Column(nullable = false)
     String token;
 
-    public abstract AccountInfo getAccountInfo();
+    String deviceInfo;
 
-    public abstract void setAccountInfo(AccountInfo accountInfo);
+    public abstract Account getAccount();
 
 }

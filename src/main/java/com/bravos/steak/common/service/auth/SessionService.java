@@ -8,6 +8,6 @@ public interface SessionService {
 
     boolean isTokenBlacklisted(long jti);
 
-    void logout();
+    void logout(String role);
 
 }

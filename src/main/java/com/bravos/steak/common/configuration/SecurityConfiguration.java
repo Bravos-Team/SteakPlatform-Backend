@@ -38,13 +38,13 @@ public class SecurityConfiguration implements WebMvcConfigurer {
     @Bean
     public SecurityFilterChain security(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(request -> {
-            request.requestMatchers("/api/v1/account/auth/**").permitAll();
-            request.requestMatchers("/verificate/**").permitAll();
+            request.requestMatchers("/api/v1/user/auth/**").permitAll();
             request.requestMatchers("/api/v1/store/public/**").permitAll();
             request.requestMatchers("/api/v1/dev/auth/**").permitAll();
             request.requestMatchers("/api/v1/admin/auth/**").permitAll();
             request.requestMatchers("/api/v1/hub/public/**").permitAll();
             request.requestMatchers("/api/v1/support/public/**").permitAll();
+            request.requestMatchers("/verificate/**").permitAll();
             request.anyRequest().authenticated();
         });
 
@@ -67,7 +67,9 @@ public class SecurityConfiguration implements WebMvcConfigurer {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of(System.getProperty("BASE_URL_FRONTEND",System.getProperty("BASE_URL_PREVIEW_FRONTEND"))));
+        config.setAllowedOrigins(
+                List.of(System.getProperty("BASE_URL_FRONTEND",
+                        System.getProperty("BASE_URL_PREVIEW_FRONTEND"))));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

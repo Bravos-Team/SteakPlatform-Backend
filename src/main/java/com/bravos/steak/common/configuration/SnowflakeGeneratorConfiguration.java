@@ -7,19 +7,9 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class SnowflakeGeneratorConfiguration {
 
-    @Bean("accountIdGenerator")
-    public SnowflakeGenerator accountIdGenerator() {
-        return new SnowflakeGenerator(1);
-    }
-
-    @Bean("gameIdGenerator")
-    public SnowflakeGenerator gameIdGenerator() {
-        return new SnowflakeGenerator(2);
-    }
-
-    @Bean("generalIdGenerator")
-    public SnowflakeGenerator generalIdGenerator() {
-        return new SnowflakeGenerator(3);
+    @Bean
+    public SnowflakeGenerator snowflakeGenerator() {
+        return new SnowflakeGenerator(Long.parseLong(System.getProperty("MACHINE_ID")));
     }
 
 }

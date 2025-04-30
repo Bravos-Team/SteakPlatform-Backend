@@ -1,0 +1,23 @@
+openapi: 3.1.0
+info:
+  title: Logut
+  description: Logut
+  version: 1.0.0
+servers:
+  - url: 'http://localhost:8888'
+  - url: "https://api.steak.io.vn"
+paths:
+  /api/v1/logout/{role}:
+    get:
+      description: Logout
+      parameters:
+        - name: role
+          in: path
+          required: true
+          description: 1 trong 3 role ("user","admin,"publisher")
+          schema:
+            type: string
+      responses:
+        200:
+          description: Đăng xuất thành công
+  

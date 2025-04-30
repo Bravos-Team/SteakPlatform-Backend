@@ -1,5 +1,5 @@
 server:
-  port: 8888
+  port: ${SERVER_PORT}
   error:
     include-binding-errors: on_param
 spring:
@@ -7,9 +7,9 @@ spring:
     name: steak-platform
   datasource:
     driver-class-name: org.postgresql.Driver
-    username: bravos
+    username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
-    url: jdbc:postgresql://localhost:5432/steakdb
+    url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
     hikari:
       auto-commit: true
       connection-timeout: 250
@@ -18,17 +18,17 @@ spring:
       minimum-idle: 10
       pool-name: master
       idle-timeout: 30000
+      transaction-isolation: 1
   jpa:
     hibernate:
       ddl-auto: none
-    show-sql: true
+    show-sql: ${SHOW_SQL}
     open-in-view: false
-    database: postgresql
   data:
     mongodb:
-      uri: mongodb://root:${MONGO_PASSWORD}@localhost:27017/steaknosql?authSource=admin
+      uri: mongodb://${MONGO_USER}:${MONGO_PASSWORD}@${MONGO_HOST}:${MONGO_PORT}/${MONGO_DB}?authSource=${MONGO_AUTHSOURCE}
     redis:
-      host: localhost
-      port: 6379
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
       connect-timeout: 30000
       database: 0
