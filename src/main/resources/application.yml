@@ -26,9 +26,13 @@ spring:
     open-in-view: false
   data:
     mongodb:
-      uri: mongodb://${MONGO_USER}:${MONGO_PASSWORD}@${MONGO_HOST}:${MONGO_PORT}/${MONGO_DB}?authSource=${MONGO_AUTHSOURCE}
+#      uri: mongodb://${MONGO_USER}:${MONGO_PASSWORD}@${MONGO_HOST}:${MONGO_PORT}/${MONGO_DB}?authSource=${MONGO_AUTHSOURCE}
+      host: ${MONGO_HOST}
+      port: ${MONGO_PORT}
+      username: ${MONGO_USER}
+      password: ${MONGO_PASSWORD}
+      authentication-database: ${MONGO_AUTHSOURCE}
+      database: ${MONGO_DB}
     redis:
-      host: ${REDIS_HOST}
-      port: ${REDIS_PORT}
       connect-timeout: 30000
       database: 0

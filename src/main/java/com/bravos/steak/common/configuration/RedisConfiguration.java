@@ -1,5 +1,8 @@
 package com.bravos.steak.common.configuration;
 
+import io.lettuce.core.ClientOptions;
+import io.lettuce.core.protocol.ProtocolVersion;
+import io.lettuce.core.resource.ClientResources;
 import lombok.extern.slf4j.Slf4j;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
@@ -9,6 +12,9 @@ import org.redisson.connection.ConnectionListener;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
+import org.springframework.data.redis.connection.lettuce.LettuceConnection;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
@@ -22,7 +28,19 @@ public class RedisConfiguration {
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
-        return new LettuceConnectionFactory();
+        ClientOptions options = ClientOptions.builder()
+                .protocolVersion(ProtocolVersion.RESP2)
+                .pingBeforeActivateConnection(true)
+                .autoReconnect(false)
+                .build();
+        LettuceClientConfiguration clientConfiguration = LettuceClientConfiguration.builder()
+                .clientOptions(options)
+                .build();
+        RedisStandaloneConfiguration redisConfig = new RedisStandaloneConfiguration();
+        redisConfig.setHostName(System.getProperty("REDIS_HOST"));
+        redisConfig.setPort(Integer.parseInt(System.getProperty("REDIS_PORT")));
+        redisConfig.setPassword(System.getProperty("REDIS_PASSWORD"));
+        return new LettuceConnectionFactory(redisConfig,clientConfiguration);
     }
 
     @Bean
@@ -32,34 +50,6 @@ public class RedisConfiguration {
         redisTemplate.setKeySerializer(RedisSerializer.string());
         redisTemplate.setValueSerializer(new Jackson2JsonRedisSerializer<>(Object.class));
         return redisTemplate;
-    }
-
-    @Bean
-    public RedissonClient redissonClient() {
-        Config config = new Config();
-
-        config.setCodec(new JsonJacksonCodec());
-        config.useSingleServer()
-                .setAddress("redis://127.0.0.1:6379")
-                .setDatabase(0)
-                .setConnectionMinimumIdleSize(6)
-                .setConnectTimeout(10)
-                .setConnectionPoolSize(20);
-        config.setConnectionListener(new ConnectionListener() {
-            @Override
-            public void onConnect(InetSocketAddress inetSocketAddress) {
-                log.info("Connected to redis {}",inetSocketAddress.getAddress());
-            }
-
-            @Override
-            public void onDisconnect(InetSocketAddress inetSocketAddress) {
-                log.error("Disconnected from redis {}",inetSocketAddress.getAddress());
-            }
-        });
-        config.setLazyInitialization(false);
-        config.setNettyThreads(8);
-
-        return Redisson.create(config);
     }
 
 }
