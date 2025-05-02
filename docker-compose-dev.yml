@@ -1,0 +1,47 @@
+name: steak
+
+services:
+
+  postgres:
+    image: postgres:14.17
+    container_name: pre-event-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: bravos
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: steakdb
+    networks:
+      - pre-event-networks
+    ports:
+      - "5432:5432"
+    volumes:
+      - /var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  redis:
+    image: redis:latest
+    container_name: pre-event-redis
+    ports:
+      - "6379:6379"
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    command: ["redis-server","--requirepass","${REDIS_PASSWORD}"]
+    networks:
+      - pre-event-networks
+    restart: always
+
+  mongo:
+    image: mongodb/mongodb-community-server:8.0.8-ubuntu2204
+    container_name: pre-event-mongodb
+    ports:
+      - "27017:27017"
+    networks:
+      - pre-event-networks
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
+    restart: always
+
+networks:
+  pre-event-networks:
+    driver: bridge

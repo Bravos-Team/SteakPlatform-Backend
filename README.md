@@ -1,24 +1,15 @@
 # Steak – A Digital Game Marketplace
 
-## 📌 Project Overview
-Steak is a **digital game marketplace** designed to provide a seamless platform for gamers and publishers. Inspired by platforms like Steam, our project aims to **offer a secure and efficient environment** for buying, selling, and distributing digital games.
+## Hướng dẫn sử dụng cho team frontend, tester
+- Lấy file prod.env, private.pem, public.pem bỏ vào thư mục dự án
+- Mở cửa sổ terminal sau đó chạy: `docker compose up -d`
+- Để reset lại từ đầu hoặc có thay đổi về code `docker compose up -d --build && docker image prune -a`
 
-## 🎯 Key Features
-- **Steak Store** – A storefront where users can purchase and download licensed games.
-- **Steak Dev** – A dedicated portal for game publishers to upload, manage, and monetize their games.
-- **Steak Hub** – A social hub for gamers to **chat, create groups, and receive game news & updates**.
-- **Steak Account** – A central system for user authentication, userAccount management, and security.
-- **Steak Support** – A customer support system for resolving game-related and transaction issues.
+## Hướng dẫn sử dụng cho team dev
+- Bỏ file .env, private.pem, public.pem vào dự án
+- Mở cửa sổ terminal sau đó chạy: `docker compose -f docker-compose-dev.yml up -d`
+- Rồi chạy code bình thường
+- Nếu có lỗi không chạy được do bị chiếm port thì `docker stop steak-server` rồi chạy lại
 
-## 🔧 Technologies Used
-- **Backend:** Java (Spring Boot)
-- **Database:** SQL Server
-- **Caching:** Redis
-- **Storage:** Azure Blob Storage
-- **Deployment:** Azure Cloud
-
-## 🏗️ Architecture
-This project follows a **Modular Monolith architecture** to ensure **scalability and maintainability**, making it a solid foundation for real-world application.
-
-## 🚀 About the Project
-Steak is not just a project—it’s a vision for the future of digital game distribution. This graduation project aims to deliver an intuitive, secure, and engaging platform for gamers and publishers alike.
+## Xoá hết container reset lại (chỉ dùng khi lỗi quá nhiều)
+- `docker compose down -v && docker compose -f docker-compose-dev.yml down -v`
