@@ -125,7 +125,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     }
 
     private String generateVerificationLink(RegistrationRequest registrationRequest) {
-        String token = UUID.randomUUID().toString().toLowerCase();
+        String token = UUID.randomUUID().toString();
         String jsonData;
         String encryptedData;
         try {

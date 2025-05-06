@@ -70,7 +70,7 @@ create table publisher
 create table publisher_role
 (
     id           bigint                              not null primary key,
-    publisher_id bigint                              not null,
+    publisher_id bigint,
     name         varchar(255)                        not null,
     active       bool      default true              not null,
     description  varchar(255),
@@ -163,14 +163,14 @@ CREATE INDEX idx_publisher_account_role_both ON publisher_account_role (publishe
 
 create table game
 (
-    id           bigint       not null primary key,
-    publisher_id bigint       not null,
-    name         varchar(255) not null,
-    price        numeric(13,2)       not null,
-    status       int          not null,
-    release_date timestamp    not null,
-    created_at   timestamp    not null,
-    updated_at   timestamp    not null,
+    id           bigint         not null primary key,
+    publisher_id bigint         not null,
+    name         varchar(255)   not null,
+    price        numeric(13, 2) not null,
+    status       int            not null,
+    release_date timestamp      not null,
+    created_at   timestamp      not null,
+    updated_at   timestamp      not null,
     foreign key (publisher_id) references publisher (id)
 );
 
@@ -241,3 +241,15 @@ create table game_tag
 CREATE INDEX idx_game_tag_game_id ON game_tag (game_id);
 CREATE INDEX idx_game_tag_tag_id ON game_tag (tag_id);
 CREATE INDEX idx_game_tag_both ON game_tag (game_id, tag_id);
+
+
+-- DEFAULT DATA
+-- Master
+INSERT INTO publisher_role values (0,null,'Master',true,'The king, can do everything and promote everyone');
+INSERT INTO publisher_permission_group values (0,'Master','Can create or update games, exclude some sensitive data');
+INSERT INTO publisher_permission values (0,0,'Master','Can do everything','["MASTER"]');
+INSERT INTO publisher_permission_role values (0,0,0);
+-- End
+
+INSERT INTO publisher_permission_group values (1,'Game developer','Contains all of permissions about games');
+
