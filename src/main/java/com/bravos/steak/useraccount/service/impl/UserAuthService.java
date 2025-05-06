@@ -4,7 +4,6 @@ import com.bravos.steak.common.entity.Account;
 import com.bravos.steak.useraccount.entity.UserAccount;
 import com.bravos.steak.useraccount.entity.UserRefreshToken;
 import com.bravos.steak.useraccount.repo.UserAccountRepository;
-import com.bravos.steak.useraccount.repo.UserProfileRepository;
 import com.bravos.steak.useraccount.repo.UserRefreshTokenRepository;
 import com.bravos.steak.common.entity.RefreshToken;
 import com.bravos.steak.common.service.auth.AuthService;
@@ -31,10 +30,10 @@ public class UserAuthService extends AuthService {
     private final UserRefreshTokenRepository userRefreshTokenRepository;
 
     public UserAuthService(RedisService redisService, PasswordEncoder passwordEncoder, JwtService jwtService,
-                           HttpServletResponse httpServletResponse, UserProfileRepository userProfileRepository,
-                           HttpServletRequest httpServletRequest, UserAccountRepository userAccountRepository,
-                           SnowflakeGenerator snowflakeGenerator, UserRefreshTokenRepository userRefreshTokenRepository) {
-        super(redisService, passwordEncoder, jwtService, httpServletResponse, userProfileRepository, httpServletRequest);
+                           HttpServletResponse httpServletResponse, HttpServletRequest httpServletRequest,
+                           UserAccountRepository userAccountRepository, SnowflakeGenerator snowflakeGenerator,
+                           UserRefreshTokenRepository userRefreshTokenRepository) {
+        super(redisService, passwordEncoder, jwtService, httpServletResponse, httpServletRequest);
         this.userAccountRepository = userAccountRepository;
         this.snowflakeGenerator = snowflakeGenerator;
         this.userRefreshTokenRepository = userRefreshTokenRepository;
@@ -69,7 +68,7 @@ public class UserAuthService extends AuthService {
 
     @Override
     protected RefreshToken getRefreshToken(String token, String deviceId) {
-        return userRefreshTokenRepository.findByTokenAndDeviceId(token,deviceId);
+        return userRefreshTokenRepository.findByTokenAndDeviceId(token, deviceId);
     }
 
     @Override
@@ -80,6 +79,11 @@ public class UserAuthService extends AuthService {
     @Override
     protected Duration refreshTokenDuration() {
         return Duration.parse(System.getProperty("USER_REFRESH_TOKEN_EXP"));
+    }
+
+    @Override
+    protected String getRole() {
+        return "user";
     }
 
 }

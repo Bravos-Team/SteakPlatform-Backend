@@ -1,4 +1,4 @@
-package com.bravos.steak.common.model;
+package com.bravos.steak.common.security;
 
 import lombok.*;
 
@@ -16,9 +16,9 @@ public class JwtTokenClaims {
     private Long id;
 
     @NonNull
-    private Collection<String> roles;
+    private String role;
 
-    private Collection<String> permissions;
+    private Collection<String> authorities;
 
     @NonNull
     private Long iat;
@@ -29,18 +29,14 @@ public class JwtTokenClaims {
     @NonNull
     private Long jti;
 
-    @NonNull
-    private String deviceId;
-
     public Map<String, Object> toMap() {
         return Map.of(
                 "sub", id + "",
-                "roles", roles,
-                "permissions", permissions,
+                "role", role,
+                "authorities", authorities,
                 "iat", iat,
                 "exp", exp,
-                "jti", jti +"",
-                "device_id", deviceId
+                "jti", jti + ""
         );
     }
 

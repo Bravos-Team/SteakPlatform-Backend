@@ -1,6 +1,6 @@
 package com.bravos.steak.common.service.encryption.impl;
 
-import com.bravos.steak.common.model.JwtTokenClaims;
+import com.bravos.steak.common.security.JwtTokenClaims;
 import com.bravos.steak.common.service.encryption.JwtService;
 import com.bravos.steak.common.utils.KeyLoader;
 import com.bravos.steak.exceptions.UnauthorizeException;
@@ -40,12 +40,11 @@ public class JwtServiceImpl implements JwtService {
 
             return JwtTokenClaims.builder()
                     .id(Long.valueOf(claims.getSubject()))
-                    .roles(claims.get("roles", List.class))
-                    .permissions(claims.get("permissions", List.class))
+                    .role(claims.get("role", String.class))
+                    .authorities(claims.get("authorities", List.class))
                     .iat(claims.get("iat", Long.class))
                     .exp(claims.get("exp", Long.class))
                     .jti(Long.valueOf(claims.get("jti", String.class)))
-                    .deviceId(claims.get("device_id", String.class))
                     .build();
         } catch (ExpiredJwtException e) {
             throw new UnauthorizeException("Token has expired");

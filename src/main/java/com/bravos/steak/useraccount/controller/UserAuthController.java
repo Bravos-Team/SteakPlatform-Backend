@@ -4,16 +4,14 @@ import com.bravos.steak.useraccount.model.request.EmailLoginRequest;
 import com.bravos.steak.useraccount.model.request.RefreshRequest;
 import com.bravos.steak.useraccount.model.request.RegistrationRequest;
 import com.bravos.steak.useraccount.model.request.UsernameLoginRequest;
-import com.bravos.steak.useraccount.model.response.LoginResponse;
+import com.bravos.steak.useraccount.model.response.UserLoginResponse;
 import com.bravos.steak.useraccount.service.RegistrationService;
+import com.bravos.steak.useraccount.service.UserAccountService;
 import com.bravos.steak.useraccount.service.impl.UserAuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -23,6 +21,9 @@ public class UserAuthController {
     private final UserAuthService userAuthService;
     private final RegistrationService registrationService;
 
+    private final static String ROLE = "user";
+    private final UserAccountService userAccountService;
+
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody @Valid RegistrationRequest registrationRequest) {
         return ResponseEntity.ok(registrationService.preRegisterAccount(registrationRequest));
@@ -30,20 +31,23 @@ public class UserAuthController {
 
     @PostMapping("/username-login")
     public ResponseEntity<?> login(@RequestBody @Valid UsernameLoginRequest usernameLoginRequest) {
-        LoginResponse loginResponse = userAuthService.login(usernameLoginRequest);
-        return ResponseEntity.ok().body(loginResponse);
+        Long userId = userAuthService.login(usernameLoginRequest);
+        UserLoginResponse userLoginResponse = userAccountService.getLoginResponseById(userId);
+        return ResponseEntity.ok().body(userLoginResponse);
     }
 
     @PostMapping("/email-login")
     public ResponseEntity<?> login(@RequestBody @Valid EmailLoginRequest emailLoginRequest) {
-        LoginResponse loginResponse = userAuthService.login(emailLoginRequest);
-        return ResponseEntity.ok(loginResponse);
+        Long userId = userAuthService.login(emailLoginRequest);
+        UserLoginResponse userLoginResponse = userAccountService.getLoginResponseById(userId);
+        return ResponseEntity.ok(userLoginResponse);
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<?> renewToken(@RequestBody @Valid RefreshRequest refreshRequest) {
-        LoginResponse loginResponse = userAuthService.renewToken(refreshRequest);
-        return ResponseEntity.ok(loginResponse);
+        Long userId = userAuthService.renewToken(refreshRequest);
+        UserLoginResponse userLoginResponse = userAccountService.getLoginResponseById(userId);
+        return ResponseEntity.ok(userLoginResponse);
     }
     
 }

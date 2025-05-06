@@ -1,6 +1,6 @@
 package com.bravos.steak.common.service.encryption;
 
-import com.bravos.steak.common.model.JwtTokenClaims;
+import com.bravos.steak.common.security.JwtTokenClaims;
 
 public interface JwtService {
 

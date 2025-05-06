@@ -7,9 +7,9 @@ import lombok.experimental.FieldDefaults;
 @Getter
 @Setter
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class LoginResponse {
+public class UserLoginResponse {
 
-    String name;
-    String avatar;
+    String displayName;
+    String avatarUrl;
 
 }

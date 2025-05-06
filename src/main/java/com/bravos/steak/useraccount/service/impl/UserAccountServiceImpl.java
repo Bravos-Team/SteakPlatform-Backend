@@ -2,16 +2,15 @@ package com.bravos.steak.useraccount.service.impl;
 
 import com.bravos.steak.useraccount.entity.UserAccount;
 import com.bravos.steak.useraccount.entity.UserProfile;
+import com.bravos.steak.useraccount.model.response.UserLoginResponse;
 import com.bravos.steak.useraccount.repo.UserAccountRepository;
 import com.bravos.steak.useraccount.repo.UserProfileRepository;
-import com.bravos.steak.useraccount.service.AccountService;
+import com.bravos.steak.useraccount.service.UserAccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
-
 @Service
-public class UserAccountServiceImpl implements AccountService {
+public class UserAccountServiceImpl implements UserAccountService {
 
     private final UserAccountRepository userAccountRepository;
     private final UserProfileRepository userProfileRepository;
@@ -38,8 +37,8 @@ public class UserAccountServiceImpl implements AccountService {
     }
 
     @Override
-    public Optional<UserProfile> getAccountProfileById(Long id) {
-        return userProfileRepository.findById(id);
+    public UserProfile getAccountProfileById(Long id) {
+        return userProfileRepository.findById(id).orElse(null);
     }
 
     @Override
@@ -53,5 +52,11 @@ public class UserAccountServiceImpl implements AccountService {
     }
 
     @Override
-    public Optional<UserAccount> getAccountById(Long id){return userAccountRepository.findById(id);}
+    public UserAccount getAccountById(Long id){return userAccountRepository.findById(id).orElse(null);}
+
+    @Override
+    public UserLoginResponse getLoginResponseById(Long id) {
+        return userProfileRepository.findLoginResponseById(id);
+    }
+
 }

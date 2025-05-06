@@ -2,6 +2,8 @@ package com.bravos.steak.common.configuration;
 
 import com.bravos.steak.common.filter.AdminFilter;
 import com.bravos.steak.common.filter.JwtFilter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,7 +15,9 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -21,6 +25,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.List;
+import java.util.Map;
 
 @Configuration
 @RequiredArgsConstructor
@@ -29,6 +34,7 @@ public class SecurityConfiguration implements WebMvcConfigurer {
 
     private final JwtFilter jwtFilter;
     private final AdminFilter adminFilter;
+    private final ObjectMapper objectMapper;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -38,15 +44,27 @@ public class SecurityConfiguration implements WebMvcConfigurer {
     @Bean
     public SecurityFilterChain security(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(request -> {
-            request.requestMatchers("/api/v1/user/auth/**").permitAll();
-            request.requestMatchers("/api/v1/store/public/**").permitAll();
-            request.requestMatchers("/api/v1/dev/auth/**").permitAll();
-            request.requestMatchers("/api/v1/admin/auth/**").permitAll();
-            request.requestMatchers("/api/v1/hub/public/**").permitAll();
-            request.requestMatchers("/api/v1/support/public/**").permitAll();
-            request.requestMatchers("/verificate/**").permitAll();
+            request.requestMatchers(
+                            "/api/v1/user/auth/**",
+                            "/api/v1/store/public/**",
+                            "/api/v1/dev/auth/**",
+                            "/api/v1/admin/auth/**",
+                            "/api/v1/hub/public/**",
+                            "/api/v1/support/public/**",
+                            "/verificate/**")
+                    .permitAll();
+
+            request.requestMatchers("/api/v1/dev/**").hasRole("PUBLISHER");
+            request.requestMatchers("/api/v1/admin/**").hasRole("ADMIN");
+
             request.anyRequest().authenticated();
         });
+
+        http.exceptionHandling(ex -> {
+            ex.accessDeniedHandler(customAccessDeniedHandler());
+            ex.authenticationEntryPoint(customAuthEntryPoint());
+        });
+
 
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
         http.csrf(CsrfConfigurer::disable);
@@ -79,6 +97,38 @@ public class SecurityConfiguration implements WebMvcConfigurer {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
+    }
+
+    @Bean
+    public AuthenticationEntryPoint customAuthEntryPoint() {
+        return (request, response, authException) -> {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/problem+json");
+            Map<String,String> errors = Map.of(
+                    "type", "about:blank",
+                    "title", "Unauthorize",
+                    "status", "401",
+                    "detail","You need to login to access this resource",
+                    "instance", request.getRequestURI()
+            );
+            response.getWriter().write(objectMapper.writeValueAsString(errors));
+        };
+    }
+
+    @Bean
+    public AccessDeniedHandler customAccessDeniedHandler() {
+        return (request, response, accessDeniedException) -> {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.setContentType("application/problem+json");
+            Map<String,String> errors = Map.of(
+                    "type", "about:blank",
+                    "title", "Forbidden",
+                    "status", "403",
+                    "detail","You do not have permission to access this resource.",
+                    "instance", request.getRequestURI()
+            );
+            response.getWriter().write(objectMapper.writeValueAsString(errors));
+        };
     }
 
 }

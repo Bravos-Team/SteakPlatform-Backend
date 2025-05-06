@@ -7,7 +7,6 @@ import lombok.experimental.SuperBuilder;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import java.util.Collection;
 import java.util.List;
 
 @Entity
@@ -19,8 +18,8 @@ import java.util.List;
 public class UserAccount extends Account {
 
     @Override
-    public Collection<? extends GrantedAuthority> getRoles() {
-        return List.of(new SimpleGrantedAuthority("USER"));
+    public GrantedAuthority getRole() {
+        return new SimpleGrantedAuthority("ROLE_USER");
     }
 
     @Override

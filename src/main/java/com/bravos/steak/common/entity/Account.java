@@ -51,7 +51,7 @@ public abstract class Account {
     @Builder.Default
     private LocalDateTime updatedAt = LocalDateTime.now();
 
-    public abstract Collection<? extends GrantedAuthority> getRoles();
+    public abstract GrantedAuthority getRole();
 
     public abstract Collection<String> getPermissions();
 

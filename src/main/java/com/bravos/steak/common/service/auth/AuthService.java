@@ -1,15 +1,12 @@
 package com.bravos.steak.common.service.auth;
 
 import com.bravos.steak.common.entity.Account;
-import com.bravos.steak.useraccount.entity.UserProfile;
 import com.bravos.steak.useraccount.model.enums.AccountStatus;
 import com.bravos.steak.useraccount.model.request.EmailLoginRequest;
 import com.bravos.steak.useraccount.model.request.RefreshRequest;
 import com.bravos.steak.useraccount.model.request.UsernameLoginRequest;
-import com.bravos.steak.useraccount.model.response.LoginResponse;
-import com.bravos.steak.useraccount.repo.UserProfileRepository;
 import com.bravos.steak.common.entity.RefreshToken;
-import com.bravos.steak.common.model.JwtTokenClaims;
+import com.bravos.steak.common.security.JwtTokenClaims;
 import com.bravos.steak.common.service.encryption.JwtService;
 import com.bravos.steak.common.service.redis.RedisService;
 import com.bravos.steak.exceptions.ForbiddenException;
@@ -21,7 +18,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -29,6 +25,7 @@ import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -41,13 +38,13 @@ public abstract class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final HttpServletResponse httpServletResponse;
-    private final UserProfileRepository userProfileRepository;
 
-    private final String jwtCookieName = "jwt";
-    private final String refreshTokenCookieName = "refresh_token";
     private final HttpServletRequest httpServletRequest;
 
-    public LoginResponse login(UsernameLoginRequest usernameLoginRequest) {
+    public static final String ACCESS_TOKEN_NAME = "access_token";
+    public static final String REFRESH_TOKEN_NAME = "refresht_token";
+
+    public Long login(UsernameLoginRequest usernameLoginRequest) {
 
         this.checkLoginAttemptsLimit(usernameLoginRequest.getDeviceId());
 
@@ -60,11 +57,11 @@ public abstract class AuthService {
 
         this.generateAndAttachCredentials(account, deviceId, deviceInfo);
 
-        return buildLoginResponse(account.getId());
+        return account.getId();
 
     }
 
-    public LoginResponse login(EmailLoginRequest emailLoginRequest) {
+    public Long login(EmailLoginRequest emailLoginRequest) {
         this.checkLoginAttemptsLimit(emailLoginRequest.getDeviceId());
 
         Account account = this.getAccountByEmail(emailLoginRequest.getEmail());
@@ -77,13 +74,18 @@ public abstract class AuthService {
 
         this.generateAndAttachCredentials(account, deviceId, deviceInfo);
 
-        return buildLoginResponse(account.getId());
+        return account.getId();
     }
 
     private void generateAndAttachCredentials(Account accountInfo, String deviceId, String deviceInfo) {
         RefreshToken refreshToken = createRefreshToken(accountInfo,deviceId, deviceInfo);
-        String jwt = generateJwtToken(accountInfo,refreshToken.getDeviceId(),refreshToken.getId());
-        this.addCredentialsToCookie(jwt,refreshToken.getToken());
+        String jwt = generateJwtToken(accountInfo,refreshToken.getId());
+
+        List<String> paths = getCookiePathByRole(getRole());
+        for (String path : paths) {
+            this.addAccessTokenCookie(jwt, path);
+            this.addRefreshTokenCookie(refreshToken.getToken(), path);
+        }
     }
 
     private void validateAccount(Account accountInfo, String rawPassword, String deviceId) {
@@ -112,7 +114,7 @@ public abstract class AuthService {
         redisService.expire(key, attempts > 3 ? 5 : 2, TimeUnit.MINUTES);
     }
 
-    public LoginResponse renewToken(RefreshRequest refreshRequest) {
+    public Long renewToken(RefreshRequest refreshRequest) {
         String refreshToken = getRefreshToken();
 
         if(refreshToken == null || refreshToken.isBlank()) {
@@ -131,25 +133,39 @@ public abstract class AuthService {
 
         JwtTokenClaims jwtTokenClaims = JwtTokenClaims.builder()
                 .id(account.getId())
-                .deviceId(deviceId)
                 .jti(accountRefreshToken.getId())
-                .permissions(List.of())
+                .authorities(List.of())
                 .iat(now.toEpochSecond(ZoneOffset.UTC))
                 .exp(now.plusMinutes(30).toEpochSecond(ZoneOffset.UTC))
-                .roles(account.getRoles().stream()
-                        .map(GrantedAuthority::getAuthority)
-                        .toList()
-                ).build();
+                .role(account.getRole().getAuthority())
+                .build();
 
         String token = jwtService.generateToken(jwtTokenClaims);
 
-        return new LoginResponse(token, refreshToken);
+        List<String> paths = getCookiePathByRole(getRole());
+        for (String path : paths) {
+            this.addAccessTokenCookie(token, path);
+            this.addRefreshTokenCookie(refreshToken, path);
+        }
+
+        return account.getId();
+    }
+
+    private List<String> getCookiePathByRole(String role) {
+        final List<String> paths = new ArrayList<>();
+        switch (role) {
+            case "admin" -> paths.addAll(List.of("/api/v1/admin", "/api/v1/support/supporter"));
+            case "publisher" -> paths.addAll(List.of("/api/v1/dev", "/api/v1/hub/publisher"));
+            case null, default -> paths.addAll(List.of("/api/v1/store", "/api/v1/user", "/api/v1/support/user", "/api/v1/hub/user"));
+        }
+        return paths;
     }
 
     private String getRefreshToken() {
         Cookie[] cookies = httpServletRequest.getCookies();
         if(cookies != null) {
-            Cookie refreshCookie = Arrays.stream(cookies).filter(cookie -> cookie.getName().equals(jwtCookieName)).findFirst().orElse(null);
+            Cookie refreshCookie = Arrays.stream(cookies).filter(cookie ->
+                    cookie.getName().equals(REFRESH_TOKEN_NAME)).findFirst().orElse(null);
             if(refreshCookie != null) {
                 return refreshCookie.getValue();
             }
@@ -176,44 +192,38 @@ public abstract class AuthService {
         }
     }
 
-    private String generateJwtToken(Account account, String deviceId, long jti) {
+    private String generateJwtToken(Account account, long jti) {
         LocalDateTime now = LocalDateTime.now();
         JwtTokenClaims jwtTokenClaims = JwtTokenClaims.builder()
                 .id(account.getId())
-                .deviceId(deviceId)
                 .jti(jti)
-                .permissions(account.getPermissions())
+                .authorities(account.getPermissions())
                 .iat(now.toEpochSecond(ZoneOffset.UTC))
                 .exp(now.plus(Duration.parse(System.getProperty("USER_TOKEN_EXP"))).toEpochSecond(ZoneOffset.UTC))
-                .roles(account.getRoles().stream()
-                        .map(GrantedAuthority::getAuthority)
-                        .toList()
-                ).build();
+                .role(account.getRole().getAuthority()).build();
         return jwtService.generateToken(jwtTokenClaims);
     }
 
-    private void addCredentialsToCookie(String jwt, String refreshToken) {
-        ResponseCookie refreshCookie = ResponseCookie.from(refreshTokenCookieName, refreshToken)
+    private void addAccessTokenCookie(String jwt, String path) {
+        ResponseCookie accessCookie = ResponseCookie.from(ACCESS_TOKEN_NAME, jwt)
                 .httpOnly(true)
                 .secure(true)
-                .path("/")
-                .sameSite("Lax")
-                .maxAge(refreshTokenDuration())
-                .build();
-        ResponseCookie accessCookie = ResponseCookie.from(jwtCookieName, jwt)
-                .httpOnly(true)
-                .secure(true)
-                .path("/")
+                .path(path)
                 .sameSite("Lax")
                 .maxAge(jwtDuration())
                 .build();
-        httpServletResponse.addHeader(HttpHeaders.SET_COOKIE,accessCookie.toString());
-        httpServletResponse.addHeader(HttpHeaders.SET_COOKIE,refreshCookie.toString());
+        httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
     }
 
-    public LoginResponse buildLoginResponse(Long accountId) {
-        UserProfile userProfile = userProfileRepository.findById(accountId).orElse(new UserProfile());
-        return new LoginResponse(userProfile.getDisplayName(),userProfile.getAvatarUrl());
+    private void addRefreshTokenCookie(String refreshToken, String path) {
+        ResponseCookie refreshCookie = ResponseCookie.from(REFRESH_TOKEN_NAME, refreshToken)
+                .httpOnly(true)
+                .secure(true)
+                .path(path)
+                .sameSite("Lax")
+                .maxAge(refreshTokenDuration())
+                .build();
+        httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
     }
 
     protected abstract Account getAccountByUsername(String username);
@@ -227,5 +237,7 @@ public abstract class AuthService {
     protected abstract Duration jwtDuration();
 
     protected abstract Duration refreshTokenDuration();
+
+    protected abstract String getRole();
 
 }

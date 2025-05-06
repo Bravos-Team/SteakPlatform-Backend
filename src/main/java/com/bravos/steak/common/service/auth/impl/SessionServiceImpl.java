@@ -1,7 +1,7 @@
 package com.bravos.steak.common.service.auth.impl;
 
 import com.bravos.steak.useraccount.repo.UserRefreshTokenRepository;
-import com.bravos.steak.common.model.JwtTokenClaims;
+import com.bravos.steak.common.security.JwtTokenClaims;
 import com.bravos.steak.common.security.JwtAuthentication;
 import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.common.service.redis.RedisService;
@@ -19,6 +19,11 @@ public class SessionServiceImpl implements SessionService {
 
     private final RedisService redisService;
     private final UserRefreshTokenRepository userRefreshTokenRepository;
+
+    @Override
+    public JwtAuthentication getAuthentication() {
+        return (JwtAuthentication) SecurityContextHolder.getContext().getAuthentication();
+    }
 
     @Override
     public void killRefreshToken(long jti, String role) {
@@ -69,7 +74,7 @@ public class SessionServiceImpl implements SessionService {
                 Thread.startVirtualThread(() -> {
                     long jti = jwtTokenClaims.getJti();
 
-                    this.killRefreshToken(jti, jwtTokenClaims.getRoles().stream().toList().getFirst());
+                    this.killRefreshToken(jti, jwtTokenClaims.getRole());
 
                     this.addBlacklistRefreshToken(jti);
                 });

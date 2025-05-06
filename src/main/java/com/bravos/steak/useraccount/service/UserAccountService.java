@@ -2,10 +2,9 @@ package com.bravos.steak.useraccount.service;
 
 import com.bravos.steak.useraccount.entity.UserAccount;
 import com.bravos.steak.useraccount.entity.UserProfile;
+import com.bravos.steak.useraccount.model.response.UserLoginResponse;
 
-import java.util.Optional;
-
-public interface AccountService {
+public interface UserAccountService {
 
     /**
      * Kiểm tra tài khoản tồn tại theo username hoặc email
@@ -34,7 +33,7 @@ public interface AccountService {
      * @param id id
      * @return profile của user
      */
-    Optional<UserProfile> getAccountProfileById(Long id);
+    UserProfile getAccountProfileById(Long id);
 
     /**
      * Tìm account bằng username
@@ -49,6 +48,9 @@ public interface AccountService {
      * @return account tương ứng
      */
     UserAccount getAccountByEmail(String email);
-    Optional<UserAccount> getAccountById(Long id);
+
+    UserAccount getAccountById(Long id);
+
+    UserLoginResponse getLoginResponseById(Long id);
 
 }

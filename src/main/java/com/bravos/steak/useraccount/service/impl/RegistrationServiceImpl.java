@@ -5,7 +5,7 @@ import com.bravos.steak.useraccount.entity.UserProfile;
 import com.bravos.steak.useraccount.model.request.RegistrationRequest;
 import com.bravos.steak.useraccount.repo.UserAccountRepository;
 import com.bravos.steak.useraccount.repo.UserProfileRepository;
-import com.bravos.steak.useraccount.service.AccountService;
+import com.bravos.steak.useraccount.service.UserAccountService;
 import com.bravos.steak.useraccount.service.RegistrationService;
 import com.bravos.steak.common.model.EmailPayload;
 import com.bravos.steak.common.service.email.EmailService;
@@ -30,7 +30,7 @@ import java.util.concurrent.TimeUnit;
 @AllArgsConstructor
 public class RegistrationServiceImpl implements RegistrationService {
 
-    private final AccountService accountService;
+    private final UserAccountService userAccountService;
     private final EmailService emailService;
     private final ObjectMapper objectMapper;
     private final PasswordEncoder passwordEncoder;
@@ -43,7 +43,7 @@ public class RegistrationServiceImpl implements RegistrationService {
     @Override
     public String preRegisterAccount(RegistrationRequest registrationRequest) {
 
-        if (accountService.isExistByUsernameEmail(registrationRequest.getUsername(), registrationRequest.getEmail())) {
+        if (userAccountService.isExistByUsernameEmail(registrationRequest.getUsername(), registrationRequest.getEmail())) {
             throw new ConflictDataException("Email or username already exists");
         }
 
@@ -92,7 +92,7 @@ public class RegistrationServiceImpl implements RegistrationService {
         }
 
         try {
-            if (accountService.isExistByUsernameEmail(registerRequest.getUsername(), registerRequest.getEmail())) {
+            if (userAccountService.isExistByUsernameEmail(registerRequest.getUsername(), registerRequest.getEmail())) {
                 redisService.delete(key);
                 throw new ConflictDataException("Username or email exists");
             }

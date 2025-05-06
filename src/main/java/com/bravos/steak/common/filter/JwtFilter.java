@@ -1,6 +1,6 @@
 package com.bravos.steak.common.filter;
 
-import com.bravos.steak.common.model.JwtTokenClaims;
+import com.bravos.steak.common.security.JwtTokenClaims;
 import com.bravos.steak.common.security.JwtAuthentication;
 import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.common.service.encryption.JwtService;
@@ -25,7 +25,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
     private final List<String> whiteList = List.of(
             "/verificate",
-            "/api/v1/account/auth",
+            "/api/v1/user/auth",
             "/api/v1/store/public",
             "/api/v1/dev/auth",
             "/api/v1/admin/auth",
@@ -48,10 +48,10 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
 
-        String token = getTokenFromRequest(request);
+        String token = getTokenFromRequest(requestURI,request);
         JwtTokenClaims tokenClaims = null;
 
-        if(token == null) {
+        if(token == null || token.isBlank()) {
             filterChain.doFilter(request,response);
             return;
         }
@@ -62,13 +62,8 @@ public class JwtFilter extends OncePerRequestFilter {
             logger.warn(e.getMessage());
         }
 
-        if(tokenClaims == null) {
+        if(tokenClaims == null || sessionService.isTokenBlacklisted(tokenClaims.getJti())) {
             filterChain.doFilter(request,response);
-            return;
-        }
-
-        if(sessionService.isTokenBlacklisted(tokenClaims.getJti())) {
-            filterChain.doFilter(request, response);
             return;
         }
 
@@ -80,10 +75,11 @@ public class JwtFilter extends OncePerRequestFilter {
 
     }
 
-    private String getTokenFromRequest(HttpServletRequest request) {
+    private String getTokenFromRequest(String requestURI, HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
-            Cookie jwtCookie = Arrays.stream(request.getCookies()).filter(cookie -> cookie.getName().equals("jwt")).findFirst().orElse(null);
+            Cookie jwtCookie = Arrays.stream(request.getCookies()).filter(cookie ->
+                    cookie.getName().equals("access_token")).findFirst().orElse(null);
             return jwtCookie != null ? jwtCookie.getValue() : null;
         }
         return null;

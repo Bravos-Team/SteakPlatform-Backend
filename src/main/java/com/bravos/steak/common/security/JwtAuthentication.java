@@ -1,6 +1,5 @@
 package com.bravos.steak.common.security;
 
-import com.bravos.steak.common.model.JwtTokenClaims;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -19,8 +18,10 @@ public class JwtAuthentication implements Authentication {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        List<SimpleGrantedAuthority> authorities = new ArrayList<>(jwtTokenClaims.getRoles().stream().map(SimpleGrantedAuthority::new).toList());
-        jwtTokenClaims.getPermissions().forEach(role -> authorities.add(new SimpleGrantedAuthority(role)));
+        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new SimpleGrantedAuthority(jwtTokenClaims.getRole()));
+        jwtTokenClaims.getAuthorities().forEach(role ->
+                authorities.add(new SimpleGrantedAuthority(role)));
         return authorities;
     }
 

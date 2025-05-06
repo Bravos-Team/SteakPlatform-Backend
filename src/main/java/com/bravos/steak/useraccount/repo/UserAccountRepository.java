@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface UserAccountRepository extends JpaRepository<UserAccount,Long>, JpaSpecificationExecutor<UserAccount> {
+public interface UserAccountRepository extends JpaRepository<UserAccount,Long> {
 
     boolean existsByUsername(String username);
 

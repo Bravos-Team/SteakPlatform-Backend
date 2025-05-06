@@ -10,7 +10,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -36,8 +35,8 @@ public class PublisherAccount extends Account {
     Set<PublisherRole> roles;
 
     @Override
-    public Collection<? extends GrantedAuthority> getRoles() {
-        return List.of(new SimpleGrantedAuthority("PUBLISHER"));
+    public GrantedAuthority getRole() {
+        return new SimpleGrantedAuthority("ROLE_PUBLISHER");
     }
 
     @Override
