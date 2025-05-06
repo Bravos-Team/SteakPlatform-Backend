@@ -12,7 +12,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @AllArgsConstructor
 @NoArgsConstructor
-public class RegistrationRequest {
+public class UserRegistrationRequest {
 
     @NotNull
     @Pattern(

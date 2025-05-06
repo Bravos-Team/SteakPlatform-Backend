@@ -9,10 +9,12 @@ public interface PublisherRegistrationService {
      * @param publisherRegistrationRequest request đăng ký
      * @return token
      */
-    String preRegisterPublisher(PublisherRegistrationRequest publisherRegistrationRequest);
+    void preRegisterPublisher(PublisherRegistrationRequest publisherRegistrationRequest);
 
-    String sendVerificationEmail(String token, String email);
-
+    /**
+     * Xác thực email
+     * @param token token
+     */
     void postRegisterPublisher(String token);
 
 }

@@ -56,11 +56,39 @@ public class PublisherRegistrationServiceImpl implements PublisherRegistrationSe
     }
 
     @Override
-    public String preRegisterPublisher(PublisherRegistrationRequest publisherRegistrationRequest) {
+    public void preRegisterPublisher(PublisherRegistrationRequest publisherRegistrationRequest) {
+        validateData(publisherRegistrationRequest);
+        String encryptedData = encryptRegisterRequest(publisherRegistrationRequest);
+        String token = saveRegistrationRequestToRedis(encryptedData);
+        sendVerificationEmail(token,publisherRegistrationRequest.getMasterEmail());
+    }
 
+    private String encryptRegisterRequest(PublisherRegistrationRequest publisherRegistrationRequest) {
+        publisherRegistrationRequest.setMasterPassword(passwordEncoder.encode(publisherRegistrationRequest.getMasterPassword()));
+        String encryptedData;
+        try {
+            encryptedData = encryptionService.aesEncrypt(objectMapper.writeValueAsString(publisherRegistrationRequest));
+        } catch (JsonProcessingException e) {
+            log.error(e.getMessage());
+            throw new RuntimeException("Error when handling data");
+        }
+        return encryptedData;
+    }
+
+    private String saveRegistrationRequestToRedis(String encryptedData) {
+        String token = UUID.randomUUID().toString();
+        try {
+            redisService.save("p-register:" + token, encryptedData,15, TimeUnit.MINUTES);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            throw new RuntimeException("Error when handling data");
+        }
+        return token;
+    }
+
+    private void validateData(PublisherRegistrationRequest publisherRegistrationRequest) {
         String masterUsername = publisherRegistrationRequest.getMasterUsername();
         String masterEmail = publisherRegistrationRequest.getMasterEmail();
-        String masterPassword = publisherRegistrationRequest.getMasterPassword();
         String businessName = publisherRegistrationRequest.getName();
         String businessEmail = publisherRegistrationRequest.getBusinessEmail();
 
@@ -70,31 +98,10 @@ public class PublisherRegistrationServiceImpl implements PublisherRegistrationSe
         if(publisherRepository.existsByNameOrEmail(businessName,businessEmail)) {
             throw new ConflictDataException("Business name or business email is already existed");
         }
-
-        publisherRegistrationRequest.setMasterPassword(passwordEncoder.encode(masterPassword));
-
-        String token = UUID.randomUUID().toString();
-        String encryptedData;
-        try {
-            encryptedData = encryptionService.aesEncrypt(objectMapper.writeValueAsString(publisherRegistrationRequest));
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Error when handling data");
-        }
-
-        try {
-            redisService.save("p-register:" + token, encryptedData,15, TimeUnit.MINUTES);
-        } catch (Exception e) {
-            throw new RuntimeException("Error when handling data");
-        }
-
-        return this.sendVerificationEmail(token,masterEmail);
-
     }
 
-    @Override
-    public String sendVerificationEmail(String token, String email) {
-        String domain = System.getProperty("DOMAIN");
-        String verificationUrl = domain + "/" + "verification/create-publisher/" + token;
+    private void sendVerificationEmail(String token, String email) {
+        String verificationUrl = System.getProperty("DOMAIN") + "/" + "verification/dev/register" + token;
         EmailPayload emailPayload = EmailPayload.builder()
                 .to(email)
                 .subject("Email Verification")
@@ -102,62 +109,81 @@ public class PublisherRegistrationServiceImpl implements PublisherRegistrationSe
                 .param("verification_link",verificationUrl)
                 .build();
         emailService.sendEmailUsingTemplate(emailPayload);
-        return token;
     }
 
     @Transactional
     @Override
     public void postRegisterPublisher(String token) {
-        String key = "p-register:" + token;
-        PublisherRegistrationRequest publisherRegistrationRequest = redisService.get(key, PublisherRegistrationRequest.class);
 
-        if(publisherRegistrationRequest == null) {
+        PublisherRegistrationRequest request = getRegistrationRequestFromRedis(token);
+        validateData(request);
+
+        Publisher publisher = createPublisher(request);
+        createMasterAccount(request, publisher);
+
+        redisService.delete("p-register:" + token);
+        log.info("Created new publisher with id: {}", publisher.getId());
+
+    }
+
+    private PublisherRegistrationRequest getRegistrationRequestFromRedis(String token) {
+        String key = "p-register:" + token;
+
+        String encryptedData;
+        try {
+            encryptedData = redisService.get(key, String.class);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            throw new RuntimeException("Error when handling data");
+        }
+
+        if (encryptedData == null) {
             throw new IllegalArgumentException("Token is invalid or expired");
         }
 
-        String masterUsername = publisherRegistrationRequest.getMasterUsername();
-        String masterEmail = publisherRegistrationRequest.getMasterEmail();
-        String businessName = publisherRegistrationRequest.getName();
-        String businessEmail = publisherRegistrationRequest.getBusinessEmail();
-
-        if(publisherAccountRepository.existsByEmailOrUsername(masterEmail,masterUsername)) {
-            throw new ConflictDataException("Master username or master email is already used");
-        }
-        if(publisherRepository.existsByNameOrEmail(businessName,businessEmail)) {
-            throw new ConflictDataException("Business name or business email is already existed");
+        String decryptedData = encryptionService.aesDecrypt(encryptedData);
+        try {
+            return objectMapper.readValue(decryptedData, PublisherRegistrationRequest.class);
+        } catch (JsonProcessingException e) {
+            log.error(e.getMessage());
+            throw new RuntimeException("Error when parsing registration data");
         }
 
-        Long id = snowflakeGenerator.generateId();
+    }
 
+    private Publisher createPublisher(PublisherRegistrationRequest request) {
         Publisher publisher = Publisher.builder()
-                .id(id)
-                .name(businessName)
-                .email(businessEmail)
-                .phone(publisherRegistrationRequest.getPhone())
+                .id(snowflakeGenerator.generateId())
+                .name(request.getName())
+                .email(request.getBusinessEmail())
+                .phone(request.getPhone())
                 .build();
 
         try {
-            publisher = publisherRepository.save(publisher);
+            return publisherRepository.save(publisher);
         } catch (Exception e) {
-            throw new RuntimeException("Error when save publisher");
+            log.error(e.getMessage());
+            throw new RuntimeException("Failed to save publisher");
         }
+    }
 
-        PublisherAccount publisherAccount = PublisherAccount.builder()
-                .id(id)
-                .username(masterUsername)
-                .email(masterEmail)
-                .password(publisherRegistrationRequest.getMasterPassword())
+    private void createMasterAccount(PublisherRegistrationRequest request, Publisher publisher) {
+        PublisherAccount account = PublisherAccount.builder()
+                .id(publisher.getId())
+                .username(request.getMasterUsername())
+                .email(request.getMasterEmail())
+                .password(request.getMasterPassword())
                 .publisher(publisher)
                 .roles(Set.of(MASTER_ROLE))
                 .build();
 
         try {
-            publisherAccountRepository.save(publisherAccount);
+            publisherAccountRepository.save(account);
         } catch (Exception e) {
-            throw new RuntimeException("Error when save publisher");
+            log.error(e.getMessage());
+            throw new RuntimeException("Failed to save master account");
         }
-
-        log.info("Created new publisher with id: {}", id);
     }
+
 
 }
