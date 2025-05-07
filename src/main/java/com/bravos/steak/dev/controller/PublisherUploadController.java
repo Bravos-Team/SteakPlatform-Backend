@@ -1,9 +1,11 @@
 package com.bravos.steak.dev.controller;
 
 import com.bravos.steak.common.annotation.HasAuthority;
+import com.bravos.steak.common.annotation.PublisherController;
 import com.bravos.steak.common.model.PublisherAuthority;
 import com.bravos.steak.dev.model.request.ImageUploadPresignedRequest;
 import com.bravos.steak.dev.service.PublisherUploadService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -12,16 +14,18 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/dev/upload")
+@PublisherController
 public class PublisherUploadController {
 
     private final PublisherUploadService publisherUploadService;
 
+    @Autowired
     public PublisherUploadController(PublisherUploadService publisherUploadService) {
         this.publisherUploadService = publisherUploadService;
     }
 
     @GetMapping("/image/publisher/presigned")
-    @HasAuthority({PublisherAuthority.MASTER,PublisherAuthority.WRITE_INFO})
+    @HasAuthority({PublisherAuthority.WRITE_INFO})
     public ResponseEntity<?> getUploadPresignedUrl(@RequestBody ImageUploadPresignedRequest imageUploadPresignedRequest) {
         return ResponseEntity.ok(publisherUploadService.createUploadPublisherImagePresignedUrl(imageUploadPresignedRequest));
     }

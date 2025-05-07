@@ -61,8 +61,9 @@ create table publisher
     id         bigint                              not null primary key,
     name       varchar(255)                        not null unique,
     email      varchar(255)                        not null unique,
+    phone      varchar(15)                         not null,
     status     smallint                            not null,
-    logo_url   varchar(255)                        not null,
+    logo_url   varchar(255),
     created_at timestamp default current_timestamp not null,
     updated_at timestamp default current_timestamp not null
 );
@@ -70,7 +71,7 @@ create table publisher
 create table publisher_role
 (
     id           bigint                              not null primary key,
-    publisher_id bigint                              not null,
+    publisher_id bigint,
     name         varchar(255)                        not null,
     active       bool      default true              not null,
     description  varchar(255),
@@ -97,13 +98,14 @@ create table publisher_permission
     foreign key (group_id) references publisher_permission_group (id)
 );
 
+
 create table publisher_permission_role
 (
-    id                      bigint not null primary key,
     publisher_role_id       bigint not null,
     publisher_permission_id int    not null,
     foreign key (publisher_role_id) references publisher_role (id),
-    foreign key (publisher_permission_id) references publisher_permission_role (id)
+    foreign key (publisher_permission_id) references publisher_permission (id),
+    primary key (publisher_role_id,publisher_permission_id)
 );
 
 CREATE INDEX idx_role_id ON publisher_permission_role (publisher_role_id);
@@ -144,13 +146,14 @@ create table publisher_refresh_token
 CREATE INDEX idx_publisher_account_id ON publisher_refresh_token (account_id);
 CREATE INDEX idx_publisher_token_device_id ON publisher_refresh_token (token, device_id);
 
+
 create table publisher_account_role
 (
-    id                   bigint not null primary key,
     publisher_account_id bigint not null,
     publisher_role_id    bigint not null,
     foreign key (publisher_account_id) references publisher_account (id),
-    foreign key (publisher_role_id) references publisher_role (id)
+    foreign key (publisher_role_id) references publisher_role (id),
+    primary key (publisher_account_id,publisher_role_id)
 );
 
 CREATE INDEX idx_publisher_account_role_account_id ON publisher_account_role (publisher_account_id);
@@ -163,14 +166,14 @@ CREATE INDEX idx_publisher_account_role_both ON publisher_account_role (publishe
 
 create table game
 (
-    id           bigint       not null primary key,
-    publisher_id bigint       not null,
-    name         varchar(255) not null,
-    price        numeric(13,2)       not null,
-    status       int          not null,
-    release_date timestamp    not null,
-    created_at   timestamp    not null,
-    updated_at   timestamp    not null,
+    id           bigint         not null primary key,
+    publisher_id bigint         not null,
+    name         varchar(255)   not null,
+    price        numeric(13, 2) not null,
+    status       int            not null,
+    release_date timestamp      not null,
+    created_at   timestamp      not null,
+    updated_at   timestamp      not null,
     foreign key (publisher_id) references publisher (id)
 );
 
@@ -208,11 +211,11 @@ CREATE INDEX idx_genre_slug ON genre (slug);
 
 create table game_genre
 (
-    id       bigint not null primary key,
     game_id  bigint not null,
     genre_id bigint not null,
     foreign key (game_id) references game (id),
-    foreign key (genre_id) references genre (id)
+    foreign key (genre_id) references genre (id),
+    primary key (game_id,genre_id)
 );
 
 CREATE INDEX idx_genre_game ON game_genre (game_id);
@@ -231,13 +234,28 @@ CREATE INDEX idx_tag_slug ON tag (slug);
 
 create table game_tag
 (
-    id      bigint not null primary key,
     game_id bigint not null,
     tag_id  bigint not null,
     foreign key (game_id) references game (id),
-    foreign key (tag_id) references tag (id)
+    foreign key (tag_id) references tag (id),
+    primary key (game_id, tag_id)
 );
 
 CREATE INDEX idx_game_tag_game_id ON game_tag (game_id);
 CREATE INDEX idx_game_tag_tag_id ON game_tag (tag_id);
 CREATE INDEX idx_game_tag_both ON game_tag (game_id, tag_id);
+
+-- DEFAULT DATA
+-- Master
+INSERT INTO publisher_role
+values (0, null, 'Master', true, 'The king, can do everything and promote everyone');
+INSERT INTO publisher_permission_group
+values (0, 'Master', 'Can create or update games, exclude some sensitive data');
+INSERT INTO publisher_permission
+values (0, 0, 'Master', 'Can do everything', '[
+  "MASTER"
+]');
+INSERT INTO publisher_permission_role(publisher_permission_id,publisher_role_id)
+values (0, 0);
+-- End
+

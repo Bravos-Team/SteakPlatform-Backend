@@ -27,12 +27,15 @@ public class Publisher {
     String phone;
 
     @Enumerated(EnumType.ORDINAL)
-    PublisherStatus status;
+    @Builder.Default
+    PublisherStatus status = PublisherStatus.UNVERIFIED;
 
     String logoUrl;
 
-    LocalDateTime createdAt;
+    @Builder.Default
+    LocalDateTime createdAt = LocalDateTime.now();
 
-    LocalDateTime updatedAt;
+    @Builder.Default
+    LocalDateTime updatedAt = LocalDateTime.now();
 
 }
