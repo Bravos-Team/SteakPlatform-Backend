@@ -32,7 +32,7 @@ public class PublisherRole {
 
     String description;
 
-    LocalDateTime updatedDate;
+    LocalDateTime updatedAt;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(

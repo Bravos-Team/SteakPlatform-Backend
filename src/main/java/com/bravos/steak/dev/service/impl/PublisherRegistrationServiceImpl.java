@@ -13,6 +13,7 @@ import com.bravos.steak.dev.model.request.PublisherRegistrationRequest;
 import com.bravos.steak.dev.repo.PublisherAccountRepository;
 import com.bravos.steak.dev.repo.PublisherRepository;
 import com.bravos.steak.dev.service.PublisherRegistrationService;
+import com.bravos.steak.exceptions.BadRequestException;
 import com.bravos.steak.exceptions.ConflictDataException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -101,7 +102,7 @@ public class PublisherRegistrationServiceImpl implements PublisherRegistrationSe
     }
 
     private void sendVerificationEmail(String token, String email) {
-        String verificationUrl = System.getProperty("DOMAIN") + "/" + "verification/dev/register" + token;
+        String verificationUrl = System.getProperty("DOMAIN") + "/" + "verificate/dev/register/" + token;
         EmailPayload emailPayload = EmailPayload.builder()
                 .to(email)
                 .subject("Email Verification")
@@ -115,11 +116,17 @@ public class PublisherRegistrationServiceImpl implements PublisherRegistrationSe
     @Override
     public void postRegisterPublisher(String token) {
 
-        PublisherRegistrationRequest request = getRegistrationRequestFromRedis(token);
-        validateData(request);
+        Publisher publisher;
+        try {
+            PublisherRegistrationRequest request = getRegistrationRequestFromRedis(token);
+            validateData(request);
 
-        Publisher publisher = createPublisher(request);
-        createMasterAccount(request, publisher);
+            publisher = createPublisher(request);
+            createMasterAccount(request, publisher);
+        } catch (Exception e) {
+            log.error("Registration failed",e);
+            throw new RuntimeException("Registration failed");
+        }
 
         redisService.delete("p-register:" + token);
         log.info("Created new publisher with id: {}", publisher.getId());
@@ -138,7 +145,7 @@ public class PublisherRegistrationServiceImpl implements PublisherRegistrationSe
         }
 
         if (encryptedData == null) {
-            throw new IllegalArgumentException("Token is invalid or expired");
+            throw new BadRequestException("Token is invalid or expired");
         }
 
         String decryptedData = encryptionService.aesDecrypt(encryptedData);

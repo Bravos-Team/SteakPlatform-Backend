@@ -18,7 +18,7 @@ public class UserVerificateController {
         this.userRegistrationService = userRegistrationService;
     }
 
-    @GetMapping("/{token}")
+    @GetMapping("/register/{token}")
     public String verificateRegisterRequest(@PathVariable("token") String token) {
         try {
             userRegistrationService.postRegisterAccount(token);

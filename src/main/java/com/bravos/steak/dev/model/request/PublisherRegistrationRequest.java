@@ -16,10 +16,7 @@ import static lombok.AccessLevel.PRIVATE;
 @FieldDefaults(level = PRIVATE)
 public class PublisherRegistrationRequest {
 
-    @Pattern(
-            regexp = "^[a-zA-Z0-9]{5,32}$",
-            message = "Username cannot contain special characters and between 6 and 32 characters"
-    )
+    @NotBlank(message = "Publisher name cannot be blank")
     String name;
 
     @Email(message = "Email is invalid")
@@ -28,7 +25,10 @@ public class PublisherRegistrationRequest {
     @Pattern(regexp = "^\\+?[1-9]\\d{1,14}$", message = "Invalid phone number")
     String phone;
 
-    @NotBlank(message = "Master username cannot be blank")
+    @Pattern(
+            regexp = "^[a-zA-Z0-9]{5,32}$",
+            message = "Username cannot contain special characters and between 6 and 32 characters"
+    )
     String masterUsername;
 
     @Email(message = "Master email is invalid")

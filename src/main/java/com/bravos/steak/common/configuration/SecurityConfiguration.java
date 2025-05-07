@@ -44,6 +44,7 @@ public class SecurityConfiguration implements WebMvcConfigurer {
     @Bean
     public SecurityFilterChain security(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(request -> {
+
             request.requestMatchers(
                             "/api/v1/user/auth/**",
                             "/api/v1/store/public/**",
@@ -57,14 +58,23 @@ public class SecurityConfiguration implements WebMvcConfigurer {
             request.requestMatchers("/api/v1/dev/**").hasRole("PUBLISHER");
             request.requestMatchers("/api/v1/admin/**").hasRole("ADMIN");
 
-            request.anyRequest().authenticated();
+            request.requestMatchers(
+                            "/api/v1/user/**",
+                            "/api/v1/dev/**",
+                            "/api/v1/store/**",
+                            "/api/v1/admin/**",
+                            "/api/v1/hub/**",
+                            "/api/v1/support/**")
+                    .authenticated();
+
+            request.anyRequest().denyAll();
+
         });
 
         http.exceptionHandling(ex -> {
             ex.accessDeniedHandler(customAccessDeniedHandler());
             ex.authenticationEntryPoint(customAuthEntryPoint());
         });
-
 
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
         http.csrf(CsrfConfigurer::disable);

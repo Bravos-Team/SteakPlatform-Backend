@@ -77,7 +77,7 @@ public class UserRegistrationServiceImpl implements UserRegistrationService {
     private String saveDataToRedis(String encryptedData) {
         String token = UUID.randomUUID().toString();
         try {
-            redisService.save("user-register:" + token, encryptedData, 30, TimeUnit.MINUTES);
+            redisService.save("user-register:" + token, encryptedData, 15, TimeUnit.MINUTES);
         } catch (Exception e) {
             throw new RuntimeException("Error when handling data");
         }
@@ -85,7 +85,7 @@ public class UserRegistrationServiceImpl implements UserRegistrationService {
     }
 
     private void sendVerificationEmail(String token, String email) {
-        String verificationUrl = System.getProperty("DOMAIN") + "/" + "verification/user/register" + token;
+        String verificationUrl = System.getProperty("DOMAIN") + "/" + "verificate/user/register/" + token;
         EmailPayload emailPayload = EmailPayload.builder()
                 .to(email)
                 .subject("Email Verification")
@@ -98,9 +98,15 @@ public class UserRegistrationServiceImpl implements UserRegistrationService {
     @Override
     public void postRegisterAccount(String token) {
         String key = "user-register:" + token;
-        UserRegistrationRequest registrationRequest = getRegistrationRequestFromRedis(key);
-        validatePostRequst(key,registrationRequest);
-        saveUserAccount(registrationRequest);
+        try {
+            UserRegistrationRequest registrationRequest = getRegistrationRequestFromRedis(key);
+            validatePostRequst(key,registrationRequest);
+            saveUserAccount(registrationRequest);
+        } catch (Exception e) {
+            log.error("Registration failed: {}",e.getMessage());
+            throw new RuntimeException("Registration failed " + e.getMessage());
+        }
+        redisService.delete(key);
     }
 
     private void validatePostRequst(String key, UserRegistrationRequest registrationRequest) {
