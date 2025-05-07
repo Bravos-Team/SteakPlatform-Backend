@@ -65,9 +65,6 @@ paths:
       responses:
         200:
           description: Tạo lệnh đăng ký thành công, trả về email đăng ký
-          content:
-            string:
-              example: "email@meow.com"
         409:
           description: Tài khoản đã tồn tại
           content:
