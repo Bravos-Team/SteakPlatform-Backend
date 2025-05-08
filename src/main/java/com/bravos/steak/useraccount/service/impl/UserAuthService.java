@@ -20,6 +20,7 @@ import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service("userAuthService")
@@ -52,7 +53,6 @@ public class UserAuthService extends AuthService {
 
     @Override
     protected RefreshToken createRefreshToken(Account accountInfo, String deviceId, String deviceInfo) {
-        LocalDateTime now = LocalDateTime.now();
         UserRefreshToken userRefreshToken = UserRefreshToken.builder()
                 .id(snowflakeGenerator.generateId())
                 .deviceId(deviceId)
@@ -60,30 +60,19 @@ public class UserAuthService extends AuthService {
                 .userAccount((UserAccount) accountInfo)
                 .token(UUID.randomUUID().toString())
                 .revoked(false)
-                .issuesAt(Timestamp.valueOf(now))
-                .expiresAt(Timestamp.valueOf(now.plus(refreshTokenDuration())))
+                .expiresAt(LocalDateTime.now().plusSeconds(Long.parseLong(System.getProperty("USER_REFRESH_TOKEN_EXP"))))
                 .build();
-        return userRefreshTokenRepository.save(userRefreshToken);
+        try {
+            return userRefreshTokenRepository.save(userRefreshToken);
+        } catch (Exception e) {
+            log.error("Error when creating refresh token: ", e);
+            throw new RuntimeException("Error when creating token");
+        }
     }
 
     @Override
     protected RefreshToken getRefreshToken(String token, String deviceId) {
         return userRefreshTokenRepository.findByTokenAndDeviceId(token, deviceId);
-    }
-
-    @Override
-    protected Duration jwtDuration() {
-        return Duration.parse(System.getProperty("USER_TOKEN_EXP"));
-    }
-
-    @Override
-    protected Duration refreshTokenDuration() {
-        return Duration.parse(System.getProperty("USER_REFRESH_TOKEN_EXP"));
-    }
-
-    @Override
-    protected String getRole() {
-        return "user";
     }
 
 }

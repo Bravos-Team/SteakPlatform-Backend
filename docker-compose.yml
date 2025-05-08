@@ -2,21 +2,21 @@ name: steak
 
 services:
 
-#  postgres:
-#    image: postgres:14.17
-#    container_name: pre-event-postgres
-#    restart: always
-#    environment:
-#      POSTGRES_USER: bravos
-#      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-#      POSTGRES_DB: steakdb
-#    networks:
-#      - pre-event-networks
-#    ports:
-#      - "5432:5432"
-#    volumes:
-#      - /var/lib/postgresql/data
-#      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+  postgres:
+    image: postgres:14.17
+    container_name: pre-event-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: bravos
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: steakdb
+    networks:
+      - pre-event-networks
+    ports:
+      - "5432:5432"
+    volumes:
+      - /var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
   redis:
     image: redis:latest
@@ -31,7 +31,7 @@ services:
     restart: always
 
   mongo:
-    image: mongodb/mongodb-community-server:8.0.8-ubuntu2204
+    image: mongo:8.0.9-noble
     container_name: pre-event-mongodb
     ports:
       - "27017:27017"
@@ -47,7 +47,7 @@ services:
     image: steak:latest
     container_name: steak-server
     depends_on:
-#      - postgres
+      - postgres
       - redis
       - mongo
     ports:
