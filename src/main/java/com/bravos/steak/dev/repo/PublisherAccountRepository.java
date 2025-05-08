@@ -6,5 +6,11 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface PublisherAccountRepository extends JpaRepository<PublisherAccount,Long> {
+
     boolean existsByEmailOrUsername(String email, String username);
+
+    PublisherAccount findByUsername(String username);
+
+    PublisherAccount findByEmail(String email);
+
 }

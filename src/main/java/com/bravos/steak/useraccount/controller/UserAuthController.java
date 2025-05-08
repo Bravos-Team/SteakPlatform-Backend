@@ -1,5 +1,6 @@
 package com.bravos.steak.useraccount.controller;
 
+import com.bravos.steak.useraccount.entity.UserAccount;
 import com.bravos.steak.useraccount.model.request.EmailLoginRequest;
 import com.bravos.steak.useraccount.model.request.RefreshRequest;
 import com.bravos.steak.useraccount.model.request.UserRegistrationRequest;
@@ -30,8 +31,8 @@ public class UserAuthController {
 
     @PostMapping("/username-login")
     public ResponseEntity<?> login(@RequestBody @Valid UsernameLoginRequest usernameLoginRequest) {
-        Long userId = userAuthService.login(usernameLoginRequest);
-        UserLoginResponse userLoginResponse = userAccountService.getLoginResponseById(userId);
+        UserAccount userAccount = (UserAccount) userAuthService.login(usernameLoginRequest);
+        UserLoginResponse userLoginResponse = userAccountService.getLoginResponseById(userAccount.getId());
         return ResponseEntity.ok().body(userLoginResponse);
     }
 
