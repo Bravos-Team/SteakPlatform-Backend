@@ -13,14 +13,13 @@ import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.sql.Timestamp;
-import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service("userAuthService")
@@ -30,6 +29,7 @@ public class UserAuthService extends AuthService {
     private final SnowflakeGenerator snowflakeGenerator;
     private final UserRefreshTokenRepository userRefreshTokenRepository;
 
+    @Autowired
     public UserAuthService(RedisService redisService, PasswordEncoder passwordEncoder, JwtService jwtService,
                            HttpServletResponse httpServletResponse, HttpServletRequest httpServletRequest,
                            UserAccountRepository userAccountRepository, SnowflakeGenerator snowflakeGenerator,
@@ -40,6 +40,11 @@ public class UserAuthService extends AuthService {
         this.userRefreshTokenRepository = userRefreshTokenRepository;
     }
 
+
+    @Override
+    protected Set<String> getCookiePaths() {
+        return Set.of("/api/v1/dev", "/api/v1/hub/publisher");
+    }
 
     @Override
     protected Account getAccountByUsername(String username) {
