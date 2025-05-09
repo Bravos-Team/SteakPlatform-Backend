@@ -1,7 +1,6 @@
 package com.bravos.steak.common.service.auth;
 
 import com.bravos.steak.common.entity.Account;
-import com.bravos.steak.dev.service.impl.PublisherAuthService;
 import com.bravos.steak.useraccount.model.enums.AccountStatus;
 import com.bravos.steak.useraccount.model.request.EmailLoginRequest;
 import com.bravos.steak.useraccount.model.request.RefreshRequest;
@@ -20,17 +19,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @RequiredArgsConstructor
-@Component
+@Service
 public abstract class AuthService {
 
     private final RedisService redisService;
@@ -81,7 +79,7 @@ public abstract class AuthService {
         RefreshToken refreshToken = createRefreshToken(accountInfo,deviceId, deviceInfo);
         String jwt = generateJwtToken(accountInfo,refreshToken.getId());
 
-        List<String> paths = getCookiePathByRole(getRole());
+        Set<String> paths = getCookiePaths();
         for (String path : paths) {
             this.addAccessTokenCookie(jwt, path);
             this.addRefreshTokenCookie(refreshToken, path);
@@ -135,7 +133,7 @@ public abstract class AuthService {
 
         String token = generateJwtToken(account,accountRefreshToken.getId());
 
-        List<String> paths = getCookiePathByRole(getRole());
+        Set<String> paths = getCookiePaths();
         for (String path : paths) {
             this.addAccessTokenCookie(token, path);
             this.addRefreshTokenCookie(accountRefreshToken, path);
@@ -144,15 +142,7 @@ public abstract class AuthService {
         return account.getId();
     }
 
-    private List<String> getCookiePathByRole(String role) {
-        final List<String> paths = new ArrayList<>();
-        switch (role) {
-            case "admin" -> paths.addAll(List.of("/api/v1/admin", "/api/v1/support/supporter"));
-            case "publisher" -> paths.addAll(List.of("/api/v1/dev", "/api/v1/hub/publisher"));
-            case null, default -> paths.addAll(List.of("/api/v1/store", "/api/v1/user", "/api/v1/support/user", "/api/v1/hub/user"));
-        }
-        return paths;
-    }
+    protected abstract Set<String> getCookiePaths();
 
     private String getRefreshToken() {
         Cookie[] cookies = httpServletRequest.getCookies();
@@ -227,14 +217,5 @@ public abstract class AuthService {
     protected abstract RefreshToken createRefreshToken(Account account, String deviceId, String deviceInfo);
 
     protected abstract RefreshToken getRefreshToken(String token, String deviceId);
-
-    // Mỗi loại account thì thêm vô thôi
-    protected String getRole() {
-        if(this instanceof PublisherAuthService) {
-            return "publisher";
-        } else {
-            return "user";
-        }
-    }
 
 }

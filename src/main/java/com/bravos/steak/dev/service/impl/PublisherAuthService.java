@@ -17,10 +17,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
-@Service
+@Service("publisherAuthService")
 public class PublisherAuthService extends AuthService {
 
     private final PublisherAccountRepository publisherAccountRepository;
@@ -35,6 +36,11 @@ public class PublisherAuthService extends AuthService {
         this.publisherAccountRepository = publisherAccountRepository;
         this.snowflakeGenerator = snowflakeGenerator;
         this.publisherRefreshTokenRepository = publisherRefreshTokenRepository;
+    }
+
+    @Override
+    protected Set<String> getCookiePaths() {
+        return Set.of("/api/v1/store", "/api/v1/user", "/api/v1/support/user", "/api/v1/hub/user");
     }
 
     @Override
