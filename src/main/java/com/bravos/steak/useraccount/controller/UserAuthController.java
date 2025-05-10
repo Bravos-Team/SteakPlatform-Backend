@@ -25,11 +25,10 @@ public class UserAuthController {
     private final UserRegistrationService userRegistrationService;
     private final UserAccountService userAccountService;
 
-    @Qualifier("userAuthService")
     private final AuthService authService;
 
     @Autowired
-    public UserAuthController(UserRegistrationService userRegistrationService, UserAccountService userAccountService, AuthService authService) {
+    public UserAuthController(UserRegistrationService userRegistrationService, UserAccountService userAccountService, @Qualifier("userAuthService") AuthService authService) {
         this.userRegistrationService = userRegistrationService;
         this.userAccountService = userAccountService;
         this.authService = authService;

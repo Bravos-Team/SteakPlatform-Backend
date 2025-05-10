@@ -22,11 +22,10 @@ public class PublisherAuthController {
 
     private final PublisherRegistrationService publisherRegistrationService;
 
-    @Qualifier("publisherAuthService")
     private final AuthService authService;
 
     @Autowired
-    public PublisherAuthController(PublisherRegistrationService publisherRegistrationService, AuthService authService) {
+    public PublisherAuthController(PublisherRegistrationService publisherRegistrationService, @Qualifier("publisherAuthService") AuthService authService) {
         this.publisherRegistrationService = publisherRegistrationService;
         this.authService = authService;
     }
