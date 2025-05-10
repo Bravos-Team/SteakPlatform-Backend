@@ -13,21 +13,23 @@ import com.bravos.steak.dev.repo.PublisherRefreshTokenRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
-@Service("publisherAuthService")
+@Component("publisherAuthService")
 public class PublisherAuthService extends AuthService {
 
     private final PublisherAccountRepository publisherAccountRepository;
     private final SnowflakeGenerator snowflakeGenerator;
     private final PublisherRefreshTokenRepository publisherRefreshTokenRepository;
 
+    @Autowired
     public PublisherAuthService(RedisService redisService, PasswordEncoder passwordEncoder, JwtService jwtService,
                                 HttpServletResponse httpServletResponse, HttpServletRequest httpServletRequest,
                                 PublisherAccountRepository publisherAccountRepository, SnowflakeGenerator snowflakeGenerator,
