@@ -6,11 +6,13 @@ import com.bravos.steak.common.service.storage.impl.CloudflareS3Service;
 import com.bravos.steak.dev.model.request.ImageUploadPresignedRequest;
 import com.bravos.steak.dev.model.response.PresignedUrlResponse;
 import com.bravos.steak.dev.service.PublisherUploadService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class PublisherUploadServiceImpl implements PublisherUploadService {
 
@@ -40,7 +42,8 @@ public class PublisherUploadServiceImpl implements PublisherUploadService {
                     .signedUrl(signedUrl)
                     .build();
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+            log.error("Error when create presigned url: ",e);
+            throw new RuntimeException("Error when create presigned url");
         }
     }
 

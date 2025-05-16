@@ -42,7 +42,7 @@ public class PublisherAuthService extends AuthService {
 
     @Override
     protected Set<String> getCookiePaths() {
-        return Set.of("/api/v1/store", "/api/v1/user", "/api/v1/support/user", "/api/v1/hub/user");
+        return Set.of("/api/v1/dev", "/api/v1/hub/publisher");
     }
 
     @Override

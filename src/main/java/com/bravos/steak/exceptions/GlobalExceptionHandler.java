@@ -1,7 +1,6 @@
 package com.bravos.steak.exceptions;
 
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -16,77 +15,49 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ProblemDetail> handleNotFound(ResourceNotFoundException ex){
-
-        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
-        problemDetail.setTitle("Resource not found");
-        problemDetail.setDetail(ex.getMessage());
-
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problemDetail);
+    public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex){
+        ErrorResponse errorResponse = new ErrorResponse(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorResponse);
     }
 
     @ExceptionHandler(ConflictDataException.class)
-    public ResponseEntity<ProblemDetail> handleConflictData(ConflictDataException ex) {
-        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.CONFLICT);
-
-        problemDetail.setTitle("Data conflict");
-        problemDetail.setDetail(ex.getMessage());
-
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(problemDetail);
+    public ResponseEntity<ErrorResponse> handleConflictData(ConflictDataException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
 
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ProblemDetail> handleInternalServerError(RuntimeException ex) {
-        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR);
-
-        problemDetail.setTitle("Internal Server Error");
-        problemDetail.setDetail(ex.getMessage());
-
-        return ResponseEntity.internalServerError().body(problemDetail);
+    public ResponseEntity<ErrorResponse> handleInternalServerError(RuntimeException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(ex.getMessage());
+        return ResponseEntity.internalServerError().body(errorResponse);
     }
 
     @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<ProblemDetail> handleBadRequestException(BadRequestException ex) {
-        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
-
-        problemDetail.setTitle("Bad request");
-        problemDetail.setDetail(ex.getMessage());
-
-        return ResponseEntity.badRequest().body(problemDetail);
+    public ResponseEntity<ErrorResponse> handleBadRequestException(BadRequestException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(ex.getMessage());
+        return ResponseEntity.badRequest().body(errorResponse);
     }
 
     @ExceptionHandler(UnauthorizeException.class)
-    public ResponseEntity<ProblemDetail> handleUnauthorizeException(UnauthorizeException ex) {
-        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
-
-        problemDetail.setTitle("Unauthorize");
-        problemDetail.setDetail(ex.getMessage());
-
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problemDetail);
+    public ResponseEntity<ErrorResponse> handleUnauthorizeException(UnauthorizeException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(errorResponse);
     }
 
     @ExceptionHandler(ForbiddenException.class)
-    public ResponseEntity<ProblemDetail> handleForbiddenException(ForbiddenException ex) {
-        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.FORBIDDEN);
-
-        problemDetail.setTitle("Forbidden");
-        problemDetail.setDetail(ex.getMessage());
-
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problemDetail);
+    public ResponseEntity<ErrorResponse> handleForbiddenException(ForbiddenException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorResponse);
     }
 
     @ExceptionHandler(TooManyRequestException.class)
-    public ResponseEntity<ProblemDetail> handleTooManyRequestException(TooManyRequestException ex) {
-        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.TOO_MANY_REQUESTS);
-
-        problemDetail.setTitle("Too many request");
-        problemDetail.setDetail(ex.getMessage());
-
-        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(problemDetail);
+    public ResponseEntity<ErrorResponse> handleTooManyRequestException(TooManyRequestException ex) {
+        ErrorResponse errorResponse = new ErrorResponse(ex.getMessage());
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(errorResponse);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ProblemDetail> handleValidationException(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException ex) {
         Map<String,String> errors = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
@@ -95,14 +66,8 @@ public class GlobalExceptionHandler {
                         Objects.requireNonNull(FieldError::getDefaultMessage,"invalid data"),
                         (existing, replacement) -> existing + " ; " + replacement
                 ));
-
-        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
-
-        problemDetail.setTitle("Validation Error");
-        problemDetail.setDetail("One or more fields have errors");
-        problemDetail.setProperty("errors", errors);
-
-        return ResponseEntity.badRequest().body(problemDetail);
+        ErrorResponse errorResponse = new ValidateErrorReponse(ex.getMessage(), errors);
+        return ResponseEntity.badRequest().body(errorResponse);
     }
 
 

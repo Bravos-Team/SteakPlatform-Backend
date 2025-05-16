@@ -2,11 +2,13 @@ package com.bravos.steak.common.configuration;
 
 import com.bravos.steak.common.filter.AdminFilter;
 import com.bravos.steak.common.filter.JwtFilter;
+import com.bravos.steak.exceptions.ErrorResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -114,14 +116,8 @@ public class SecurityConfiguration implements WebMvcConfigurer {
         return (request, response, authException) -> {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.setContentType("application/problem+json");
-            Map<String,String> errors = Map.of(
-                    "type", "about:blank",
-                    "title", "Unauthorize",
-                    "status", "401",
-                    "detail","You need to login to access this resource",
-                    "instance", request.getRequestURI()
-            );
-            response.getWriter().write(objectMapper.writeValueAsString(errors));
+            ErrorResponse errorResponse = new ErrorResponse("You need to login to access this resource");
+            response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
         };
     }
 
@@ -130,14 +126,8 @@ public class SecurityConfiguration implements WebMvcConfigurer {
         return (request, response, accessDeniedException) -> {
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             response.setContentType("application/problem+json");
-            Map<String,String> errors = Map.of(
-                    "type", "about:blank",
-                    "title", "Forbidden",
-                    "status", "403",
-                    "detail","You do not have permission to access this resource.",
-                    "instance", request.getRequestURI()
-            );
-            response.getWriter().write(objectMapper.writeValueAsString(errors));
+            ErrorResponse errorResponse = new ErrorResponse("You do not have permission to access this resource");
+            response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
         };
     }
 
