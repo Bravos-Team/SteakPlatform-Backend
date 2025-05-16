@@ -191,7 +191,7 @@ public abstract class AuthService {
         LocalDateTime now = LocalDateTime.now();
         ResponseCookie accessCookie = ResponseCookie.from(ACCESS_TOKEN_NAME, jwt)
                 .httpOnly(true)
-                .secure(true)
+                .secure(false)
                 .path(path)
                 .sameSite("Lax")
                 .maxAge(now.plusSeconds(Long.parseLong(System.getProperty("USER_TOKEN_EXP"))).toEpochSecond(ZoneOffset.UTC))
@@ -202,7 +202,7 @@ public abstract class AuthService {
     private void addRefreshTokenCookie(RefreshToken refreshToken, String path) {
         ResponseCookie refreshCookie = ResponseCookie.from(REFRESH_TOKEN_NAME, refreshToken.getToken())
                 .httpOnly(true)
-                .secure(true)
+                .secure(false)
                 .path(path)
                 .sameSite("Lax")
                 .maxAge(refreshToken.getExpiresAt().toEpochSecond(ZoneOffset.UTC))

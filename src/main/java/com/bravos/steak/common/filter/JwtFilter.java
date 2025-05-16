@@ -26,12 +26,10 @@ public class JwtFilter extends OncePerRequestFilter {
     private final List<String> whiteList = List.of(
             "/verificate",
             "/api/v1/user/auth",
-            "/api/v1/store/public",
             "/api/v1/dev/auth",
-            "/api/v1/admin/auth",
-            "/api/v1/hub/public",
-            "/api/v1/support/public"
+            "/api/v1/admin/auth"
     );
+
     private final SessionService sessionService;
     private final JwtService jwtService;
 
@@ -48,7 +46,7 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
 
-        String token = getTokenFromRequest(requestURI,request);
+        String token = getTokenFromRequest(request);
         JwtTokenClaims tokenClaims = null;
 
         if(token == null || token.isBlank()) {
@@ -75,7 +73,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
     }
 
-    private String getTokenFromRequest(String requestURI, HttpServletRequest request) {
+    private String getTokenFromRequest(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             Cookie jwtCookie = Arrays.stream(request.getCookies()).filter(cookie ->
