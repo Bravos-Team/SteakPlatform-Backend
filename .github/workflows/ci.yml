@@ -1,7 +1,7 @@
 name: CI - Build and Deploy Spring Boot
 
 on:
-  pull_request:
+  push:
     branches: [ master ]
 
 jobs:
