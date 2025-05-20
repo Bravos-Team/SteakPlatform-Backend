@@ -134,7 +134,7 @@ public class RedisServiceImpl implements RedisService {
             log.error(e.getMessage());
             throw new RuntimeException("Error when convert data");
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error("Error when getting data: {}",e.getMessage(), e);
             throw new RuntimeException("Error when getting data");
         }
     }

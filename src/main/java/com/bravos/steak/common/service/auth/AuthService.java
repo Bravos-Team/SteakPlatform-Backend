@@ -59,7 +59,7 @@ public abstract class AuthService {
 
     }
 
-    public Long login(EmailLoginRequest emailLoginRequest) {
+    public Account login(EmailLoginRequest emailLoginRequest) {
         this.checkLoginAttemptsLimit(emailLoginRequest.getDeviceId());
 
         Account account = this.getAccountByEmail(emailLoginRequest.getEmail());
@@ -72,7 +72,7 @@ public abstract class AuthService {
 
         this.generateAndAttachCredentials(account, deviceId, deviceInfo);
 
-        return account.getId();
+        return account;
     }
 
     private void generateAndAttachCredentials(Account accountInfo, String deviceId, String deviceInfo) {

@@ -99,9 +99,7 @@ public class SecurityConfiguration implements WebMvcConfigurer {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(
                 List.of(System.getProperty("BASE_URL_FRONTEND"),
-                        System.getProperty("BASE_URL_PREVIEW_FRONTEND"),
-                        "http://localhost:5173",
-                        "http://localhost:5174"));
+                        System.getProperty("BASE_URL_DOCUMENT")));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

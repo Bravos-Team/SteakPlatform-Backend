@@ -1,5 +1,6 @@
 package com.bravos.steak.common.configuration;
 
+import com.bravos.steak.common.service.encryption.KeyVaultService;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,11 +17,12 @@ import java.net.URI;
 public class S3Configuration {
 
     @Bean
-    public AwsCredentialsProvider cloudflareCredentialsProvider() {
+    public AwsCredentialsProvider cloudflareCredentialsProvider(KeyVaultService keyVaultService) {
+        String cfs3AccessKey = keyVaultService.getSecretKey("cf-s3-access-key");
+        String cfs3SecretKey = keyVaultService.getSecretKey("cf-s3-secret-key");
         return StaticCredentialsProvider
                 .create(AwsBasicCredentials.
-                        create(System.getProperty("CF_S3_ACCESS_KEY"),
-                                System.getProperty("CF_S3_SECRET_KEY")));
+                        create(cfs3AccessKey,cfs3SecretKey));
     }
 
     @Bean("cloudflareS3Client")

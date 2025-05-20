@@ -3,8 +3,9 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
-*.env
+.env
 *.pem
+secret-script.sh
 
 ### STS ###
 .apt_generated
@@ -33,3 +34,4 @@ build/
 
 ### VS Code ###
 .vscode/
+/secret-script.sh

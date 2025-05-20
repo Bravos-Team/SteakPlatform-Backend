@@ -6,10 +6,6 @@ spring:
   application:
     name: steak-platform
   datasource:
-    driver-class-name: org.postgresql.Driver
-    username: ${POSTGRES_USER}
-    password: ${POSTGRES_PASSWORD}
-    url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
     hikari:
       auto-commit: true
       connection-timeout: 250
@@ -25,14 +21,6 @@ spring:
     show-sql: ${SHOW_SQL}
     open-in-view: false
   data:
-    mongodb:
-#      uri: mongodb://${MONGO_USER}:${MONGO_PASSWORD}@${MONGO_HOST}:${MONGO_PORT}/${MONGO_DB}?authSource=${MONGO_AUTHSOURCE}
-      host: ${MONGO_HOST}
-      port: ${MONGO_PORT}
-      username: ${MONGO_USER}
-      password: ${MONGO_PASSWORD}
-      authentication-database: ${MONGO_AUTHSOURCE}
-      database: ${MONGO_DB}
     redis:
       connect-timeout: 30000
       database: 0
