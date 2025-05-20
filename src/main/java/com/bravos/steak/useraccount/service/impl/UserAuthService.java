@@ -13,12 +13,12 @@ import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.sql.Timestamp;
-import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -29,6 +29,7 @@ public class UserAuthService extends AuthService {
     private final SnowflakeGenerator snowflakeGenerator;
     private final UserRefreshTokenRepository userRefreshTokenRepository;
 
+    @Autowired
     public UserAuthService(RedisService redisService, PasswordEncoder passwordEncoder, JwtService jwtService,
                            HttpServletResponse httpServletResponse, HttpServletRequest httpServletRequest,
                            UserAccountRepository userAccountRepository, SnowflakeGenerator snowflakeGenerator,
@@ -39,6 +40,11 @@ public class UserAuthService extends AuthService {
         this.userRefreshTokenRepository = userRefreshTokenRepository;
     }
 
+
+    @Override
+    protected Set<String> getCookiePaths() {
+        return Set.of("/api/v1/store", "/api/v1/user", "/api/v1/support/user", "/api/v1/hub/user");
+    }
 
     @Override
     protected Account getAccountByUsername(String username) {
@@ -52,7 +58,6 @@ public class UserAuthService extends AuthService {
 
     @Override
     protected RefreshToken createRefreshToken(Account accountInfo, String deviceId, String deviceInfo) {
-        LocalDateTime now = LocalDateTime.now();
         UserRefreshToken userRefreshToken = UserRefreshToken.builder()
                 .id(snowflakeGenerator.generateId())
                 .deviceId(deviceId)
@@ -60,30 +65,19 @@ public class UserAuthService extends AuthService {
                 .userAccount((UserAccount) accountInfo)
                 .token(UUID.randomUUID().toString())
                 .revoked(false)
-                .issuesAt(Timestamp.valueOf(now))
-                .expiresAt(Timestamp.valueOf(now.plus(refreshTokenDuration())))
+                .expiresAt(LocalDateTime.now().plusSeconds(Long.parseLong(System.getProperty("USER_REFRESH_TOKEN_EXP"))))
                 .build();
-        return userRefreshTokenRepository.save(userRefreshToken);
+        try {
+            return userRefreshTokenRepository.save(userRefreshToken);
+        } catch (Exception e) {
+            log.error("Error when creating refresh token: ", e);
+            throw new RuntimeException("Error when creating token");
+        }
     }
 
     @Override
     protected RefreshToken getRefreshToken(String token, String deviceId) {
         return userRefreshTokenRepository.findByTokenAndDeviceId(token, deviceId);
-    }
-
-    @Override
-    protected Duration jwtDuration() {
-        return Duration.parse(System.getProperty("USER_TOKEN_EXP"));
-    }
-
-    @Override
-    protected Duration refreshTokenDuration() {
-        return Duration.parse(System.getProperty("USER_REFRESH_TOKEN_EXP"));
-    }
-
-    @Override
-    protected String getRole() {
-        return "user";
     }
 
 }

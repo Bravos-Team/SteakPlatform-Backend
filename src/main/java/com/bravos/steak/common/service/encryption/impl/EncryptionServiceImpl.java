@@ -2,29 +2,31 @@ package com.bravos.steak.common.service.encryption.impl;
 
 import com.bravos.steak.common.service.encryption.AesEncryptionService;
 import com.bravos.steak.common.service.encryption.EncryptionService;
+import com.bravos.steak.common.service.encryption.KeyVaultService;
 import org.springframework.stereotype.Service;
-
-import javax.crypto.SecretKey;
 
 @Service
 public class EncryptionServiceImpl implements EncryptionService {
 
-    public static final String SECRET_KEY = System.getProperty("SECRET_KEY");
+    public final String secretKey;
 
     private final AesEncryptionService aesEncryptionService;
+    private final KeyVaultService keyVaultService;
 
-    public EncryptionServiceImpl(AesEncryptionService aesEncryptionService) {
+    public EncryptionServiceImpl(AesEncryptionService aesEncryptionService, KeyVaultService keyVaultService) {
         this.aesEncryptionService = aesEncryptionService;
+        this.keyVaultService = keyVaultService;
+        this.secretKey = keyVaultService.getSecretKey("steak-secret-key");
     }
 
     @Override
     public String aesEncrypt(String data) {
-        return aesEncryptionService.encrypt(data,SECRET_KEY);
+        return aesEncryptionService.encrypt(data, secretKey);
     }
 
     @Override
     public String aesDecrypt(String encryptedData) {
-        return aesEncryptionService.decrypt(encryptedData,SECRET_KEY);
+        return aesEncryptionService.decrypt(encryptedData, secretKey);
     }
 
 }

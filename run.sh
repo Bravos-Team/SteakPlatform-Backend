@@ -1,0 +1,1 @@
+docker run -d -p 8888:8888 --name steak-server -e AZURE_CLIENT_ID -e AZURE_CLIENT_SECRET -e AZURE_TENANT_ID -e KEY_IDENTIFIER -e VAULT_URL -e SPRING_PROFILES_ACTIVE=prod bravos/steak-server:latest

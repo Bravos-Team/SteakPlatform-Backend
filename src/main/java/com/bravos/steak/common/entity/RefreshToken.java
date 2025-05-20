@@ -7,6 +7,7 @@ import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Getter
@@ -25,11 +26,11 @@ public abstract class RefreshToken {
     String deviceId;
 
     @Column(nullable = false, updatable = false)
-    @CreationTimestamp
-    Timestamp issuesAt;
+    @Builder.Default
+    LocalDateTime issuesAt = LocalDateTime.now();
 
     @Column(nullable = false)
-    Timestamp expiresAt;
+    LocalDateTime expiresAt;
 
     @Column(nullable = false)
     @Builder.Default

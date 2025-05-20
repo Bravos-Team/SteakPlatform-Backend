@@ -32,7 +32,7 @@ public class PublisherRole {
 
     String description;
 
-    LocalDateTime updatedDate;
+    LocalDateTime updatedAt;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
@@ -41,6 +41,10 @@ public class PublisherRole {
             inverseJoinColumns = @JoinColumn(name = "publisher_permission_id")
     )
     Set<PublisherPermission> publisherPermissions;
+
+    public PublisherRole(Long id) {
+        this.id = id;
+    }
 
     @Override
     public boolean equals(Object o) {

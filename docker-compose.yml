@@ -8,7 +8,7 @@ services:
     restart: always
     environment:
       POSTGRES_USER: bravos
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
       POSTGRES_DB: steakdb
     networks:
       - pre-event-networks
@@ -41,20 +41,6 @@ services:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD}
     restart: always
-
-  app:
-    build: .
-    image: steak:latest
-    container_name: steak-server
-    depends_on:
-      - postgres
-      - redis
-      - mongo
-    ports:
-      - "8888:8888"
-    networks:
-      - pre-event-networks
-
 
 networks:
   pre-event-networks:
