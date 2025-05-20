@@ -11,10 +11,8 @@ FROM amazoncorretto:21.0.7-al2023-headless as runtime
 
 WORKDIR /app
 COPY --from=build /app/target/*.jar steak.jar
-COPY private.pem .
-COPY public.pem .
 COPY prod.env .env
 
-ENTRYPOINT ["java","-jar","steak.jar"]
+ENTRYPOINT ["java", "-jar", "Xms256m", "Xmx1g", "-XX:+UseG1GC", "steak.jar", "--spring.profiles.active=prod"]
 
 

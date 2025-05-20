@@ -1,31 +1,33 @@
-name: CI - Build and Test Spring Boot
+name: CI - Build and Deploy Spring Boot
 
 on:
   pull_request:
-    branches: [ master, develop ]  # tùy nhánh chính của tụi mày
+    branches: [ master ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Setup JDK 21
-        uses: actions/setup-java@v3
-        with:
-          java-version: '21'
-          distribution: 'temurin'
+      - name: Build docker image
+        run: |
+          docker login --username bravos --password ${{ secrets.DOCKER_PASSWORD }}
+          docker build -t bravos/steak-server:latest .
+          docker push bravos/steak-server:latest
 
-      - name: Cache Maven packages
-        uses: actions/cache@v3
+      - name: Deploy
+        uses: appleboy/ssh-action@v1
         with:
-          path: |
-            ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
-
-      - name: Build with Maven
-        run: mvn clean compile
+            host: ${{ secrets.HOST }}
+            username: ${{ secrets.USERNAME }}
+            key: ${{ secrets.PRIVATE_KEY }}
+            port: ${{ secrets.PORT }}
+            script: |
+              docker login --username bravos --password ${{ secrets.DOCKER_PASSWORD }}
+              docker stop steak-server || true
+              docker rm steak-server || true
+              docker pull bravos/steak-server:latest
+              docker run -d -p 8888:8888 --name steak-server -e AZURE_CLIENT_ID -e AZURE_CLIENT_SECRET -e AZURE_TENANT_ID -e KEY_IDENTIFIER -e VAULT_URL -e SPRING_PROFILES_ACTIVE=prod bravos/steak-server:latest
+          
