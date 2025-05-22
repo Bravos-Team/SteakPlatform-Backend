@@ -2,7 +2,6 @@ package com.bravos.steak.common.configuration;
 
 import com.bravos.steak.common.service.encryption.KeyVaultService;
 import io.lettuce.core.ClientOptions;
-import io.lettuce.core.TimeoutOptions;
 import io.lettuce.core.protocol.ProtocolVersion;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
@@ -16,8 +15,6 @@ import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactor
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
-
-import java.time.Duration;
 
 @Slf4j
 @Configuration
@@ -40,9 +37,10 @@ public class LocalRedisConfiguration {
         LettuceClientConfiguration clientConfiguration = LettuceClientConfiguration.builder()
                 .clientOptions(options)
                 .build();
+        String[] redisHostPort = keyVaultService.getSecretKey("redis-host-port").split(":");
         RedisStandaloneConfiguration redisConfig = new RedisStandaloneConfiguration();
-        redisConfig.setHostName(System.getProperty("REDIS_HOST"));
-        redisConfig.setPort(Integer.parseInt(System.getProperty("REDIS_PORT")));
+        redisConfig.setHostName(redisHostPort[0]);
+        redisConfig.setPort(Integer.parseInt(redisHostPort[1]));
         redisConfig.setPassword(keyVaultService.getSecretKey("redis-password"));
         log.info("Using product redis config");
         return new LettuceConnectionFactory(redisConfig,clientConfiguration);
