@@ -26,6 +26,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -96,9 +97,8 @@ public class SecurityConfiguration implements WebMvcConfigurer {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(
-                List.of(System.getProperty("BASE_URL_FRONTEND"),
-                        System.getProperty("BASE_URL_DOCUMENT")));
+        String[] allowOrigins = System.getProperty("ALLOW_ORIGINS").split(",");
+        config.setAllowedOrigins(Arrays.stream(allowOrigins).toList());
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

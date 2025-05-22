@@ -30,8 +30,8 @@ public class DatabaseConfiguration {
     public DataSource prodDataSource(KeyVaultService keyVaultService) {
         HikariDataSource dataSource = new HikariDataSource();
         dataSource.setDriverClassName(System.getProperty("DATABASE_DRIVER"));
-        dataSource.setJdbcUrl(System.getProperty("DATABASE_JDBC_URL"));
-        dataSource.setUsername(System.getProperty("DATABASE_USER"));
+        dataSource.setJdbcUrl(keyVaultService.getSecretKey("database-jdbc-url"));
+        dataSource.setUsername(keyVaultService.getSecretKey("database-username"));
         dataSource.setPassword(keyVaultService.getSecretKey("database-password"));
         log.info("Using prod datasource");
         return dataSource;
