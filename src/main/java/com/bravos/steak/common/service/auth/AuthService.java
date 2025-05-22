@@ -16,6 +16,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -27,6 +28,7 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public abstract class AuthService {
@@ -100,7 +102,13 @@ public abstract class AuthService {
 
     private void checkLoginAttemptsLimit(String deviceId) {
         String key = "login:attempt:" + deviceId;
-        Long attempts = redisService.get(key, Long.class);
+        Long attempts;
+        try {
+            attempts = redisService.get(key, Long.class);
+        } catch (Exception e) {
+            log.error("Error when checking login attemps: {}", e.getMessage(), e);
+            throw new RuntimeException("Error when checking login attemp");
+        }
         if(attempts != null && attempts > 3) {
             throw new TooManyRequestException("Too many login attempts");
         }
