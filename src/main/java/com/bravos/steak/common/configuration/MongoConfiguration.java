@@ -19,18 +19,26 @@ public class MongoConfiguration {
     @Bean
     @Profile("dev")
     public MongoClient devMongoClient() {
-        ConnectionString connectionString = new ConnectionString(System.getProperty("MONGO_CONN_STRING"));
-        log.info("Using dev mongodb");
-        return MongoClients.create(connectionString);
+        try {
+            ConnectionString connectionString = new ConnectionString(System.getProperty("MONGO_CONN_STRING"));
+            log.info("Using dev mongodb");
+            return MongoClients.create(connectionString);
+        } catch (Exception e) {
+            throw new RuntimeException("Cannot connect to mongodb", e);
+        }
     }
 
     @Bean
     @Profile("prod")
     public MongoClient prodMongoClient(KeyVaultService keyVaultService) {
-        ConnectionString connectionString = new ConnectionString(keyVaultService.getSecretKey("mongo-connection-string"));
-        connectionString.getHosts().forEach(host -> log.info("Using mongodb host: {}",host));
-        log.info("Using prod mongodb");
-        return MongoClients.create(connectionString);
+        try {
+            ConnectionString connectionString = new ConnectionString(keyVaultService.getSecretKey("mongo-connection-string"));
+            connectionString.getHosts().forEach(host -> log.info("Using mongodb host: {}",host));
+            log.info("Using prod mongodb in {}", connectionString.getHosts().getFirst());
+            return MongoClients.create(connectionString);
+        } catch (Exception e) {
+            throw new RuntimeException("Cannot connect to mongodb", e);
+        }
     }
 
     @Bean

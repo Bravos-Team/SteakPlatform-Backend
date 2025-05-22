@@ -25,7 +25,7 @@ public class RedisServiceImpl implements RedisService {
         try {
             redisTemplate.opsForValue().set(key,value);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error("Error when getting data: {}", e.getMessage(), e);
             throw new RuntimeException("Error when getting data");
         }
     }
@@ -35,7 +35,7 @@ public class RedisServiceImpl implements RedisService {
         try {
             redisTemplate.opsForValue().set(key,value,timeout,timeUnit);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error("Error when getting data: {}", e.getMessage(), e);
             throw new RuntimeException("Error when getting data");
         }
     }
@@ -45,7 +45,7 @@ public class RedisServiceImpl implements RedisService {
         try {
             return Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(key, value));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error("Error when getting data: {}", e.getMessage(), e);
             throw new RuntimeException("Error when getting data");
         }
     }
@@ -55,7 +55,7 @@ public class RedisServiceImpl implements RedisService {
         try {
             return Boolean.TRUE.equals(redisTemplate.opsForValue().setIfAbsent(key,value,timeout,timeUnit));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error("Error when getting data: {}", e.getMessage(), e);
             throw new RuntimeException("Error when getting data");
         }
     }
@@ -65,7 +65,7 @@ public class RedisServiceImpl implements RedisService {
         try {
             return redisTemplate.hasKey(key);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error("Error when getting data: {}", e.getMessage(), e);
             throw new RuntimeException("Error when getting data");
         }
     }
@@ -76,11 +76,11 @@ public class RedisServiceImpl implements RedisService {
         if(value == null) return null;
         try {
             return objectMapper.convertValue(value,clazz);
-        } catch (IllegalArgumentException e) {
-            log.error(e.getMessage());
-            throw new RuntimeException("Error when convert data");
+        } catch (IllegalArgumentException | ClassCastException e) {
+            log.error("Error when converting data: {}", e.getMessage(), e);
+            throw new RuntimeException("Error when converting data");
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error("Error when getting data: {}", e.getMessage(), e);
             throw new RuntimeException("Error when getting data");
         }
     }
@@ -91,11 +91,11 @@ public class RedisServiceImpl implements RedisService {
         if(values == null || values.isEmpty()) return List.of();
         try {
             return objectMapper.convertValue(values,objectMapper.getTypeFactory().constructCollectionLikeType(List.class,clazz));
-        } catch (IllegalArgumentException e) {
-            log.error(e.getMessage());
-            throw new RuntimeException("Error when convert data");
+        } catch (IllegalArgumentException | ClassCastException e) {
+            log.error("Error when converting data: {}", e.getMessage(), e);
+            throw new RuntimeException("Error when converting data");
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error("Error when getting data: {}", e.getMessage(), e);
             throw new RuntimeException("Error when getting data");
         }
     }
@@ -104,11 +104,11 @@ public class RedisServiceImpl implements RedisService {
     public <T> T getAndSet(String key, Object value, Class<T> clazz) {
         try {
             return objectMapper.convertValue(redisTemplate.opsForValue().getAndSet(key,value),clazz);
-        } catch (IllegalArgumentException e) {
-            log.error(e.getMessage());
-            throw new RuntimeException("Error when convert data");
+        } catch (IllegalArgumentException | ClassCastException e) {
+            log.error("Error when converting data: {}", e.getMessage(), e);
+            throw new RuntimeException("Error when converting data");
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error("Error when getting data: {}", e.getMessage(), e);
             throw new RuntimeException("Error when getting data");
         }
     }
@@ -117,11 +117,11 @@ public class RedisServiceImpl implements RedisService {
     public <T> T getAndDelete(String key, Class<T> clazz) {
         try {
             return objectMapper.convertValue(redisTemplate.opsForValue().getAndDelete(key),clazz);
-        } catch (IllegalArgumentException e) {
-            log.error(e.getMessage());
-            throw new RuntimeException("Error when convert data");
+        } catch (IllegalArgumentException | ClassCastException e) {
+            log.error("Error when converting data: {}", e.getMessage(), e);
+            throw new RuntimeException("Error when converting data");
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error("Error when getting data: {}", e.getMessage(), e);
             throw new RuntimeException("Error when getting data");
         }
     }
@@ -130,11 +130,11 @@ public class RedisServiceImpl implements RedisService {
     public Long increment(String key, long delta) {
         try {
             return redisTemplate.opsForValue().increment(key,delta);
-        } catch (ClassCastException e) {
-            log.error(e.getMessage());
-            throw new RuntimeException("Error when convert data");
+        } catch (IllegalArgumentException | ClassCastException e) {
+            log.error("Error when converting data: {}", e.getMessage(), e);
+            throw new RuntimeException("Error when converting data");
         } catch (Exception e) {
-            log.error("Error when getting data: {}",e.getMessage(), e);
+            log.error("Error when getting data: {}", e.getMessage(), e);
             throw new RuntimeException("Error when getting data");
         }
     }
@@ -143,11 +143,11 @@ public class RedisServiceImpl implements RedisService {
     public Long decrement(String key, long delta) {
         try {
             return redisTemplate.opsForValue().decrement(key,delta);
-        } catch (ClassCastException e) {
-            log.error(e.getMessage());
-            throw new RuntimeException("Error when convert data");
+        } catch (IllegalArgumentException | ClassCastException e) {
+            log.error("Error when converting data: {}", e.getMessage(), e);
+            throw new RuntimeException("Error when converting data");
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error("Error when getting data: {}", e.getMessage(), e);
             throw new RuntimeException("Error when getting data");
         }
     }
@@ -156,18 +156,23 @@ public class RedisServiceImpl implements RedisService {
     public Double increment(String key, double delta) {
         try {
             return redisTemplate.opsForValue().increment(key,delta);
-        } catch (ClassCastException e) {
-            log.error(e.getMessage());
-            throw new RuntimeException("Error when convert data");
+        } catch (IllegalArgumentException | ClassCastException e) {
+            log.error("Error when converting data: {}", e.getMessage(), e);
+            throw new RuntimeException("Error when converting data");
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error("Error when getting data: {}", e.getMessage(), e);
             throw new RuntimeException("Error when getting data");
         }
     }
 
     @Override
     public void expire(String key, long timeout, TimeUnit timeUnit) {
-        redisTemplate.expire(key, timeout, timeUnit);
+        try {
+            redisTemplate.expire(key, timeout, timeUnit);
+        } catch (Exception e) {
+            log.error("Error when revoking resource: {}", e.getMessage(), e);
+            throw new RuntimeException("Error when revoking resource");
+        }
     }
 
     @Override
@@ -175,7 +180,7 @@ public class RedisServiceImpl implements RedisService {
         try {
             redisTemplate.delete(key);
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error("Error when deleting resource: {}", e.getMessage(), e);
             throw new RuntimeException("Error when deleting resource");
         }
     }
