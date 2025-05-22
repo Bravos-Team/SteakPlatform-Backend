@@ -62,7 +62,6 @@ public class SecurityConfiguration implements WebMvcConfigurer {
 
             request.requestMatchers(
                             "/api/v1/user/**",
-                            "/api/v1/dev/**",
                             "/api/v1/store/**",
                             "/api/v1/admin/**",
                             "/api/v1/hub/**",
