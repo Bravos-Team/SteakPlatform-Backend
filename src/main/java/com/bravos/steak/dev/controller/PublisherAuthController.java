@@ -38,13 +38,13 @@ public class PublisherAuthController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/login-username")
+    @PostMapping("/username-login")
     public ResponseEntity<?> login(@RequestBody @Valid UsernameLoginRequest usernameLoginRequest) {
         PublisherAccount account = (PublisherAccount) authService.login(usernameLoginRequest);
         return ResponseEntity.ok(Map.of("username",account.getUsername()));
     }
 
-    @PostMapping("/login-email")
+    @PostMapping("/email-login")
     public ResponseEntity<?> login(@RequestBody @Valid EmailLoginRequest emailLoginRequest) {
         PublisherAccount account = (PublisherAccount) authService.login(emailLoginRequest);
         return ResponseEntity.ok(Map.of("username",account.getUsername()));
