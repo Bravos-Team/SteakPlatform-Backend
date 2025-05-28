@@ -1,4 +1,4 @@
-FROM maven:3.9.9-amazoncorretto-21-alpine as build
+FROM maven:3.9.9-amazoncorretto-21-alpine
 LABEL authors="bravos"
 
 WORKDIR /app
@@ -7,7 +7,7 @@ COPY src ./src
 
 RUN mvn clean package -DskipTests
 
-FROM amazoncorretto:21.0.7-al2023-headless as runtime
+FROM azul/zulu-openjdk-alpine:21-jre-headless-latest
 
 WORKDIR /app
 COPY --from=build /app/target/*.jar steak.jar

@@ -20,7 +20,3 @@ spring:
       ddl-auto: none
     show-sql: ${SHOW_SQL}
     open-in-view: false
-  data:
-    redis:
-      connect-timeout: 30000
-      database: 0

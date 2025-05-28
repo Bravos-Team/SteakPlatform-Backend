@@ -188,6 +188,12 @@
             <artifactId>azure-security-keyvault-keys</artifactId>
             <version>4.9.4</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/io.atlasgo/hibernate-provider -->
+        <dependency>
+            <groupId>io.atlasgo</groupId>
+            <artifactId>hibernate-provider</artifactId>
+            <version>3.8.2</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -225,6 +231,11 @@
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>io.atlasgo</groupId>
+                <artifactId>hibernate-provider-maven-plugin</artifactId>
+                <version>0.1</version>
             </plugin>
         </plugins>
     </build>
