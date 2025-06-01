@@ -7,7 +7,7 @@ COPY src ./src
 
 RUN mvn clean package -DskipTests
 
-FROM azul/zulu-openjdk-alpine:21-jre-latest AS runtime
+FROM azul/zulu-openjdk-alpine:21-jre-headless-latest AS runtime
 
 WORKDIR /app
 COPY --from=build /app/target/*.jar steak.jar
