@@ -5,23 +5,24 @@ import java.time.ZoneOffset;
 
 public class SnowflakeGenerator {
 
-    private static final long machineIdBits = 10;
-    private static final long sequenceBits = 12;
-    private static final long timeStampBits = 41;
-    private static final long epoch = LocalDateTime.of(2025,1,1,0,0).toInstant(ZoneOffset.UTC).toEpochMilli();
+    private static final long MACHINE_ID_BITS = 10;
+    private static final long SEQUENCE_BITS = 12;
+    private static final long TIME_STAMP_BITS = 41;
+    private static final long EPOCH =
+            LocalDateTime.of(2025,1,1,0,0).toInstant(ZoneOffset.UTC).toEpochMilli();
 
-    private static final long machineIdShift = sequenceBits + timeStampBits;
-    private static final long timestampShift = sequenceBits;
+    private static final long MACHINE_ID_SHIFT = SEQUENCE_BITS + TIME_STAMP_BITS;
+    private static final long TIMESTAMP_SHIFT = SEQUENCE_BITS;
 
-    private static final long sequenceMask = (1L << sequenceBits) - 1;
+    private static final long SEQUENCE_MASK = (1L << SEQUENCE_BITS) - 1;
 
     private final long machineId;
     private long sequence = 0L;
     private long lastTimestamp = -1L;
 
     public SnowflakeGenerator(long machineId) {
-        if(machineId < 0 || ((machineId > (1L << machineIdBits) - 1))) {
-            throw new IllegalArgumentException("Machine ID must be between 0 and " + ((1L << machineIdBits) - 1));
+        if(machineId < 0 || ((machineId > (1L << MACHINE_ID_BITS) - 1))) {
+            throw new IllegalArgumentException("Machine ID must be between 0 and " + ((1L << MACHINE_ID_BITS) - 1));
         }
         this.machineId = machineId;
     }
@@ -35,36 +36,33 @@ public class SnowflakeGenerator {
     }
 
     public synchronized long generateId() {
-        if(machineId < 0 || ((machineId > (1L << machineIdBits) - 1))) {
-            throw new IllegalArgumentException("Machine ID must be between 0 and " + ((1L << machineIdBits) - 1));
-        }
         long currentTimestamp = System.currentTimeMillis();
-        long timestamp = currentTimestamp - epoch;
+        long timestamp = currentTimestamp - EPOCH;
         if(currentTimestamp != lastTimestamp) {
             sequence = 0L;
             lastTimestamp = currentTimestamp;
         }
-        else if(sequence >= sequenceMask) {
+        else if(sequence >= SEQUENCE_MASK) {
             long nextMillis = waitForNextMillis();
-            timestamp = nextMillis - epoch;
+            timestamp = nextMillis - EPOCH;
             sequence = 0L;
             lastTimestamp = nextMillis;
         } else {
             sequence++;
         }
-        long timestampShifted = timestamp << timestampShift;
-        long machineIdShifted = machineId << machineIdShift;
+        long timestampShifted = timestamp << TIMESTAMP_SHIFT;
+        long machineIdShifted = machineId << MACHINE_ID_SHIFT;
         return timestampShifted | machineIdShifted | sequence;
     }
 
     public static long extractTimestamp(long id) {
-        return ((id >> timestampShift) &
-                ((1L << timeStampBits) - 1)) + epoch;
+        return ((id >> TIMESTAMP_SHIFT) &
+                ((1L << TIME_STAMP_BITS) - 1)) + EPOCH;
     }
 
     public static long extractMachineId(long id) {
-        return (id >> machineIdShift) &
-                ((1L << machineIdBits) - 1);
+        return (id >> MACHINE_ID_SHIFT) &
+                ((1L << MACHINE_ID_BITS) - 1);
     }
 
 }

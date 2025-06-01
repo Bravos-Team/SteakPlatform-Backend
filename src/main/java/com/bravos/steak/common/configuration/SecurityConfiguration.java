@@ -45,7 +45,8 @@ public class SecurityConfiguration implements WebMvcConfigurer {
     }
 
     @Bean
-    public SecurityFilterChain security(HttpSecurity http) throws Exception {
+    public SecurityFilterChain security(HttpSecurity http, AccessDeniedHandler customAccessDeniedHandler,
+                                        AuthenticationEntryPoint customAuthEntryPoint) throws Exception {
         http.authorizeHttpRequests(request -> {
 
             request.requestMatchers(
@@ -74,8 +75,8 @@ public class SecurityConfiguration implements WebMvcConfigurer {
         });
 
         http.exceptionHandling(ex -> {
-            ex.accessDeniedHandler(customAccessDeniedHandler());
-            ex.authenticationEntryPoint(customAuthEntryPoint());
+            ex.accessDeniedHandler(customAccessDeniedHandler);
+            ex.authenticationEntryPoint(customAuthEntryPoint);
         });
 
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()));
