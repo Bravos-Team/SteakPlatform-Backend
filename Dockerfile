@@ -13,5 +13,5 @@ WORKDIR /app
 COPY --from=build /app/target/*.jar steak.jar
 COPY prod.env .env
 
-ENTRYPOINT ["java", "-Xms1g", "-Xmx1g", "-XX:+UseG1GC", "-jar", "steak.jar", "--spring.profiles.active=prod"]
+ENTRYPOINT ["java", "-Xms1g", "-Xmx1g", "-jar", "steak.jar", "--spring.profiles.active=prod"]
 

@@ -32,7 +32,6 @@ public class LocalRedisConfiguration {
         ClientOptions options = ClientOptions.builder()
                 .protocolVersion(ProtocolVersion.RESP2)
                 .pingBeforeActivateConnection(true)
-                .autoReconnect(true)
                 .build();
         LettuceClientConfiguration clientConfiguration = LettuceClientConfiguration.builder()
                 .clientOptions(options)
@@ -52,7 +51,6 @@ public class LocalRedisConfiguration {
         ClientOptions options = ClientOptions.builder()
                 .protocolVersion(ProtocolVersion.RESP2)
                 .pingBeforeActivateConnection(true)
-                .autoReconnect(false)
                 .build();
         LettuceClientConfiguration clientConfiguration = LettuceClientConfiguration.builder()
                 .clientOptions(options)
