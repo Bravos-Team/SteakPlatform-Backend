@@ -1,4 +1,4 @@
-package com.bravos.steak.dev.entity;
+package com.bravos.steak.administration.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -15,15 +15,11 @@ import java.util.Set;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "publisher_role")
-public class PublisherRole {
+@Table(name = "admin_role")
+public class AdminRole {
 
     @Id
     Long id;
-
-    @ManyToOne
-    @JoinColumn(name = "publisher_id")
-    Publisher publisher;
 
     String name;
 
@@ -36,20 +32,20 @@ public class PublisherRole {
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
-            name = "publisher_permission_role",
-            joinColumns = @JoinColumn(name = "publisher_role_id"),
-            inverseJoinColumns = @JoinColumn(name = "publisher_permission_id")
+            name = "admin_permission_role",
+            joinColumns = @JoinColumn(name = "admin_role_id"),
+            inverseJoinColumns = @JoinColumn(name = "admin_permission_id")
     )
-    Set<PublisherPermission> publisherPermissions;
+    Set<AdminPermission> adminPermissions;
 
-    public PublisherRole(Long id) {
+    public AdminRole(Long id) {
         this.id = id;
     }
 
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
-        PublisherRole that = (PublisherRole) o;
+        AdminRole that = (AdminRole) o;
         return Objects.equals(id, that.id);
     }
 

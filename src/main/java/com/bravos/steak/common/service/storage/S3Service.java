@@ -13,7 +13,8 @@ import java.util.Map;
 @Service
 public abstract class S3Service {
 
-    public String generateS3PutSignedUrl(String bucket, String objectKey, Map<String,String> metadata, Duration duration) {
+    public String generateS3PutSignedUrl(String bucket, String objectKey,
+                                         Map<String,String> metadata, Duration duration) {
         S3Presigner presigner = getS3Presigned();
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(bucket)
@@ -42,5 +43,10 @@ public abstract class S3Service {
     }
 
     public abstract S3Presigner getS3Presigned();
+
+    private Duration getDurationBySize(long fileSize) {
+        long megaBytes = fileSize / (1024 * 1024);
+        return Duration.ofMinutes(Math.min(Math.max(5,megaBytes / 3),240));
+    }
 
 }

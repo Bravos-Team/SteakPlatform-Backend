@@ -15,7 +15,6 @@ import java.security.interfaces.RSAPublicKey;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.RSAPublicKeySpec;
-import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 
 @Slf4j
@@ -24,55 +23,79 @@ public class RSAServiceImpl implements RSAService {
 
     private static final String ALGORITHM = "RSA";
 
-    private static final ThreadLocal<KeyPairGenerator> KEY_PAIR_GENERATOR = ThreadLocal.withInitial(() -> {
-        try {
-            KeyPairGenerator generator = KeyPairGenerator.getInstance(ALGORITHM);
-            generator.initialize(2048);
-            return generator;
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Error initializing KeyPairGenerator", e);
-        }
-    });
-
     @Override
     public String encrypt(String plainText, String publicKey) {
+        return encrypt(plainText,convertPublicKey(publicKey));
+    }
+
+    @Override
+    public String encrypt(String plainText, PublicKey publicKey) {
+        return encrypt(plainText.getBytes(),publicKey);
+    }
+
+    @Override
+    public String encrypt(byte[] data, String publicKey) {
+        return encrypt(data,convertPublicKey(publicKey));
+    }
+
+    @Override
+    public String encrypt(byte[] data, PublicKey publicKey) {
         try {
             Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
-            cipher.init(Cipher.ENCRYPT_MODE, convertPublicKey(publicKey));
-            byte[] encryptedData = cipher.doFinal(plainText.getBytes());
+            cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+            byte[] encryptedData = cipher.doFinal(data);
             return Base64.getEncoder().encodeToString(encryptedData);
         } catch (NoSuchAlgorithmException | NoSuchPaddingException | InvalidKeyException |
                  IllegalBlockSizeException | BadPaddingException e) {
-            log.error(e.getMessage());
-            throw new RuntimeException(e);
+            log.error("Error when encrypt data: {}", e.getMessage(), e);
+            throw new RuntimeException("Error when encrypt data");
         }
     }
 
     @Override
-    public String decrypt(String encryptedData, String privateKey) {
+    public String decrypt(String cipherData, String privateKey) {
+        return decrypt(cipherData,convertPrivateKey(privateKey));
+    }
+
+    @Override
+    public String decrypt(String cipherData, PrivateKey privateKey) {
+        return decrypt(Base64.getDecoder().decode(cipherData),privateKey);
+    }
+
+    @Override
+    public String decrypt(byte[] cipherData, String privateKey) {
+        return decrypt(cipherData,convertPrivateKey(privateKey));
+    }
+
+    @Override
+    public String decrypt(byte[] cipherData, PrivateKey privateKey) {
         try {
             Cipher cipher = Cipher.getInstance("RSA/ECB/OAEPWithSHA-256AndMGF1Padding");
-            cipher.init(Cipher.DECRYPT_MODE, convertPrivateKey(privateKey));
-            byte[] encryptedDataBytes = Base64.getDecoder().decode(encryptedData);
-            byte[] decryptedData = cipher.doFinal(encryptedDataBytes);
+            cipher.init(Cipher.DECRYPT_MODE, privateKey);
+            byte[] decryptedData = cipher.doFinal(cipherData);
             return new String(decryptedData);
         } catch (Exception e) {
-            log.error(e.getMessage());
-            throw new RuntimeException(e);
+            log.error("Error when decrypt data: {}", e.getMessage(), e);
+            throw new RuntimeException("Error when decrypt data");
         }
     }
 
     @Override
     public String getSignatureData(String data, String privateKey) {
+        return getSignatureData(data,convertPrivateKey(privateKey));
+    }
+
+    @Override
+    public String getSignatureData(String data, PrivateKey privateKey) {
         try {
             Signature signature = Signature.getInstance("SHA256withRSA");
-            signature.initSign(convertPrivateKey(privateKey));
+            signature.initSign(privateKey);
             signature.update(data.getBytes());
             byte[] signDataBytes = signature.sign();
-            return Base64.getEncoder().encodeToString(signDataBytes);
+            return Base64.getUrlEncoder().withoutPadding().encodeToString(signDataBytes);
         } catch (InvalidKeyException | SignatureException | NoSuchAlgorithmException e) {
-            log.error(e.getMessage());
-            throw new RuntimeException(e);
+            log.error("Error when get signature data: {}",e.getMessage(),e);
+            throw new RuntimeException(e.getMessage());
         }
     }
 
@@ -85,6 +108,7 @@ public class RSAServiceImpl implements RSAService {
             signature.update(data.getBytes());
             return signature.verify(signedDataBytes);
         } catch (InvalidKeyException | SignatureException | NoSuchAlgorithmException e) {
+            log.warn("Failed when verify data: {}", e.getMessage(), e);
             return false;
         }
     }
@@ -96,7 +120,8 @@ public class RSAServiceImpl implements RSAService {
             PrivateKey privateKey = keyPair.getPrivate();
             return Base64.getEncoder().encodeToString(privateKey.getEncoded());
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            log.warn("Failed when gen private key: {}", e.getMessage(), e);
+            throw new RuntimeException(e.getMessage());
         }
     }
 
@@ -119,7 +144,13 @@ public class RSAServiceImpl implements RSAService {
 
     @Override
     public KeyPair generateKeyPair() {
-        return KEY_PAIR_GENERATOR.get().generateKeyPair();
+        try {
+            KeyPairGenerator generator = KeyPairGenerator.getInstance(ALGORITHM);
+            generator.initialize(2048);
+            return generator.generateKeyPair();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e.getMessage());
+        }
     }
 
     @Override
@@ -130,32 +161,6 @@ public class RSAServiceImpl implements RSAService {
     @Override
     public String getPublicKeyFromKeyPair(KeyPair keyPair) {
         return Base64.getEncoder().encodeToString(keyPair.getPublic().getEncoded());
-    }
-
-    private PublicKey convertPublicKey(String publicKey) {
-        try {
-            byte[] publicKeyBytes = Base64.getDecoder().decode(publicKey);
-            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKeyBytes);
-            KeyFactory keyFactory = KeyFactory.getInstance(ALGORITHM);
-            return keyFactory.generatePublic(keySpec);
-        } catch (InvalidKeySpecException e) {
-            throw new IllegalArgumentException("Invalid public key");
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalArgumentException("Invalid algorithm");
-        }
-    }
-
-    private PrivateKey convertPrivateKey(String privateKey) {
-        try {
-            byte[] privateKeyBytes = Base64.getDecoder().decode(privateKey);
-            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
-            KeyFactory keyFactory = KeyFactory.getInstance(ALGORITHM);
-            return keyFactory.generatePrivate(keySpec);
-        } catch (InvalidKeySpecException e) {
-            throw new IllegalArgumentException("Invalid private key");
-        } catch (NoSuchAlgorithmException e) {
-            throw new IllegalArgumentException("Invalid algorithm");
-        }
     }
 
 

@@ -42,8 +42,8 @@ public class AesEncryptionServiceImpl implements AesEncryptionService {
             return Base64.getEncoder().encodeToString(byteBuffer.array());
         } catch (InvalidKeyException | InvalidAlgorithmParameterException | IllegalBlockSizeException
                  | BadPaddingException | NoSuchPaddingException | NoSuchAlgorithmException e) {
-            log.error(e.getMessage());
-            throw new IllegalArgumentException("Lỗi mã hóa: " + e.getMessage(), e);
+            log.error("Error when encrypting: {}",e.getMessage(),e);
+            throw new IllegalArgumentException("Error when encrypting");
         }
     }
 
@@ -68,8 +68,8 @@ public class AesEncryptionServiceImpl implements AesEncryptionService {
         } catch (BadPaddingException | IllegalBlockSizeException |
                  InvalidAlgorithmParameterException | InvalidKeyException
                  | NoSuchPaddingException | NoSuchAlgorithmException e) {
-            log.error(e.getMessage());
-            throw new IllegalArgumentException("Lỗi giải mã: " + e.getMessage(), e);
+            log.error("Error when decrypting: {}",e.getMessage(),e);
+            throw new IllegalArgumentException("Error when decrypting");
         }
     }
 

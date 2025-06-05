@@ -1,4 +1,4 @@
-package com.bravos.steak.common.model;
+package com.bravos.steak.dev.model;
 
 public final class PublisherAuthority {
 

@@ -8,10 +8,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
 import javax.sql.DataSource;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.charset.Charset;
-import java.sql.SQLException;
 
 @Slf4j
 @Configuration
@@ -31,13 +27,12 @@ public class DatabaseConfiguration {
 
     @Bean
     @Profile("prod")
-    public DataSource prodDataSource(KeyVaultService keyVaultService) throws IOException, SQLException {
+    public DataSource prodDataSource(KeyVaultService keyVaultService) {
         HikariDataSource dataSource = new HikariDataSource();
         dataSource.setDriverClassName(System.getProperty("DATABASE_DRIVER"));
-        dataSource.setJdbcUrl(keyVaultService.getSecretKey("database-jdbc-url"));
-        dataSource.setUsername(keyVaultService.getSecretKey("database-username"));
-        dataSource.setPassword(keyVaultService.getSecretKey("database-password"));
-        dataSource.setLogWriter(new PrintWriter("database.log", Charset.defaultCharset()));
+        dataSource.setJdbcUrl(keyVaultService.getSecretKey(System.getProperty("DATABASE_JDBC_URL")));
+        dataSource.setUsername(keyVaultService.getSecretKey(System.getProperty("DATABASE_USERNAME")));
+        dataSource.setPassword(keyVaultService.getSecretKey(System.getProperty("DATABASE_PASSWORD")));
         log.info("Using prod datasource");
         return dataSource;
     }

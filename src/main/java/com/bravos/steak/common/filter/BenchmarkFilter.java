@@ -5,15 +5,17 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
-public class AdminFilter extends OncePerRequestFilter {
+public class BenchmarkFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(@NotNull HttpServletRequest request,
@@ -21,18 +23,13 @@ public class AdminFilter extends OncePerRequestFilter {
                                     @NotNull FilterChain filterChain)
             throws ServletException, IOException {
 
-        String requestURI = request.getRequestURI();
+        long startTime = System.currentTimeMillis();
 
-        if(request.getMethod().equalsIgnoreCase("GET") || !requestURI.startsWith("/api/v1/admin")) {
-            filterChain.doFilter(request,response);
-            return;
-        }
+        filterChain.doFilter(request, response);
 
-        logger.info("Implement admin");
+        long responseTime = System.currentTimeMillis() - startTime;
 
-        // Implement admin log
-
-        filterChain.doFilter(request,response);
+        log.info("Request completed {} in {} ms with status {}", request.getRequestURI(), responseTime, response.getStatus());
 
     }
 

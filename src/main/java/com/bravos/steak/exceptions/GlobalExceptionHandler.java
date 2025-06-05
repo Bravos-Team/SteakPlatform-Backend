@@ -14,6 +14,8 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    private static final String VALIDATE_ERROR_MESSAGE = "Invalid request parameters";
+
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex){
         ErrorResponse errorResponse = new ErrorResponse(ex.getMessage());
@@ -66,7 +68,7 @@ public class GlobalExceptionHandler {
                         Objects.requireNonNull(FieldError::getDefaultMessage,"invalid data"),
                         (existing, replacement) -> existing + " ; " + replacement
                 ));
-        ErrorResponse errorResponse = new ValidateErrorReponse(ex.getMessage(), errors);
+        ErrorResponse errorResponse = new ValidateErrorReponse(VALIDATE_ERROR_MESSAGE, errors);
         return ResponseEntity.badRequest().body(errorResponse);
     }
 

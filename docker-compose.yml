@@ -16,7 +16,6 @@ services:
       - "5432:5432"
     volumes:
       - /var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
   redis:
     image: redis:latest
@@ -31,7 +30,7 @@ services:
     restart: always
 
   mongo:
-    image: mongodb/mongodb-community-server:8.0.8-ubuntu2204
+    image: mongo:noble
     container_name: pre-event-mongodb
     ports:
       - "27017:27017"

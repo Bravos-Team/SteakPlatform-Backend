@@ -1,0 +1,73 @@
+name: CI - Build and Deploy Spring Boot
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build:
+    services:
+      postgresql:
+        image: postgres:15
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: devdb
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup AtlasCLI
+        uses: ariga/setup-atlas@master
+
+      - name: Lint migrations
+        uses: ariga/atlas-action/migrate/lint@v1
+        with:
+          dir: 'file://migrations'
+          dev-url: 'postgres://postgres:password@localhost:5432/devdb?sslmode=disable'
+          dir-name: 'migrations'
+
+      - name: Apply migrations
+        uses: ariga/atlas-action/migrate/apply@v1
+        with:
+          dir: 'file://migrations'
+          url: ${{ secrets.POSTGRES_URL }}
+
+      - name: Build docker image
+        run: |
+          docker login --username ${{ secrets.DOCKER_USERNAME }} --password ${{ secrets.DOCKER_PASSWORD }}
+          docker build -t bravos/steak-server:latest .
+          docker push bravos/steak-server:latest
+
+      - name: Deploy
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.PRIVATE_KEY }}
+          port: ${{ secrets.PORT }}
+          script: |
+            docker login --username ${{ secrets.DOCKER_USERNAME }} --password ${{ secrets.DOCKER_PASSWORD }}
+            docker stop steak-server || true
+            docker rm steak-server || true
+            docker pull bravos/steak-server:latest
+            docker run --memory="1.4g" -d -p 8888:8888 --name steak-server \
+              -e AZURE_CLIENT_ID \
+              -e AZURE_CLIENT_SECRET \
+              -e AZURE_TENANT_ID \
+              -e KEY_IDENTIFIER \
+              -e VAULT_URL \
+              -e SPRING_PROFILES_ACTIVE=prod \
+              bravos/steak-server:latest
+            sleep 10
+            docker ps | grep steak-server || (echo "Container failed to start" && exit 1)
+          

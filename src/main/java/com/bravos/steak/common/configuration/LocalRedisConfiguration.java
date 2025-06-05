@@ -36,11 +36,11 @@ public class LocalRedisConfiguration {
         LettuceClientConfiguration clientConfiguration = LettuceClientConfiguration.builder()
                 .clientOptions(options)
                 .build();
-        String[] redisHostPort = keyVaultService.getSecretKey("redis-host-port").split(":");
+        String[] redisHostPort = keyVaultService.getSecretKey(System.getProperty("REDIS_HOST_PORT")).split(":");
         RedisStandaloneConfiguration redisConfig = new RedisStandaloneConfiguration();
         redisConfig.setHostName(redisHostPort[0]);
         redisConfig.setPort(Integer.parseInt(redisHostPort[1]));
-        redisConfig.setPassword(keyVaultService.getSecretKey("redis-password"));
+        redisConfig.setPassword(keyVaultService.getSecretKey(System.getProperty("REDIS_PASSWORD")));
         log.info("Using product redis config");
         return new LettuceConnectionFactory(redisConfig,clientConfiguration);
     }
