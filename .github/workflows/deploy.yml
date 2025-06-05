@@ -30,17 +30,17 @@ jobs:
         uses: ariga/setup-atlas@master
 
       - name: Lint migrations
-        uses: ariga/atlas-action/migrate/lint@v1
-        with:
-          dir: 'file://migrations'
-          dev-url: 'postgres://postgres:password@localhost:5432/devdb?sslmode=disable'
-          dir-name: 'migrations'
+        run: |
+          atlas migrate lint \
+            --dir "file://migrations" \
+            --dev-url "postgres://postgres:password@localhost:5432/devdb?sslmode=disable"
 
-      - name: Apply migrations
-        uses: ariga/atlas-action/migrate/apply@v1
-        with:
-          dir: 'file://migrations'
-          url: ${{ secrets.POSTGRES_URL }}
+      - name: Apply migrations (local)
+        run: |
+          atlas migrate apply \
+            --dir "file://migrations" \
+            --url "${{ secrets.POSTGRES_URL }}"
+      
 
       - name: Build docker image
         run: |
