@@ -20,8 +20,8 @@ public class S3Configuration {
     @Bean
     @Profile("prod")
     public AwsCredentialsProvider cloudflareCredentialsProvider(KeyVaultService keyVaultService) {
-        String cfs3AccessKey = keyVaultService.getSecretKey("cf-s3-access-key");
-        String cfs3SecretKey = keyVaultService.getSecretKey("cf-s3-secret-key");
+        String cfs3AccessKey = keyVaultService.getSecretKey(System.getProperty("CF_S3_ACCESS_KEY"));
+        String cfs3SecretKey = keyVaultService.getSecretKey(System.getProperty("CF_S3_SECRET_KEY"));
         return StaticCredentialsProvider
                 .create(AwsBasicCredentials.
                         create(cfs3AccessKey,cfs3SecretKey));
@@ -33,7 +33,7 @@ public class S3Configuration {
                                        KeyVaultService keyVaultService) {
         return S3Client.builder()
                 .region(Region.US_EAST_1)
-                .endpointOverride(URI.create(keyVaultService.getSecretKey("cf-s3-endpoint")))
+                .endpointOverride(URI.create(keyVaultService.getSecretKey(System.getProperty("CF_S3_ENDPOINT"))))
                 .credentialsProvider(awsCredentialsProvider)
                 .build();
     }
@@ -44,7 +44,7 @@ public class S3Configuration {
                                              KeyVaultService keyVaultService) {
         return S3Presigner.builder()
                 .region(Region.US_EAST_1)
-                .endpointOverride(URI.create(keyVaultService.getSecretKey("cf-s3-endpoint")))
+                .endpointOverride(URI.create(keyVaultService.getSecretKey(System.getProperty("CF_S3_ENDPOINT"))))
                 .credentialsProvider(awsCredentialsProvider)
                 .build();
     }

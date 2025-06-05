@@ -18,7 +18,7 @@ table "game" {
   }
   column "price" {
     null = false
-    type = numeric(13,2)
+    type = numeric(13, 2)
   }
   column "status" {
     null = false
@@ -184,6 +184,11 @@ table "genre" {
   column "id" {
     null = false
     type = integer
+    identity {
+      generated = ALWAYS
+      start     = 1
+      increment = 1
+    }
   }
   column "name" {
     null = false
@@ -361,6 +366,11 @@ table "publisher_permission" {
   column "id" {
     null = false
     type = integer
+    identity {
+      generated = ALWAYS
+      start     = 1
+      increment = 1
+    }
   }
   column "group_id" {
     null = false
@@ -396,6 +406,11 @@ table "publisher_permission_group" {
   column "id" {
     null = false
     type = integer
+    identity {
+      generated = ALWAYS
+      start     = 1
+      increment = 1
+    }
   }
   column "name" {
     null = false
@@ -542,6 +557,11 @@ table "tag" {
   column "id" {
     null = false
     type = integer
+    identity {
+      generated = ALWAYS
+      start     = 1
+      increment = 1
+    }
   }
   column "name" {
     null = false
@@ -850,7 +870,7 @@ table "admin_account_role" {
   }
   foreign_key "admin_account_role_admin_role_id_fkey" {
     columns     = [column.admin_role_id]
-    ref_columns = [table.admin_account.column.id]
+    ref_columns = [table.admin_role.column.id]
     on_update   = NO_ACTION
     on_delete   = NO_ACTION
   }
@@ -863,6 +883,11 @@ table "admin_permission" {
   column "id" {
     null = false
     type = integer
+    identity {
+      generated = ALWAYS
+      start     = 1
+      increment = 1
+    }
   }
   column "group_id" {
     null = false
@@ -898,6 +923,11 @@ table "admin_permission_group" {
   column "id" {
     null = false
     type = integer
+    identity {
+      generated = ALWAYS
+      start     = 1
+      increment = 1
+    }
   }
   column "name" {
     null = false

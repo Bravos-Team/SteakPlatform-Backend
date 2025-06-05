@@ -1,7 +1,6 @@
 package com.bravos.steak.dev.service.impl;
 
-import com.bravos.steak.common.security.JwtAuthentication;
-import com.bravos.steak.common.service.auth.SessionService;
+import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
 import com.bravos.steak.common.service.storage.impl.CloudflareS3Service;
 import com.bravos.steak.dev.model.request.ImageUploadPresignedRequest;
 import com.bravos.steak.dev.model.response.PresignedUrlResponse;
@@ -10,18 +9,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.util.UUID;
 
 @Slf4j
 @Service
 public class PublisherUploadServiceImpl implements PublisherUploadService {
 
     private final CloudflareS3Service cloudflareS3Service;
-    private final SessionService sessionService;
+    private final SnowflakeGenerator snowflakeGenerator;
 
-    public PublisherUploadServiceImpl(CloudflareS3Service cloudflareS3Service, SessionService sessionService) {
+    public PublisherUploadServiceImpl(CloudflareS3Service cloudflareS3Service, SnowflakeGenerator snowflakeGenerator) {
         this.cloudflareS3Service = cloudflareS3Service;
-        this.sessionService = sessionService;
+        this.snowflakeGenerator = snowflakeGenerator;
     }
 
     @Override
@@ -29,9 +27,7 @@ public class PublisherUploadServiceImpl implements PublisherUploadService {
         String fileName = imageUploadPresignedRequest.getFileName();
         long fileSize = imageUploadPresignedRequest.getFileSize();
         String extension = fileName.substring(fileName.lastIndexOf("."));
-        JwtAuthentication authentication = sessionService.getAuthentication();
-        String folder = "publisher/" + authentication.getName();
-        String objectName = folder + "/" + UUID.randomUUID() + extension;
+        String objectName = snowflakeGenerator.generateId() + extension;
         try {
             String signedUrl = cloudflareS3Service.generateS3PutSignedUrl(
                     System.getProperty("CF_S3_BUCKET_NAME"),

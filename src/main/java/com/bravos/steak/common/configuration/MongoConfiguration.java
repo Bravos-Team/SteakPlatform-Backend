@@ -20,7 +20,7 @@ public class MongoConfiguration {
     @Profile("dev")
     public MongoClient devMongoClient() {
         try {
-            ConnectionString connectionString = new ConnectionString(System.getProperty("MONGO_CONN_STRING"));
+            ConnectionString connectionString = new ConnectionString(System.getProperty("MONGO_CONNECTION_STRING"));
             log.info("Using dev mongodb");
             return MongoClients.create(connectionString);
         } catch (Exception e) {
@@ -32,7 +32,8 @@ public class MongoConfiguration {
     @Profile("prod")
     public MongoClient prodMongoClient(KeyVaultService keyVaultService) {
         try {
-            ConnectionString connectionString = new ConnectionString(keyVaultService.getSecretKey("mongo-connection-string"));
+            ConnectionString connectionString = new ConnectionString(
+                    keyVaultService.getSecretKey(System.getProperty("MONGO_CONNECTION_STRING")));
             connectionString.getHosts().forEach(host -> log.info("Using mongodb host: {}",host));
             log.info("Using prod mongodb in {}", connectionString.getHosts().getFirst());
             return MongoClients.create(connectionString);

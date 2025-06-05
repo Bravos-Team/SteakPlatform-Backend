@@ -6,16 +6,16 @@ CREATE TABLE "public"."admin_account" ("id" bigint NOT NULL, "username" characte
 CREATE INDEX "idx_admin_email" ON "public"."admin_account" ("username");
 -- Create index "idx_admin_username" to table: "admin_account"
 CREATE INDEX "idx_admin_username" ON "public"."admin_account" ("username");
+-- Create "admin_role" table
+CREATE TABLE "public"."admin_role" ("id" bigint NOT NULL, "name" character varying(255) NOT NULL, "active" boolean NOT NULL DEFAULT true, "description" character varying(255) NULL, "updated_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY ("id"));
 -- Create "admin_account_role" table
-CREATE TABLE "public"."admin_account_role" ("admin_account_id" bigint NOT NULL, "admin_role_id" bigint NOT NULL, PRIMARY KEY ("admin_account_id", "admin_role_id"), CONSTRAINT "admin_account_role_admin_account_id_fkey" FOREIGN KEY ("admin_account_id") REFERENCES "public"."admin_account" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION, CONSTRAINT "admin_account_role_admin_role_id_fkey" FOREIGN KEY ("admin_role_id") REFERENCES "public"."admin_account" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION);
+CREATE TABLE "public"."admin_account_role" ("admin_account_id" bigint NOT NULL, "admin_role_id" bigint NOT NULL, PRIMARY KEY ("admin_account_id", "admin_role_id"), CONSTRAINT "admin_account_role_admin_account_id_fkey" FOREIGN KEY ("admin_account_id") REFERENCES "public"."admin_account" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION, CONSTRAINT "admin_account_role_admin_role_id_fkey" FOREIGN KEY ("admin_role_id") REFERENCES "public"."admin_role" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION);
 -- Create index "idx_admin_account_role_account_id" to table: "admin_account_role"
 CREATE INDEX "idx_admin_account_role_account_id" ON "public"."admin_account_role" ("admin_account_id");
 -- Create "admin_permission_group" table
-CREATE TABLE "public"."admin_permission_group" ("id" integer NOT NULL, "name" character varying(255) NOT NULL, "description" character varying(255) NULL, PRIMARY KEY ("id"));
+CREATE TABLE "public"."admin_permission_group" ("id" integer NOT NULL GENERATED ALWAYS AS IDENTITY, "name" character varying(255) NOT NULL, "description" character varying(255) NULL, PRIMARY KEY ("id"));
 -- Create "admin_permission" table
-CREATE TABLE "public"."admin_permission" ("id" integer NOT NULL, "group_id" integer NOT NULL, "name" character varying(64) NOT NULL, "description" character varying(255) NULL, "authorities" jsonb NOT NULL, PRIMARY KEY ("id"), CONSTRAINT "admin_permission_name_key" UNIQUE ("name"), CONSTRAINT "admin_permission_group_id_fkey" FOREIGN KEY ("group_id") REFERENCES "public"."admin_permission_group" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION);
--- Create "admin_role" table
-CREATE TABLE "public"."admin_role" ("id" bigint NOT NULL, "name" character varying(255) NOT NULL, "active" boolean NOT NULL DEFAULT true, "description" character varying(255) NULL, "updated_at" timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY ("id"));
+CREATE TABLE "public"."admin_permission" ("id" integer NOT NULL GENERATED ALWAYS AS IDENTITY, "group_id" integer NOT NULL, "name" character varying(64) NOT NULL, "description" character varying(255) NULL, "authorities" jsonb NOT NULL, PRIMARY KEY ("id"), CONSTRAINT "admin_permission_name_key" UNIQUE ("name"), CONSTRAINT "admin_permission_group_id_fkey" FOREIGN KEY ("group_id") REFERENCES "public"."admin_permission_group" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION);
 -- Create "admin_permission_role" table
 CREATE TABLE "public"."admin_permission_role" ("admin_role_id" bigint NOT NULL, "admin_permission_id" integer NOT NULL, PRIMARY KEY ("admin_role_id", "admin_permission_id"), CONSTRAINT "admin_permission_role_admin_permission_id_fkey" FOREIGN KEY ("admin_permission_id") REFERENCES "public"."admin_permission" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION, CONSTRAINT "admin_permission_role_admin_role_id_fkey" FOREIGN KEY ("admin_role_id") REFERENCES "public"."admin_role" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION);
 -- Create index "idx_admin_permission_id" to table: "admin_permission_role"
@@ -39,7 +39,7 @@ CREATE INDEX "idx_game_publisher" ON "public"."game" ("publisher_id");
 -- Create index "idx_game_release_date" to table: "game"
 CREATE INDEX "idx_game_release_date" ON "public"."game" ("release_date");
 -- Create "genre" table
-CREATE TABLE "public"."genre" ("id" integer NOT NULL, "name" character varying(64) NOT NULL, "description" text NULL, "slug" character varying(128) NOT NULL, PRIMARY KEY ("id"), CONSTRAINT "genre_slug_key" UNIQUE ("slug"));
+CREATE TABLE "public"."genre" ("id" integer NOT NULL GENERATED ALWAYS AS IDENTITY, "name" character varying(64) NOT NULL, "description" text NULL, "slug" character varying(128) NOT NULL, PRIMARY KEY ("id"), CONSTRAINT "genre_slug_key" UNIQUE ("slug"));
 -- Create index "idx_genre_slug" to table: "genre"
 CREATE INDEX "idx_genre_slug" ON "public"."genre" ("slug");
 -- Create "game_genre" table
@@ -49,7 +49,7 @@ CREATE INDEX "idx_genre_game" ON "public"."game_genre" ("game_id");
 -- Create index "idx_genre_genre" to table: "game_genre"
 CREATE INDEX "idx_genre_genre" ON "public"."game_genre" ("genre_id");
 -- Create "tag" table
-CREATE TABLE "public"."tag" ("id" integer NOT NULL, "name" character varying(64) NOT NULL, "description" text NULL, "slug" character varying(128) NOT NULL, PRIMARY KEY ("id"), CONSTRAINT "tag_slug_key" UNIQUE ("slug"));
+CREATE TABLE "public"."tag" ("id" integer NOT NULL GENERATED ALWAYS AS IDENTITY, "name" character varying(64) NOT NULL, "description" text NULL, "slug" character varying(128) NOT NULL, PRIMARY KEY ("id"), CONSTRAINT "tag_slug_key" UNIQUE ("slug"));
 -- Create index "idx_tag_slug" to table: "tag"
 CREATE INDEX "idx_tag_slug" ON "public"."tag" ("slug");
 -- Create "game_tag" table
@@ -83,9 +83,9 @@ CREATE INDEX "idx_publisher_account_role_account_id" ON "public"."publisher_acco
 -- Create index "idx_publisher_account_role_both" to table: "publisher_account_role"
 CREATE INDEX "idx_publisher_account_role_both" ON "public"."publisher_account_role" ("publisher_account_id", "publisher_role_id");
 -- Create "publisher_permission_group" table
-CREATE TABLE "public"."publisher_permission_group" ("id" integer NOT NULL, "name" character varying(255) NOT NULL, "description" character varying(255) NULL, PRIMARY KEY ("id"));
+CREATE TABLE "public"."publisher_permission_group" ("id" integer NOT NULL GENERATED ALWAYS AS IDENTITY, "name" character varying(255) NOT NULL, "description" character varying(255) NULL, PRIMARY KEY ("id"));
 -- Create "publisher_permission" table
-CREATE TABLE "public"."publisher_permission" ("id" integer NOT NULL, "group_id" integer NOT NULL, "name" character varying(64) NOT NULL, "description" character varying(255) NULL, "authorities" jsonb NOT NULL, PRIMARY KEY ("id"), CONSTRAINT "publisher_permission_name_key" UNIQUE ("name"), CONSTRAINT "publisher_permission_group_id_fkey" FOREIGN KEY ("group_id") REFERENCES "public"."publisher_permission_group" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION);
+CREATE TABLE "public"."publisher_permission" ("id" integer NOT NULL GENERATED ALWAYS AS IDENTITY, "group_id" integer NOT NULL, "name" character varying(64) NOT NULL, "description" character varying(255) NULL, "authorities" jsonb NOT NULL, PRIMARY KEY ("id"), CONSTRAINT "publisher_permission_name_key" UNIQUE ("name"), CONSTRAINT "publisher_permission_group_id_fkey" FOREIGN KEY ("group_id") REFERENCES "public"."publisher_permission_group" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION);
 -- Create "publisher_permission_role" table
 CREATE TABLE "public"."publisher_permission_role" ("publisher_role_id" bigint NOT NULL, "publisher_permission_id" integer NOT NULL, PRIMARY KEY ("publisher_role_id", "publisher_permission_id"), CONSTRAINT "publisher_permission_role_publisher_permission_id_fkey" FOREIGN KEY ("publisher_permission_id") REFERENCES "public"."publisher_permission" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION, CONSTRAINT "publisher_permission_role_publisher_role_id_fkey" FOREIGN KEY ("publisher_role_id") REFERENCES "public"."publisher_role" ("id") ON UPDATE NO ACTION ON DELETE NO ACTION);
 -- Create index "idx_permission_id" to table: "publisher_permission_role"

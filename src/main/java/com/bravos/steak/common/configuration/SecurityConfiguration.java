@@ -1,6 +1,6 @@
 package com.bravos.steak.common.configuration;
 
-import com.bravos.steak.common.filter.AdminFilter;
+import com.bravos.steak.common.filter.BenchmarkFilter;
 import com.bravos.steak.common.filter.JwtFilter;
 import com.bravos.steak.exceptions.ErrorResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -8,7 +8,6 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -28,7 +27,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 @Configuration
 @RequiredArgsConstructor
@@ -36,7 +34,7 @@ import java.util.Map;
 public class SecurityConfiguration implements WebMvcConfigurer {
 
     private final JwtFilter jwtFilter;
-    private final AdminFilter adminFilter;
+    private final BenchmarkFilter benchmarkFilter;
     private final ObjectMapper objectMapper;
 
     @Bean
@@ -64,13 +62,10 @@ public class SecurityConfiguration implements WebMvcConfigurer {
 
             request.requestMatchers(
                             "/api/v1/user/**",
-                            "/api/v1/store/**",
-                            "/api/v1/admin/**",
+                            "/api/v1/store/private/**",
                             "/api/v1/hub/**",
                             "/api/v1/support/**")
                     .authenticated();
-
-            request.anyRequest().denyAll();
 
         });
 
@@ -86,8 +81,9 @@ public class SecurityConfiguration implements WebMvcConfigurer {
                 .logout(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable);
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
-        http.addFilterAfter(adminFilter, JwtFilter.class);
+        http.addFilterAfter(benchmarkFilter, JwtFilter.class);
         return http.build();
+
     }
 
     @Bean

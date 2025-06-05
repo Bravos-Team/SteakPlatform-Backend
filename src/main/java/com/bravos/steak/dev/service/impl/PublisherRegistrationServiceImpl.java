@@ -40,7 +40,7 @@ public class PublisherRegistrationServiceImpl implements PublisherRegistrationSe
     private final EmailService emailService;
     private final SnowflakeGenerator snowflakeGenerator;
 
-    private final PublisherRole MASTER_ROLE = new PublisherRole(0L);
+    private final PublisherRole MASTER_ROLE = new PublisherRole(9056664623308800L);
 
     @Autowired
     public PublisherRegistrationServiceImpl(PublisherAccountRepository publisherAccountRepository, PublisherRepository publisherRepository,
@@ -54,6 +54,7 @@ public class PublisherRegistrationServiceImpl implements PublisherRegistrationSe
         this.objectMapper = objectMapper;
         this.emailService = emailService;
         this.snowflakeGenerator = snowflakeGenerator;
+
     }
 
     @Override

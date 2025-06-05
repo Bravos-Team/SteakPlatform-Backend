@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.bravos</groupId>
     <artifactId>steak</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>1.0.0</version>
     <name>steak</name>
     <description>steak</description>
     <url/>
@@ -140,24 +140,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-webflux</artifactId>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk18on -->
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcprov-jdk18on</artifactId>
-            <version>1.79</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.bouncycastle/bcpkix-jdk18on -->
-        <dependency>
-            <groupId>org.bouncycastle</groupId>
-            <artifactId>bcpkix-jdk18on</artifactId>
-            <version>1.79</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.redisson/redisson -->
-        <dependency>
-            <groupId>org.redisson</groupId>
-            <artifactId>redisson</artifactId>
-            <version>3.45.1</version>
-        </dependency>
         <!-- https://mvnrepository.com/artifact/software.amazon.awssdk/s3 -->
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
@@ -187,12 +169,6 @@
             <groupId>com.azure</groupId>
             <artifactId>azure-security-keyvault-keys</artifactId>
             <version>4.9.4</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/io.atlasgo/hibernate-provider -->
-        <dependency>
-            <groupId>io.atlasgo</groupId>
-            <artifactId>hibernate-provider</artifactId>
-            <version>3.8.2</version>
         </dependency>
     </dependencies>
 
@@ -231,11 +207,6 @@
                         </path>
                     </annotationProcessorPaths>
                 </configuration>
-            </plugin>
-            <plugin>
-                <groupId>io.atlasgo</groupId>
-                <artifactId>hibernate-provider-maven-plugin</artifactId>
-                <version>0.1</version>
             </plugin>
         </plugins>
     </build>
