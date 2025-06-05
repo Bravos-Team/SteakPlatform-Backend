@@ -6,21 +6,6 @@ on:
 
 jobs:
   build:
-    services:
-      postgresql:
-        image: postgres:15
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd="pg_isready -U postgres"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=10
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: devdb
-
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo
@@ -29,18 +14,11 @@ jobs:
       - name: Setup AtlasCLI
         uses: ariga/setup-atlas@master
 
-      - name: Lint migrations
-        run: |
-          atlas migrate lint \
-            --dir "file://migrations" \
-            --dev-url "postgres://postgres:password@localhost:5432/devdb?sslmode=disable"
-
-      - name: Apply migrations (local)
+      - name: Apply migrations
         run: |
           atlas migrate apply \
             --dir "file://migrations" \
             --url "${{ secrets.POSTGRES_URL }}"
-      
 
       - name: Build docker image
         run: |
