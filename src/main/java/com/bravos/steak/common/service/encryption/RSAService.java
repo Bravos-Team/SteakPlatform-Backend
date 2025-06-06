@@ -45,7 +45,8 @@ public interface RSAService {
             publicKey = publicKey
                     .replace("-----BEGIN PUBLIC KEY-----", "")
                     .replace("-----END PUBLIC KEY-----", "")
-                    .replaceAll("\n", "");
+                    .replaceAll("\n", "")
+                    .replaceAll(" ","");
             byte[] publicKeyBytes = Base64.getDecoder().decode(publicKey);
             X509EncodedKeySpec keySpec = new X509EncodedKeySpec(publicKeyBytes);
             KeyFactory keyFactory = KeyFactory.getInstance("RSA");
@@ -62,7 +63,8 @@ public interface RSAService {
             privateKey = privateKey
                     .replace("-----BEGIN PRIVATE KEY-----", "")
                     .replace("-----END PRIVATE KEY-----", "")
-                    .replaceAll("\n", "");
+                    .replaceAll("\n", "")
+                    .replaceAll(" ","");
             byte[] privateKeyBytes = Base64.getDecoder().decode(privateKey);
             PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(privateKeyBytes);
             KeyFactory keyFactory = KeyFactory.getInstance("RSA");
