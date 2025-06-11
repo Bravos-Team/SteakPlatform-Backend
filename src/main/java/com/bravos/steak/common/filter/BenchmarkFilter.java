@@ -29,7 +29,9 @@ public class BenchmarkFilter extends OncePerRequestFilter {
 
         long responseTime = System.currentTimeMillis() - startTime;
 
-        log.info("Request completed {} in {} ms with status {}", request.getRequestURI(), responseTime, response.getStatus());
+        log.info("{} from {} executed {} in {} ms with status {}",
+                request.getMethod(), request.getRemoteAddr(),
+                request.getRequestURI(), responseTime, response.getStatus());
 
     }
 

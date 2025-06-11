@@ -34,7 +34,7 @@ SELECT id,
     'Master',
     'Can do everything',
     '[
-      "PUBLISHER_MASTER"
+      "ADMIN_MASTER"
     ]'
 FROM admin_group_ins
     RETURNING id)

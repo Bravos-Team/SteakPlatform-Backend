@@ -5,7 +5,7 @@ import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.LocalDate;
+import java.util.Date;
 
 @Document("UserProfile")
 @Getter
@@ -19,7 +19,7 @@ public class UserProfile {
 
     private String displayName;
 
-    private LocalDate birthDate;
+    private Date birthDate;
 
     private Boolean sex;
 

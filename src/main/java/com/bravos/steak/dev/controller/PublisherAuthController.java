@@ -2,7 +2,6 @@ package com.bravos.steak.dev.controller;
 
 import com.bravos.steak.common.entity.Account;
 import com.bravos.steak.common.service.auth.AuthService;
-import com.bravos.steak.dev.entity.PublisherAccount;
 import com.bravos.steak.dev.model.request.PublisherRegistrationRequest;
 import com.bravos.steak.dev.service.PublisherRegistrationService;
 import com.bravos.steak.useraccount.model.request.EmailLoginRequest;

@@ -18,6 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -85,6 +86,12 @@ public class PublisherAuthService extends AuthService {
             log.error("Error when get publisher refresh token: ",e);
             return null;
         }
+    }
+
+    @Override
+    protected Map<String, Object> otherClaims(Account account) {
+        Long publisherId = ((PublisherAccount) account).getPublisher().getId();
+        return Map.of("publisherId",publisherId);
     }
 
 }
