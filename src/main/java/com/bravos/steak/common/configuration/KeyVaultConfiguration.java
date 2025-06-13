@@ -38,15 +38,6 @@ public class KeyVaultConfiguration {
     }
 
     @Bean
-    public CryptographyClient cryptographyClient(TokenCredential tokenCredential) {
-        return new CryptographyClientBuilder()
-                .credential(tokenCredential)
-                .keyIdentifier(System.getenv("KEY_IDENTIFIER"))
-                .retryOptions(new RetryOptions(new FixedDelayOptions(5,Duration.ofSeconds(2))))
-                .buildClient();
-    }
-
-    @Bean
     public SecretClient secretClient(TokenCredential tokenCredential) {
         final String vaultUrl = System.getenv("VAULT_URL");
         if(vaultUrl == null || vaultUrl.isBlank()) {

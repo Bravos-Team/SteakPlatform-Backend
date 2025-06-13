@@ -22,7 +22,8 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
     private final GameSubmissionRepository gameSubmissionRepository;
 
     @Autowired
-    public PublisherPublishGameServiceImpl(SnowflakeGenerator snowflakeGenerator, GameSubmissionRepository gameSubmissionRepository) {
+    public PublisherPublishGameServiceImpl(SnowflakeGenerator snowflakeGenerator,
+                                           GameSubmissionRepository gameSubmissionRepository) {
         this.snowflakeGenerator = snowflakeGenerator;
         this.gameSubmissionRepository = gameSubmissionRepository;
     }
@@ -37,7 +38,7 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
             long submissionId = snowflakeGenerator.generateId();
 
             if(gameSubmissionRepository.findByNameAndPublisherId(projectName,publisherId) != null) {
-                throw new ConflictDataException("Project name is existed");
+                throw new ConflictDataException("Project name is existed in your submissions");
             }
 
             GameSubmission gameSubmission = new GameSubmission(submissionId,publisherId,createrid,projectName);
