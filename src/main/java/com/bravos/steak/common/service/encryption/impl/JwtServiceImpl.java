@@ -5,8 +5,10 @@ import com.bravos.steak.common.service.encryption.JwtService;
 import com.bravos.steak.common.service.encryption.KeyVaultService;
 import com.bravos.steak.common.service.encryption.RSAService;
 import com.bravos.steak.exceptions.UnauthorizeException;
+import com.fasterxml.jackson.databind.DatabindException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.*;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -14,8 +16,12 @@ import org.springframework.stereotype.Service;
 import java.io.*;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.Date;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -85,30 +91,39 @@ public class JwtServiceImpl implements JwtService {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public JwtTokenClaims getClaims(String token) {
-        try {
-            Claims claims = Jwts.parser()
-                    .verifyWith(publicKey)
-                    .build()
-                    .parseSignedClaims(token)
-                    .getPayload();
+        String[] parts = token.split("\\.");
 
-            return JwtTokenClaims.builder()
-                    .id(Long.valueOf(claims.getSubject()))
-                    .role(claims.get("role", String.class))
-                    .authorities(claims.get("authorities", Collection.class))
-                    .iat(claims.get("iat", Long.class))
-                    .exp(claims.get("exp", Long.class))
-                    .jti(Long.valueOf(claims.get("jti", String.class)))
-                    .build();
-        } catch (ExpiredJwtException e) {
-            throw new UnauthorizeException("Token has expired");
-        } catch (JwtException | IllegalArgumentException e) {
-            log.error("Token is invalid: {}", e.getMessage());
+        if(parts.length != 3) {
             throw new UnauthorizeException("Token is invalid");
         }
+
+        if(!rSAService.verifyData(parts[0] + "." + parts[1],parts[2],publicKey)) {
+            throw new UnauthorizeException("Token is invalid");
+        }
+
+        JwtTokenClaims payload;
+        try {
+            payload = objectMapper.readValue(
+                    Base64.getUrlDecoder().decode(parts[1]),
+                    JwtTokenClaims.class
+            );
+
+        } catch (IOException e) {
+            log.error("Token is invalid: {}", e.getMessage(), e);
+            throw new UnauthorizeException("Token is invalid");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+
+        if(payload == null ||
+                now.isBefore(LocalDateTime.ofInstant(Instant.ofEpochSecond(payload.getIat()),ZoneOffset.UTC)) ||
+                now.isAfter(LocalDateTime.ofInstant(Instant.ofEpochSecond(payload.getExp()), ZoneOffset.UTC))) {
+            throw new UnauthorizeException("Token is invalid");
+        }
+
+        return payload;
     }
 
 }

@@ -11,6 +11,11 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.mongodb.MongoDatabaseFactory;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.SimpleMongoClientDatabaseFactory;
+import org.springframework.data.mongodb.core.convert.DbRefResolver;
+import org.springframework.data.mongodb.core.convert.DefaultDbRefResolver;
+import org.springframework.data.mongodb.core.convert.DefaultMongoTypeMapper;
+import org.springframework.data.mongodb.core.convert.MappingMongoConverter;
+import org.springframework.data.mongodb.core.mapping.MongoMappingContext;
 
 @Slf4j
 @Configuration
@@ -48,8 +53,19 @@ public class MongoConfiguration {
     }
 
     @Bean
-    public MongoTemplate mongoTemplate(MongoDatabaseFactory mongoDatabaseFactory) {
-        return new MongoTemplate(mongoDatabaseFactory);
+    public DbRefResolver dbRefResolver(MongoDatabaseFactory mongoDatabaseFactory) {
+        return new DefaultDbRefResolver(mongoDatabaseFactory);
+    }
+
+    @Bean
+    public MappingMongoConverter mappingMongoConverter(DbRefResolver dbRefResolver) {
+        return new MappingMongoConverter(dbRefResolver,new MongoMappingContext());
+    }
+
+    @Bean
+    public MongoTemplate mongoTemplate(MongoDatabaseFactory mongoDatabaseFactory, MappingMongoConverter mappingMongoConverter) {
+        mappingMongoConverter.setTypeMapper(new DefaultMongoTypeMapper(null));
+        return new MongoTemplate(mongoDatabaseFactory,mappingMongoConverter);
     }
 
 }

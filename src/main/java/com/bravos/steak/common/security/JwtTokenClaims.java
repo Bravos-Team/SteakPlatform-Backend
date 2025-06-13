@@ -29,14 +29,17 @@ public class JwtTokenClaims {
     @NonNull
     private Long jti;
 
+    private Map<String,Object> otherClaims;
+
     public Map<String, Object> toMap() {
         return Map.of(
-                "sub", id + "",
-                "role", role,
-                "authorities", authorities,
-                "iat", iat,
-                "exp", exp,
-                "jti", jti + ""
+                "id",id,
+                "role",role,
+                "authorities",authorities,
+                "iat",iat,
+                "exp",exp,
+                "jti",jti,
+                "otherClaims",otherClaims
         );
     }
 

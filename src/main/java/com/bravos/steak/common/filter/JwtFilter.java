@@ -55,7 +55,7 @@ public class JwtFilter extends OncePerRequestFilter {
         }
 
         try {
-            tokenClaims = jwtService.getClaims(token);
+            tokenClaims = jwtService.getClaims(token.trim());
         } catch (Exception e) {
             logger.warn(e.getMessage());
         }

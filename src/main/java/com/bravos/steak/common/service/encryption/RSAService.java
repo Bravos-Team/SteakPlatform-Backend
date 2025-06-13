@@ -28,7 +28,9 @@ public interface RSAService {
 
     String getSignatureData(String data, PrivateKey privateKey);
 
-    boolean verifyData(String data, String signature, String publicKey);
+    boolean verifyData(String data, String signatureData, String publicKey);
+
+    boolean verifyData(String data, String signatureData, PublicKey publicKey);
 
     String generatePrivateKey();
 

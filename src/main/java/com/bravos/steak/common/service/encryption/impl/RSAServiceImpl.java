@@ -101,10 +101,15 @@ public class RSAServiceImpl implements RSAService {
 
     @Override
     public boolean verifyData(String data, String signatureData, String publicKey) {
+        return verifyData(data,signatureData,convertPublicKey(publicKey));
+    }
+
+    @Override
+    public boolean verifyData(String data, String signatureData, PublicKey publicKey) {
         try {
             Signature signature = Signature.getInstance("SHA256withRSA");
-            byte[] signedDataBytes = Base64.getDecoder().decode(signatureData);
-            signature.initVerify(convertPublicKey(publicKey));
+            byte[] signedDataBytes = Base64.getUrlDecoder().decode(signatureData);
+            signature.initVerify(publicKey);
             signature.update(data.getBytes());
             return signature.verify(signedDataBytes);
         } catch (InvalidKeyException | SignatureException | NoSuchAlgorithmException e) {

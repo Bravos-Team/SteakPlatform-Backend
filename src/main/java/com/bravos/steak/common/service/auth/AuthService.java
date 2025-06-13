@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -41,7 +42,7 @@ public abstract class AuthService {
     private final HttpServletRequest httpServletRequest;
 
     public static final String ACCESS_TOKEN_NAME = "access_token";
-    public static final String REFRESH_TOKEN_NAME = "refresht_token";
+    public static final String REFRESH_TOKEN_NAME = "refresh_token";
 
     public Account login(UsernameLoginRequest usernameLoginRequest) {
 
@@ -191,7 +192,9 @@ public abstract class AuthService {
                 .authorities(account.getPermissions())
                 .iat(now.toEpochSecond(ZoneOffset.UTC))
                 .exp(now.plusSeconds(Long.parseLong(System.getProperty("USER_TOKEN_EXP"))).toEpochSecond(ZoneOffset.UTC))
-                .role(account.getRole().getAuthority()).build();
+                .role(account.getRole().getAuthority())
+                .otherClaims(this.otherClaims(account))
+                .build();
         return jwtService.generateToken(jwtTokenClaims);
     }
 
@@ -225,5 +228,9 @@ public abstract class AuthService {
     protected abstract RefreshToken createRefreshToken(Account account, String deviceId, String deviceInfo);
 
     protected abstract RefreshToken getRefreshToken(String token, String deviceId);
+
+    protected Map<String,Object> otherClaims(Account account) {
+        return null;
+    }
 
 }
