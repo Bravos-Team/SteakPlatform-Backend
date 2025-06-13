@@ -29,8 +29,10 @@ public class BenchmarkFilter extends OncePerRequestFilter {
 
         long responseTime = System.currentTimeMillis() - startTime;
 
+        String ip = request.getHeader("X-Real-IP");
+
         log.info("{} from {} executed {} in {} ms with status {}",
-                request.getMethod(), request.getRemoteAddr(),
+                request.getMethod(), ip == null ? "undefined" : ip,
                 request.getRequestURI(), responseTime, response.getStatus());
 
     }
