@@ -3,12 +3,11 @@ package com.bravos.steak.dev.controller;
 import com.bravos.steak.common.annotation.HasAuthority;
 import com.bravos.steak.common.annotation.PublisherController;
 import com.bravos.steak.dev.model.PublisherAuthority;
+import com.bravos.steak.dev.model.request.SaveProjectRequest;
 import com.bravos.steak.dev.service.PublisherPublishGameService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
@@ -29,6 +28,13 @@ public class PublishGameController {
         return ResponseEntity.ok(Map.of(
                 "projectId",publisherPublishGameService.createProject(name)
         ));
+    }
+
+    @HasAuthority({PublisherAuthority.CREATE_GAME})
+    @PostMapping("/update-project")
+    public ResponseEntity<?> saveDraftProject(@RequestBody @Validated SaveProjectRequest saveProjectRequest) {
+        publisherPublishGameService.saveDraftProject(saveProjectRequest);
+        return ResponseEntity.ok().build();
     }
 
 }

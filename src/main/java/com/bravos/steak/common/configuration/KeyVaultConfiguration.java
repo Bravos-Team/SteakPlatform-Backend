@@ -1,11 +1,8 @@
 package com.bravos.steak.common.configuration;
 
 import com.azure.core.credential.TokenCredential;
-import com.azure.core.http.policy.FixedDelayOptions;
-import com.azure.core.http.policy.RetryOptions;
+
 import com.azure.identity.ClientSecretCredentialBuilder;
-import com.azure.security.keyvault.keys.cryptography.CryptographyClient;
-import com.azure.security.keyvault.keys.cryptography.CryptographyClientBuilder;
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.SecretClientBuilder;
 import org.springframework.context.annotation.Bean;

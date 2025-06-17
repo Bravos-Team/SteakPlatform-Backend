@@ -8,18 +8,15 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequ
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 
 import java.time.Duration;
-import java.util.Map;
 
 @Service
 public abstract class S3Service {
 
-    public String generateS3PutSignedUrl(String bucket, String objectKey,
-                                         Map<String,String> metadata, Duration duration) {
+    public String generateS3PutSignedUrl(String bucket, String objectKey, Duration duration) {
         S3Presigner presigner = getS3Presigned();
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(bucket)
                 .key(objectKey)
-                .metadata(metadata)
                 .build();
         PresignedPutObjectRequest presignedPutObjectRequest = presigner
                 .presignPutObject(p -> {

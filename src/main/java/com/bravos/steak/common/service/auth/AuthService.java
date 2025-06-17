@@ -230,7 +230,7 @@ public abstract class AuthService {
     protected abstract RefreshToken getRefreshToken(String token, String deviceId);
 
     protected Map<String,Object> otherClaims(Account account) {
-        return null;
+        return Map.of();
     }
 
 }

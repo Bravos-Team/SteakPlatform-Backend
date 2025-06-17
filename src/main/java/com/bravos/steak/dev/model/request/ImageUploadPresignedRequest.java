@@ -6,8 +6,6 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.validator.constraints.Range;
 
-import java.util.Map;
-
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Getter
 @Setter
@@ -21,7 +19,5 @@ public class ImageUploadPresignedRequest {
 
     @Range(min = 1)
     Long fileSize;
-
-    Map<String,String> metadata;
 
 }
