@@ -13,9 +13,9 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
-import java.util.List;
+import java.util.Date;
 
-@Document
+@Document("GameSubmission")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -24,29 +24,26 @@ public class GameSubmission {
 
     @Id
     @NonNull
-    private long id;
+    private Long id;
 
     @Field("publisherId")
     @NonNull
     @Indexed
-    private long publisherId;
+    private Long publisherId;
 
     @Field("createdBy")
     @NonNull
-    private long createdBy;
+    private Long createdBy;
 
     @Field("name")
     @NonNull
     private String name;
 
-    @Field("gameTitle")
-    private String gameTitle;
-
     @Field("price")
-    private double price;
+    private Double price;
 
     @Field("developerTeam")
-    private List<String> developerTeam;
+    private String[] developerTeam;
 
     @Field("region")
     private String region;
@@ -55,7 +52,7 @@ public class GameSubmission {
     private String thumbnail;
 
     @Field("media")
-    private List<Media> media;
+    private Media[] media;
 
     @Field("shortDescription")
     private String shortDescription;
@@ -70,19 +67,22 @@ public class GameSubmission {
     private SystemRequirements systemRequirements;
 
     @Field("internetConnection")
-    private String internetConnection;
+    private Boolean internetConnection;
 
     @Field("languageSupported")
-    private List<String> languageSupported;
+    private String[] languageSupported;
+
+    @Field("estimatedReleaseDate")
+    private Date estimatedReleaseDate;
 
     @Field("buildInfo")
     private BuildInfo buildInfo;
 
     @Field("status")
-    private String status;
+    private GameSubmissionStatus status = GameSubmissionStatus.DRAFT;
 
     @Field("updatedAt")
-    private String updatedAt;
+    private Date updatedAt;
 
     public GameSubmission(long id, long publisherId, long createdBy, @NotNull String name) {
         this.id = id;
