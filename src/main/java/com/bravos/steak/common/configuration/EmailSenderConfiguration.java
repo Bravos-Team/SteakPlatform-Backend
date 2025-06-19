@@ -1,39 +1,41 @@
 package com.bravos.steak.common.configuration;
 
+import com.bravos.steak.common.model.EmailKeyPair;
 import com.bravos.steak.common.service.encryption.KeyVaultService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @Configuration
 public class EmailSenderConfiguration {
 
-    private final KeyVaultService keyVaultService;
-
-    public EmailSenderConfiguration(KeyVaultService keyVaultService) {
-        this.keyVaultService = keyVaultService;
+    @Bean
+    @Profile("prod")
+    public EmailKeyPair prodEmailKeyPair(KeyVaultService keyVaultService) {
+        String emailApikey = keyVaultService.getSecretKey(System.getProperty("EMAIL_API_KEY"));
+        String emailSecretKey = keyVaultService.getSecretKey(System.getProperty("EMAIL_SECRET_KEY"));
+        return new EmailKeyPair(emailApikey, emailSecretKey);
     }
 
     @Bean
-    public WebClient emailSenderWebClient(@Value("${spring.profiles.active:dev}") String profile) {
-        String emailApikey;
-        String emailSecretKey;
+    @Profile("dev")
+    public EmailKeyPair devEmailKeyPair() {
+        String emailApikey = System.getProperty("EMAIL_API_KEY");
+        String emailSecretKey = System.getProperty("EMAIL_SECRET_KEY");
+        return new EmailKeyPair(emailApikey, emailSecretKey);
+    }
 
-        if(profile != null && profile.equals("prod")) {
-            emailApikey = keyVaultService.getSecretKey(System.getProperty("EMAIL_API_KEY"));
-            emailSecretKey = keyVaultService.getSecretKey(System.getProperty("EMAIL_SECRET_KEY"));
-        } else {
-            emailApikey = System.getProperty("EMAIL_API_KEY");
-            emailSecretKey = System.getProperty("EMAIL_SECRET_KEY");
-        }
-
+    @Bean
+    public WebClient emailSenderWebClient(EmailKeyPair emailKeyPair) {
         return WebClient.builder()
                 .baseUrl("https://api.mailjet.com/v3.1/send")
-                .defaultHeaders(headers-> {
+                .defaultHeaders(headers -> {
                     headers.setBasicAuth(
-                            emailApikey,
-                            emailSecretKey);
+                            emailKeyPair.getEmailApiKey(),
+                            emailKeyPair.getEmailSecretKey());
                 })
                 .build();
     }

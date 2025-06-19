@@ -1,42 +1,35 @@
 package com.bravos.steak.common.service.encryption.impl;
 
+import com.bravos.steak.common.model.GeneralKeyPair;
 import com.bravos.steak.common.security.JwtTokenClaims;
 import com.bravos.steak.common.service.encryption.JwtService;
-import com.bravos.steak.common.service.encryption.KeyVaultService;
 import com.bravos.steak.common.service.encryption.RSAService;
 import com.bravos.steak.exceptions.UnauthorizeException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
-import java.security.PrivateKey;
-import java.security.PublicKey;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Base64;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
 public class JwtServiceImpl implements JwtService {
 
-    private final KeyVaultService keyVaultService;
     private final ObjectMapper objectMapper;
     private final RSAService rSAService;
 
     private final String header;
-    private final PrivateKey privateKey;
-    private final PublicKey publicKey;
+    private final GeneralKeyPair generalKeyPair;
 
-    public JwtServiceImpl(KeyVaultService keyVaultService, ObjectMapper objectMapper,
-                          RSAService rSAService, @Value("${spring.profiles.active:dev}") String profile)
+    public JwtServiceImpl(ObjectMapper objectMapper,
+                          RSAService rSAService, GeneralKeyPair generalKeyPair)
             throws IOException {
 
-        this.keyVaultService = keyVaultService;
         this.objectMapper = objectMapper;
         this.rSAService = rSAService;
 
@@ -46,22 +39,10 @@ public class JwtServiceImpl implements JwtService {
                         "alg","RS256",
                         "typ", "JWT"
                 ))) + ".";
-
-        if(profile.equals("prod")) {
-            this.privateKey = rSAService.convertPrivateKey(keyVaultService.getSecretKey(System.getProperty("STEAK_PRIVATE_KEY")));
-            this.publicKey = rSAService.convertPublicKey(keyVaultService.getSecretKey(System.getProperty("STEAK_PUBLIC_KEY")));
-        } else {
-            this.privateKey = rSAService.convertPrivateKey(readPemFile("private-key.pem"));
-            this.publicKey = rSAService.convertPublicKey(readPemFile("public-key.pem"));
-        }
-
+        this.generalKeyPair = generalKeyPair;
     }
 
-    private static String readPemFile(String path) throws IOException {
-        try (BufferedReader reader = new BufferedReader(new FileReader(path))) {
-            return reader.lines().collect(Collectors.joining());
-        }
-    }
+
 
 
     @Override
@@ -76,7 +57,7 @@ public class JwtServiceImpl implements JwtService {
             token
                     .append(headerPayload)
                     .append(".")
-                    .append(rSAService.getSignatureData(headerPayload,privateKey));
+                    .append(rSAService.getSignatureData(headerPayload,generalKeyPair.getPrivateKey()));
 
             return token.toString();
 
@@ -94,7 +75,7 @@ public class JwtServiceImpl implements JwtService {
             throw new UnauthorizeException("Token is invalid");
         }
 
-        if(!rSAService.verifyData(parts[0] + "." + parts[1],parts[2],publicKey)) {
+        if(!rSAService.verifyData(parts[0] + "." + parts[1],parts[2],generalKeyPair.getPublicKey())) {
             throw new UnauthorizeException("Token is invalid");
         }
 

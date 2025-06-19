@@ -1,9 +1,11 @@
 package com.bravos.steak.common.configuration;
 
+import com.bravos.steak.common.model.ImageS3Config;
 import com.bravos.steak.common.service.encryption.KeyVaultService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
@@ -17,98 +19,50 @@ import java.net.URI;
 public class S3Configuration {
 
     @Bean
-    public AwsCredentialsProvider cloudflareCredentialsProvider(KeyVaultService keyVaultService,
-                                                                @Value("${spring.profiles.active:dev}") String profile) {
-        if ("prod".equalsIgnoreCase(profile)) {
-            return prodCloudflareCredentialsProvider(keyVaultService);
-        } else {
-            return devCloudflareCredentialsProvider();
-        }
+    @Profile("prod")
+    public ImageS3Config prodImageS3KeyPair(KeyVaultService keyVaultService) {
+        String s3AccessKey = keyVaultService.getSecretKey(System.getProperty("CF_S3_ACCESS_KEY"));
+        String s3SecretKey = keyVaultService.getSecretKey(System.getProperty("CF_S3_SECRET_KEY"));
+        String s3Endpoint = keyVaultService.getSecretKey(System.getProperty("CF_S3_ENDPOINT"));
+        String bucketName = keyVaultService.getSecretKey(System.getProperty("CF_S3_BUCKET_NAME"));
+        return new ImageS3Config(s3AccessKey, s3SecretKey,s3Endpoint,bucketName);
     }
 
-    private AwsCredentialsProvider prodCloudflareCredentialsProvider(KeyVaultService keyVaultService) {
-        String cfs3AccessKey = keyVaultService.getSecretKey(System.getProperty("CF_S3_ACCESS_KEY"));
-        String cfs3SecretKey = keyVaultService.getSecretKey(System.getProperty("CF_S3_SECRET_KEY"));
+    @Bean
+    @Profile("dev")
+    public ImageS3Config devImageS3KeyPair() {
+        String s3AccessKey = System.getProperty("CF_S3_ACCESS_KEY");
+        String s3SecretKey = System.getProperty("CF_S3_SECRET_KEY");
+        String s3Endpoint = System.getProperty("CF_S3_ENDPOINT");
+        String bucketName = System.getProperty("CF_S3_BUCKET_NAME");
+        return new ImageS3Config(s3AccessKey, s3SecretKey,s3Endpoint,bucketName);
+    }
+
+
+    @Bean
+    public AwsCredentialsProvider cloudflareCredentialsProvider(ImageS3Config imageS3Config) {
         return StaticCredentialsProvider
                 .create(AwsBasicCredentials.
-                        create(cfs3AccessKey, cfs3SecretKey));
-    }
-
-    private AwsCredentialsProvider devCloudflareCredentialsProvider() {
-        String cfs3AccessKey = System.getProperty("CF_S3_ACCESS_KEY");
-        String cfs3SecretKey = System.getProperty("CF_S3_SECRET_KEY");
-        return StaticCredentialsProvider
-                .create(AwsBasicCredentials.
-                        create(cfs3AccessKey, cfs3SecretKey));
+                        create(imageS3Config.getAccessKey(), imageS3Config.getSecretKey()));
     }
 
     @Bean
-    public S3Client cloudflareS3Client(AwsCredentialsProvider awsCredentialsProvider,
-                                       KeyVaultService keyVaultService,
-                                       @Value("${spring.profiles.active:dev}") String profile) {
-
-        if ("prod".equalsIgnoreCase(profile)) {
-            return prodCloudflareS3Client(awsCredentialsProvider, keyVaultService);
-        } else {
-            return devCloudflareS3Client(awsCredentialsProvider);
-        }
-
-    }
-
-    private S3Client prodCloudflareS3Client(AwsCredentialsProvider awsCredentialsProvider,
-                                       KeyVaultService keyVaultService) {
+    public S3Client cloudflareS3Client(AwsCredentialsProvider awsCredentialsProvider, ImageS3Config imageS3Config) {
         return S3Client.builder()
                 .region(Region.US_EAST_1)
-                .endpointOverride(URI.create(keyVaultService.getSecretKey(System.getProperty("CF_S3_ENDPOINT"))))
-                .credentialsProvider(awsCredentialsProvider)
-                .build();
-    }
-
-    private S3Client devCloudflareS3Client(AwsCredentialsProvider awsCredentialsProvider) {
-        return S3Client.builder()
-                .region(Region.US_EAST_1)
-                .endpointOverride(URI.create(System.getProperty("CF_S3_ENDPOINT")))
+                .endpointOverride(URI.create(imageS3Config.getS3Endpoint()))
                 .credentialsProvider(awsCredentialsProvider)
                 .build();
     }
 
     @Bean
-    public S3Presigner cloudflareS3Presigner(AwsCredentialsProvider awsCredentialsProvider,
-                                             KeyVaultService keyVaultService,
-                                             @Value("${spring.profiles.active:dev}") String profile) {
-
-        if ("prod".equalsIgnoreCase(profile)) {
-            return prodCloudflareS3Presigner(awsCredentialsProvider, keyVaultService);
-        } else {
-            return devCloudflareS3Presigner(awsCredentialsProvider);
-        }
-
-    }
-
-    private S3Presigner prodCloudflareS3Presigner(AwsCredentialsProvider awsCredentialsProvider,
-                                             KeyVaultService keyVaultService) {
+    public S3Presigner cloudflareS3Presigner(AwsCredentialsProvider awsCredentialsProvider, ImageS3Config imageS3Config) {
         return S3Presigner.builder()
                 .region(Region.US_EAST_1)
-                .endpointOverride(URI.create(keyVaultService.getSecretKey(System.getProperty("CF_S3_ENDPOINT"))))
+                .endpointOverride(URI.create(imageS3Config.getS3Endpoint()))
                 .credentialsProvider(awsCredentialsProvider)
                 .build();
-    }
 
-    private S3Presigner devCloudflareS3Presigner(AwsCredentialsProvider awsCredentialsProvider) {
-        return S3Presigner.builder()
-                .region(Region.US_EAST_1)
-                .endpointOverride(URI.create(System.getProperty("CF_S3_ENDPOINT")))
-                .credentialsProvider(awsCredentialsProvider)
-                .build();
-    }
-
-    @Bean
-    public String cloudflareS3BucketName(@Value("${spring.profiles.active:dev}") String profile, KeyVaultService keyVaultService) {
-        if ("prod".equalsIgnoreCase(profile)) {
-            return keyVaultService.getSecretKey(System.getProperty("CF_S3_BUCKET_NAME"));
-        } else {
-            return System.getProperty("CF_S3_BUCKET_NAME");
-        }
     }
 
 }

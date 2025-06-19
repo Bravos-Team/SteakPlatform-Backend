@@ -23,15 +23,9 @@ import java.time.Duration;
 @Configuration
 public class LocalRedisConfiguration {
 
-    public final KeyVaultService keyVaultService;
-
-    public LocalRedisConfiguration(KeyVaultService keyVaultService) {
-        this.keyVaultService = keyVaultService;
-    }
-
     @Bean
     @Profile("prod")
-    public RedisConnectionFactory prodRedisConnectionFactory() {
+    public RedisConnectionFactory prodRedisConnectionFactory(KeyVaultService keyVaultService) {
         SocketOptions socketOptions = SocketOptions.builder()
                 .keepAlive(true)
                 .build();

@@ -21,4 +21,7 @@ public class BuildInfo {
     @Field("downloadUrl")
     private String downloadUrl;
 
+    @Field("checksum")
+    private String checksum;
+
 }
