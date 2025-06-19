@@ -1,5 +1,6 @@
 package com.bravos.steak.dev.service.impl;
 
+import com.bravos.steak.common.model.ImageS3Config;
 import com.bravos.steak.common.security.JwtTokenClaims;
 import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
 import com.bravos.steak.common.service.storage.impl.CloudflareS3Service;
@@ -27,16 +28,16 @@ public class PublisherUploadServiceImpl implements PublisherUploadService {
     private final CloudflareS3Service cloudflareS3Service;
     private final SnowflakeGenerator snowflakeGenerator;
     private final S3Client s3Client;
-    private final String cloudflareS3BucketName;
     private final ExecutorService executorService;
+    private final ImageS3Config imageS3Config;
 
     public PublisherUploadServiceImpl(CloudflareS3Service cloudflareS3Service, SnowflakeGenerator snowflakeGenerator,
-                                      S3Client s3Client, String cloudflareS3BucketName) {
+                                      S3Client s3Client, ImageS3Config imageS3Config) {
         this.cloudflareS3Service = cloudflareS3Service;
         this.snowflakeGenerator = snowflakeGenerator;
         this.s3Client = s3Client;
-        this.cloudflareS3BucketName = cloudflareS3BucketName;
         this.executorService = Executors.newVirtualThreadPerTaskExecutor();
+        this.imageS3Config = imageS3Config;
     }
 
     private Duration getDurationBySize(long fileSize) {
@@ -62,7 +63,7 @@ public class PublisherUploadServiceImpl implements PublisherUploadService {
                 .append(extension);
         try {
             String signedUrl = cloudflareS3Service.generateS3PutSignedUrl(
-                    cloudflareS3BucketName,
+                    imageS3Config.getBucketName(),
                     objectName.toString(),
                     getDurationBySize(fileSize));
             return PresignedUrlResponse.builder()
@@ -96,7 +97,7 @@ public class PublisherUploadServiceImpl implements PublisherUploadService {
 
         executorService.submit(() -> {
             DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
-                    .bucket(cloudflareS3BucketName)
+                    .bucket(imageS3Config.getBucketName())
                     .key(getFileNameFromUrl(deleteImageRequest.getUrl()))
                     .build();
             s3Client.deleteObject(deleteObjectRequest);
@@ -118,7 +119,7 @@ public class PublisherUploadServiceImpl implements PublisherUploadService {
         executorService.submit(() -> {
             for (DeleteImageRequest deleteImageRequest : deleteImageRequests) {
                 DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
-                        .bucket(cloudflareS3BucketName)
+                        .bucket(imageS3Config.getBucketName())
                         .key(getFileNameFromUrl(deleteImageRequest.getUrl()))
                         .build();
                 s3Client.deleteObject(deleteObjectRequest);

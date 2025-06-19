@@ -2,8 +2,6 @@ package com.bravos.steak.dev.repo.custom.impl;
 
 import com.bravos.steak.common.repo.CustomMongoRepository;
 import com.bravos.steak.dev.repo.custom.CustomGameSubmissionRepository;
-import lombok.Getter;
-import lombok.Setter;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;

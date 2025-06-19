@@ -7,7 +7,6 @@ target/
 *.pem
 secret-script.sh
 *.log
-atlas.hcl
 
 ### STS ###
 .apt_generated
