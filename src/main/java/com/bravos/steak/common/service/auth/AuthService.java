@@ -205,7 +205,7 @@ public abstract class AuthService {
                 .secure(false)
                 .path(path)
                 .domain(System.getProperty("COOKIE_DOMAIN"))
-                .sameSite("None")
+                .sameSite("Lax")
                 .maxAge(now.plusSeconds(Long.parseLong(System.getProperty("USER_TOKEN_EXP"))).toEpochSecond(ZoneOffset.UTC))
                 .build();
         httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
@@ -217,7 +217,7 @@ public abstract class AuthService {
                 .secure(false)
                 .path(path)
                 .domain(System.getProperty("COOKIE_DOMAIN"))
-                .sameSite("None")
+                .sameSite("Lax")
                 .maxAge(refreshToken.getExpiresAt().toEpochSecond(ZoneOffset.UTC))
                 .build();
         httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
