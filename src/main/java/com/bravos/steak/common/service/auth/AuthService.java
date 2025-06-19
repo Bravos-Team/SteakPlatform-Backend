@@ -204,6 +204,7 @@ public abstract class AuthService {
                 .httpOnly(true)
                 .secure(false)
                 .path(path)
+                .domain(System.getProperty("COOKIE_DOMAIN"))
                 .sameSite("Lax")
                 .maxAge(now.plusSeconds(Long.parseLong(System.getProperty("USER_TOKEN_EXP"))).toEpochSecond(ZoneOffset.UTC))
                 .build();
@@ -215,6 +216,7 @@ public abstract class AuthService {
                 .httpOnly(true)
                 .secure(false)
                 .path(path)
+                .domain(System.getProperty("COOKIE_DOMAIN"))
                 .sameSite("Lax")
                 .maxAge(refreshToken.getExpiresAt().toEpochSecond(ZoneOffset.UTC))
                 .build();
