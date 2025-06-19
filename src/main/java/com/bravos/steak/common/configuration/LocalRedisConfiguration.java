@@ -2,6 +2,7 @@ package com.bravos.steak.common.configuration;
 
 import com.bravos.steak.common.service.encryption.KeyVaultService;
 import io.lettuce.core.ClientOptions;
+import io.lettuce.core.SocketOptions;
 import io.lettuce.core.protocol.ProtocolVersion;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
@@ -16,6 +17,8 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializer;
 
+import java.time.Duration;
+
 @Slf4j
 @Configuration
 public class LocalRedisConfiguration {
@@ -29,22 +32,33 @@ public class LocalRedisConfiguration {
     @Bean
     @Profile("prod")
     public RedisConnectionFactory prodRedisConnectionFactory() {
+        SocketOptions socketOptions = SocketOptions.builder()
+                .keepAlive(true)
+                .build();
+
         ClientOptions options = ClientOptions.builder()
                 .protocolVersion(ProtocolVersion.RESP2)
                 .pingBeforeActivateConnection(true)
                 .autoReconnect(true)
+                .socketOptions(socketOptions)
                 .build();
+
         LettuceClientConfiguration clientConfiguration = LettuceClientConfiguration.builder()
                 .clientOptions(options)
+                .commandTimeout(Duration.ofSeconds(10))
+                .shutdownTimeout(Duration.ZERO)
                 .build();
+
         String[] redisHostPort = keyVaultService.getSecretKey(System.getProperty("REDIS_HOST_PORT")).split(":");
         RedisStandaloneConfiguration redisConfig = new RedisStandaloneConfiguration();
         redisConfig.setHostName(redisHostPort[0]);
         redisConfig.setPort(Integer.parseInt(redisHostPort[1]));
         redisConfig.setPassword(keyVaultService.getSecretKey(System.getProperty("REDIS_PASSWORD")));
+
         log.info("Using product redis config");
-        return new LettuceConnectionFactory(redisConfig,clientConfiguration);
+        return new LettuceConnectionFactory(redisConfig, clientConfiguration);
     }
+
 
     @Bean
     @Profile("dev")
