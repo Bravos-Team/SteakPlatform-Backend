@@ -32,11 +32,9 @@ public class EmailSenderConfiguration {
     public WebClient emailSenderWebClient(EmailKeyPair emailKeyPair) {
         return WebClient.builder()
                 .baseUrl("https://api.mailjet.com/v3.1/send")
-                .defaultHeaders(headers -> {
-                    headers.setBasicAuth(
-                            emailKeyPair.getEmailApiKey(),
-                            emailKeyPair.getEmailSecretKey());
-                })
+                .defaultHeaders(headers -> headers.setBasicAuth(
+                        emailKeyPair.getEmailApiKey(),
+                        emailKeyPair.getEmailSecretKey()))
                 .build();
     }
 
