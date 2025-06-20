@@ -125,7 +125,7 @@ public class PublisherRegistrationServiceImpl implements PublisherRegistrationSe
             publisher = createPublisher(request);
             createMasterAccount(request, publisher);
         } catch (Exception e) {
-            log.error("Registration failed",e);
+            log.error("Registration failed: {}",e.getMessage());
             throw new RuntimeException("Registration failed");
         }
 
