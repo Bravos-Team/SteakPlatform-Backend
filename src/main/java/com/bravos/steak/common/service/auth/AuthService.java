@@ -203,7 +203,7 @@ public abstract class AuthService {
         ResponseCookie accessCookie = ResponseCookie.from(ACCESS_TOKEN_NAME, jwt)
                 .httpOnly(true)
                 .secure(false)
-                .path(path)
+                .path("/")
                 .domain(System.getProperty("COOKIE_DOMAIN"))
                 .sameSite("Lax")
                 .maxAge(now.plusSeconds(Long.parseLong(System.getProperty("USER_TOKEN_EXP"))).toEpochSecond(ZoneOffset.UTC))
