@@ -27,15 +27,15 @@ public class PublisherUploadServiceImpl implements PublisherUploadService {
 
     private final CloudflareS3Service cloudflareS3Service;
     private final SnowflakeGenerator snowflakeGenerator;
-    private final S3Client s3Client;
     private final ExecutorService executorService;
     private final ImageS3Config imageS3Config;
+    private final S3Client cloudflareS3Client;
 
     public PublisherUploadServiceImpl(CloudflareS3Service cloudflareS3Service, SnowflakeGenerator snowflakeGenerator,
-                                      S3Client s3Client, ImageS3Config imageS3Config) {
+                                      ImageS3Config imageS3Config, S3Client cloudflareS3Client) {
         this.cloudflareS3Service = cloudflareS3Service;
         this.snowflakeGenerator = snowflakeGenerator;
-        this.s3Client = s3Client;
+        this.cloudflareS3Client = cloudflareS3Client;
         this.executorService = Executors.newVirtualThreadPerTaskExecutor();
         this.imageS3Config = imageS3Config;
     }
@@ -100,7 +100,7 @@ public class PublisherUploadServiceImpl implements PublisherUploadService {
                     .bucket(imageS3Config.getBucketName())
                     .key(getFileNameFromUrl(deleteImageRequest.getUrl()))
                     .build();
-            s3Client.deleteObject(deleteObjectRequest);
+            cloudflareS3Client.deleteObject(deleteObjectRequest);
         });
     }
 
@@ -122,7 +122,7 @@ public class PublisherUploadServiceImpl implements PublisherUploadService {
                         .bucket(imageS3Config.getBucketName())
                         .key(getFileNameFromUrl(deleteImageRequest.getUrl()))
                         .build();
-                s3Client.deleteObject(deleteObjectRequest);
+                cloudflareS3Client.deleteObject(deleteObjectRequest);
             }
         });
     }

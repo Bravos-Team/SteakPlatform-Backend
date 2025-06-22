@@ -13,4 +13,6 @@ public interface PublisherPublishGameService {
 
     void updateBuild(UpdatePreBuildRequest updatePreBuildRequest);
 
+    void publishGame(Long projectId);
+
 }

@@ -1,5 +1,6 @@
 package com.bravos.steak.dev.service.impl;
 
+import com.bravos.steak.common.model.GameS3Config;
 import com.bravos.steak.common.security.JwtTokenClaims;
 import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
 import com.bravos.steak.dev.entity.gamesubmission.BuildInfo;
@@ -23,6 +24,10 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectAttributesRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectAttributesResponse;
 
 import java.util.Date;
 import java.util.Map;
@@ -36,15 +41,20 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
     private final LogDevService logDevService;
     private final MongoTemplate mongoTemplate;
     private final ObjectMapper objectMapper;
+    private final S3Client gameS3Client;
+    private final GameS3Config gameS3Config;
 
     @Autowired
     public PublisherPublishGameServiceImpl(SnowflakeGenerator snowflakeGenerator, GameSubmissionRepository gameSubmissionRepository,
-                                           LogDevService logDevService, MongoTemplate mongoTemplate, ObjectMapper objectMapper) {
+                                           LogDevService logDevService, MongoTemplate mongoTemplate, ObjectMapper objectMapper,
+                                           S3Client gameS3Client, GameS3Config gameS3Config) {
         this.snowflakeGenerator = snowflakeGenerator;
         this.gameSubmissionRepository = gameSubmissionRepository;
         this.logDevService = logDevService;
         this.mongoTemplate = mongoTemplate;
         this.objectMapper = objectMapper;
+        this.gameS3Client = gameS3Client;
+        this.gameS3Config = gameS3Config;
     }
 
     @Override
@@ -137,6 +147,11 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
             throw new BadRequestException("You can only update build for draft project");
         }
 
+        checkUploadSuccess(
+                updatePreBuildRequest.getDownloadUrl(),
+                updatePreBuildRequest.getChecksum()
+        );
+
         BuildInfo buildInfo = new BuildInfo();
         buildInfo.setVersionName(updatePreBuildRequest.getVersionName());
         buildInfo.setExecPath(updatePreBuildRequest.getExecPath());
@@ -153,6 +168,82 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
         } catch (Exception e) {
             log.error("Error when updating build: {}", e.getMessage(), e);
             throw new RuntimeException("Error when updating build");
+        }
+    }
+
+    @Override
+    public void publishGame(Long projectId) {
+        JwtTokenClaims jwtTokenClaims = (JwtTokenClaims)
+                SecurityContextHolder.getContext().getAuthentication().getDetails();
+
+        long publisherId = checkProjectOwnership(projectId);
+
+        GameSubmission gameSubmission = gameSubmissionRepository.findById(projectId)
+                .orElseThrow(() -> new BadRequestException("Project not found"));
+
+        if(gameSubmission.getStatus() != GameSubmissionStatus.DRAFT) {
+            throw new BadRequestException("You can only publish draft project");
+        }
+
+        StringBuilder errorMessage = new StringBuilder();
+
+        if(gameSubmission.getName().isBlank()) {
+            errorMessage.append("Project name cannot be blank. \n");
+        }
+
+        if(gameSubmission.getBuildInfo() == null) {
+            errorMessage.append("Project build info cannot be null. \n");
+        } else {
+            if(gameSubmission.getBuildInfo().getVersionName().isBlank()) {
+                errorMessage.append("Project version name cannot be blank. \n");
+            }
+            if(gameSubmission.getBuildInfo().getExecPath().isBlank()) {
+                errorMessage.append("Project exec path cannot be blank. \n");
+            }
+            if(gameSubmission.getBuildInfo().getDownloadUrl() == null ||
+                    gameSubmission.getBuildInfo().getDownloadUrl().isBlank()) {
+                errorMessage.append("Project download URL cannot be blank. \n");
+            }
+            if(gameSubmission.getBuildInfo().getChecksum() == null ||
+                    gameSubmission.getBuildInfo().getChecksum().isBlank()) {
+                errorMessage.append("Project checksum cannot be blank. \n");
+            }
+        }
+
+        if(gameSubmission.getThumbnail() == null || gameSubmission.getThumbnail().isBlank()) {
+            errorMessage.append("Project thumbnail cannot be blank. \n");
+        }
+
+        if(gameSubmission.getLongDescription() == null || gameSubmission.getLongDescription().isBlank()) {
+            errorMessage.append("Project description cannot be blank. \n");
+        }
+
+        if(gameSubmission.getShortDescription() == null || gameSubmission.getShortDescription().isBlank()) {
+            errorMessage.append("Project short description cannot be blank. \n");
+        }
+
+        if(gameSubmission.getPrice() == null || gameSubmission.getPrice() < 0) {
+            errorMessage.append("Project price cannot be negative. \n");
+        }
+
+        if(gameSubmission.getMedia().length < 1) {
+            errorMessage.append("You must upload at least one media file. \n");
+        }
+
+        if(!errorMessage.isEmpty()) {
+            throw new BadRequestException("Cannot publish project: " + errorMessage);
+        }
+
+        gameSubmission.setStatus(GameSubmissionStatus.PENDING_REVIEW);
+        gameSubmission.setUpdatedAt(new Date());
+
+        try {
+            gameSubmissionRepository.save(gameSubmission);
+            logDevService.saveLog(jwtTokenClaims.getId(), publisherId,
+                    "Project {} has been requested by {}", projectId, publisherId);
+        } catch (Exception e) {
+            log.error("Error when publishing project: {}", e.getMessage(), e);
+            throw new RuntimeException("Error when publishing project");
         }
     }
 
@@ -176,9 +267,37 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
         return realPublisherId;
     }
 
-    private boolean checkUploadSuccess(String uploadUrl) {
+    private void checkUploadSuccess(String uploadUrl, String checksum) {
+        GetObjectAttributesRequest getObjectAttributesRequest = GetObjectAttributesRequest.builder()
+                .bucket(gameS3Config.getBucketName())
+                .key(getClientName(uploadUrl))
+                .build();
+        GetObjectAttributesResponse response = gameS3Client.getObjectAttributes(getObjectAttributesRequest);
+        if(response == null || response.objectSize() <= 0) {
+            throw new BadRequestException("Upload failed or file not found");
+        }
+        if(!response.checksum().checksumSHA256().equals(checksum)) {
+            DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
+                    .bucket(gameS3Config.getBucketName())
+                    .key(getClientName(uploadUrl))
+                    .build();
+            Thread.startVirtualThread(() -> gameS3Client.deleteObject(deleteObjectRequest));
+            throw new BadRequestException("Checksum mismatch, upload failed");
+        }
+    }
 
-        return true;
+    private String getClientName(String uploadUrl) {
+        if (uploadUrl == null || uploadUrl.isBlank()) {
+            throw new BadRequestException("URL cannot be null or blank");
+        }
+        if(!uploadUrl.startsWith("https://" + gameS3Config.getBucketName())) {
+            throw new BadRequestException("Invalid S3 URL format, must start with https://");
+        }
+        int idx = uploadUrl.indexOf(".amazonaws.com/");
+        if (idx == -1) {
+            throw new BadRequestException("Invalid S3 URL format");
+        }
+        return uploadUrl.substring(idx + ".amazonaws.com/".length());
     }
 
 }

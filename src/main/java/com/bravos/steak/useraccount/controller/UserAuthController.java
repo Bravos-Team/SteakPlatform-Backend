@@ -58,9 +58,15 @@ public class UserAuthController {
 
     @PostMapping("/refresh")
     public ResponseEntity<?> renewToken(@RequestBody @Valid RefreshRequest refreshRequest) {
-        Long userId = authService.renewToken(refreshRequest);
-        UserLoginResponse userLoginResponse = userAccountService.getLoginResponseById(userId);
+        Account account = authService.renewToken(refreshRequest);
+        UserLoginResponse userLoginResponse = userAccountService.getLoginResponseById(account.getId());
         return ResponseEntity.ok(userLoginResponse);
+    }
+
+    @GetMapping("/logout")
+    public ResponseEntity<?> logout() {
+        authService.logout();
+        return ResponseEntity.ok().build();
     }
     
 }

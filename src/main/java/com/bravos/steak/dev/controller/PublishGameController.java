@@ -27,7 +27,7 @@ public class PublishGameController {
     @PostMapping("/create-project")
     public ResponseEntity<?> createProject(@RequestParam String name) {
         return ResponseEntity.ok(Map.of(
-                "projectId",publisherPublishGameService.createProject(name)
+                "projectId", publisherPublishGameService.createProject(name)
         ));
     }
 
@@ -43,6 +43,20 @@ public class PublishGameController {
     public ResponseEntity<?> updateBuild(@RequestBody @Validated UpdatePreBuildRequest updatePreBuildRequest) {
         publisherPublishGameService.updateBuild(updatePreBuildRequest);
         return ResponseEntity.ok().build();
+    }
+
+    @HasAuthority({PublisherAuthority.CREATE_GAME})
+    @PostMapping("/publish")
+    public ResponseEntity<?> publishGame(@RequestParam Long projectId) {
+        if(projectId == null || projectId <= 900000000000000L) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Invalid project ID"
+            ));
+        }
+        publisherPublishGameService.publishGame(projectId);
+        return ResponseEntity.ok().body(Map.of(
+                "message", "Game published successfully"
+        ));
     }
 
 }
