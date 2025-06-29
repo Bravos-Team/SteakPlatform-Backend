@@ -13,7 +13,6 @@ public class GameS3Config {
 
     private String accessKey;
     private String secretKey;
-    private String s3Endpoint;
     private String bucketName;
     private String region;
 
