@@ -43,10 +43,9 @@ public class S3Configuration {
     public GameS3Config prodGameS3Config(KeyVaultService keyVaultService) {
         String s3AccessKey = keyVaultService.getSecretKey(System.getProperty("GAME_S3_ACCESS_KEY"));
         String s3SecretKey = keyVaultService.getSecretKey(System.getProperty("GAME_S3_SECRET_KEY"));
-        String s3Endpoint = keyVaultService.getSecretKey(System.getProperty("GAME_S3_ENDPOINT"));
         String bucketName = keyVaultService.getSecretKey(System.getProperty("GAME_S3_BUCKET_NAME"));
         String region = keyVaultService.getSecretKey(System.getProperty("GAME_S3_REGION"));
-        return new GameS3Config(s3AccessKey, s3SecretKey, s3Endpoint, bucketName, region);
+        return new GameS3Config(s3AccessKey, s3SecretKey, bucketName, region);
     }
 
     @Bean
@@ -54,10 +53,9 @@ public class S3Configuration {
     public GameS3Config devGameS3Config() {
         String s3AccessKey = System.getProperty("GAME_S3_ACCESS_KEY");
         String s3SecretKey = System.getProperty("GAME_S3_SECRET_KEY");
-        String s3Endpoint = System.getProperty("GAME_S3_ENDPOINT");
         String bucketName = System.getProperty("GAME_S3_BUCKET_NAME");
         String region = System.getProperty("GAME_S3_REGION");
-        return new GameS3Config(s3AccessKey, s3SecretKey, s3Endpoint, bucketName, region);
+        return new GameS3Config(s3AccessKey, s3SecretKey, bucketName, region);
     }
 
     @Bean
