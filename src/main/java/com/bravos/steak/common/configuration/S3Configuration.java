@@ -87,7 +87,6 @@ public class S3Configuration {
     public S3Client gameS3Client(AwsCredentialsProvider gameS3CredentialsProvider, GameS3Config gameS3Config) {
         return S3Client.builder()
                 .region(Region.of(gameS3Config.getRegion()))
-                .endpointOverride(URI.create(gameS3Config.getS3Endpoint()))
                 .credentialsProvider(gameS3CredentialsProvider)
                 .build();
     }
@@ -105,7 +104,6 @@ public class S3Configuration {
     public S3Presigner gameS3Presigner(AwsCredentialsProvider gameS3CredentialsProvider, GameS3Config gameS3Config) {
         return S3Presigner.builder()
                 .region(Region.of(gameS3Config.getRegion()))
-                .endpointOverride(URI.create(gameS3Config.getS3Endpoint()))
                 .credentialsProvider(gameS3CredentialsProvider)
                 .build();
     }

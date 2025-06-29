@@ -6,6 +6,7 @@ import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
 import com.bravos.steak.dev.entity.gamesubmission.BuildInfo;
 import com.bravos.steak.dev.entity.gamesubmission.GameSubmission;
 import com.bravos.steak.dev.entity.gamesubmission.GameSubmissionStatus;
+import com.bravos.steak.dev.model.GameSubmissionListDisplay;
 import com.bravos.steak.dev.model.request.SaveProjectRequest;
 import com.bravos.steak.dev.model.request.UpdatePreBuildRequest;
 import com.bravos.steak.dev.repo.GameSubmissionRepository;
@@ -28,8 +29,10 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectAttributesRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectAttributesResponse;
+import software.amazon.awssdk.services.s3.model.ObjectAttributes;
 
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -143,8 +146,8 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
         GameSubmission gameSubmission = gameSubmissionRepository.findById(projectId)
                 .orElseThrow(() -> new BadRequestException("Project not found"));
 
-        if(gameSubmission.getStatus() != GameSubmissionStatus.DRAFT) {
-            throw new BadRequestException("You can only update build for draft project");
+        if(gameSubmission.getStatus() == GameSubmissionStatus.PENDING_REVIEW) {
+            throw new BadRequestException("You cannot update build of a project that is pending review");
         }
 
         checkUploadSuccess(
@@ -247,12 +250,51 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
         }
     }
 
-    private long checkProjectOwnership(long projectId) {
+    @Override
+    public List<GameSubmissionListDisplay> getProjectListByPublisher(String status, String keyword, int page, int size) {
+        GameSubmissionStatus submissionStatus = null;
+        if (status != null && !status.isBlank()) {
+            try {
+                submissionStatus = GameSubmissionStatus.valueOf(status);
+            } catch (IllegalArgumentException e) {
+                throw new BadRequestException("Invalid submission status: " + status);
+            }
+        }
         JwtTokenClaims jwtTokenClaims = (JwtTokenClaims)
                 SecurityContextHolder.getContext().getAuthentication().getDetails();
         long publisherId = (long) jwtTokenClaims.getOtherClaims().get("publisherId");
+        try {
+            if(keyword != null && keyword.startsWith("id:")) {
+                long projectId;
+                try {
+                    projectId = Long.parseLong(keyword.substring(3));
+                } catch (BadRequestException e) {
+                    throw new BadRequestException("Invalid project ID format");
+                }
+                GameSubmissionListDisplay submission = gameSubmissionRepository.getGameSubmissionListById(projectId, publisherId);
+                if(submission == null) {
+                    return List.of();
+                }
+                return List.of(submission);
+            }
+            return gameSubmissionRepository.getGameSubmissionListDisplay(
+                    publisherId, submissionStatus, keyword, page, size);
+        } catch (Exception e) {
+            log.error("Error when fetching project list: {}", e.getMessage(), e);
+            throw new RuntimeException("Error when fetching project list");
+        }
+    }
 
-        long realPublisherId;
+
+
+    private long checkProjectOwnership(long projectId) {
+        JwtTokenClaims jwtTokenClaims = (JwtTokenClaims)
+                SecurityContextHolder.getContext().getAuthentication().getDetails();
+
+        Long publisherId = (long) jwtTokenClaims.getOtherClaims().get("publisherId");
+
+        Long realPublisherId;
+
         try {
             realPublisherId = gameSubmissionRepository.getPublisherIdByProjectId(projectId);
         } catch (Exception e) {
@@ -260,7 +302,7 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
             throw new RuntimeException("Cannot verify your project");
         }
 
-        if(publisherId != realPublisherId) {
+        if(!publisherId.equals(realPublisherId)) {
             throw new ForbiddenException("You are not owner of this project");
         }
 
@@ -271,12 +313,16 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
         GetObjectAttributesRequest getObjectAttributesRequest = GetObjectAttributesRequest.builder()
                 .bucket(gameS3Config.getBucketName())
                 .key(getClientName(uploadUrl))
+                .objectAttributes(
+                        ObjectAttributes.CHECKSUM,
+                        ObjectAttributes.OBJECT_SIZE
+                )
                 .build();
         GetObjectAttributesResponse response = gameS3Client.getObjectAttributes(getObjectAttributesRequest);
         if(response == null || response.objectSize() <= 0) {
             throw new BadRequestException("Upload failed or file not found");
         }
-        if(!response.checksum().checksumSHA256().equals(checksum)) {
+        if(!response.checksum().checksumCRC32C().equals(checksum)) {
             DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
                     .bucket(gameS3Config.getBucketName())
                     .key(getClientName(uploadUrl))

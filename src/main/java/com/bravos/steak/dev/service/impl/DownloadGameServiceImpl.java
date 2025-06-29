@@ -22,8 +22,9 @@ public class DownloadGameServiceImpl implements DownloadGameService {
 
     @Override
     public String downloadGame(String gameUrl, String ipAddress) {
+        gameUrl = convertS3UrlToCdnUrl(gameUrl);
         CloudFrontUtilities cloudFrontUtilities = CloudFrontUtilities.create();
-        Instant expirationTime = Instant.now().plusSeconds(900);
+        Instant expirationTime = Instant.now().plusSeconds(300);
         CustomSignerRequest customSignerRequest = CustomSignerRequest.builder()
                 .resourceUrl(gameUrl)
                 .keyPairId(cdnKeyPair.getKeyPairId())
@@ -34,6 +35,15 @@ public class DownloadGameServiceImpl implements DownloadGameService {
 
         SignedUrl signedUrl = cloudFrontUtilities.getSignedUrlWithCustomPolicy(customSignerRequest);
         return signedUrl.url();
+    }
+
+    private String convertS3UrlToCdnUrl(String s3Url) {
+        String cdnBaseUrl = "https://cdn.steak.io.vn";
+        if(!s3Url.startsWith("https://steak-storage.s3.ap-southeast-1.amazonaws.com/") ||
+                !s3Url.startsWith("https://cdn.steak.io.vn/")) {
+            throw new IllegalArgumentException("Invalid S3 URL format");
+        }
+        return s3Url.replace("https://steak-storage.s3.ap-southeast-1.amazonaws.com", cdnBaseUrl);
     }
 
 }

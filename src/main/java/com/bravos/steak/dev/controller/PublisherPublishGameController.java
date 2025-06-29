@@ -6,25 +6,27 @@ import com.bravos.steak.dev.model.PublisherAuthority;
 import com.bravos.steak.dev.model.request.SaveProjectRequest;
 import com.bravos.steak.dev.model.request.UpdatePreBuildRequest;
 import com.bravos.steak.dev.service.PublisherPublishGameService;
+import com.bravos.steak.exceptions.BadRequestException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/v1/dev/publish")
+@RequestMapping("/api/v1/dev/project")
 @PublisherController
-public class PublishGameController {
+public class PublisherPublishGameController {
 
     private final PublisherPublishGameService publisherPublishGameService;
 
-    public PublishGameController(PublisherPublishGameService publisherPublishGameService) {
+    public PublisherPublishGameController(PublisherPublishGameService publisherPublishGameService) {
         this.publisherPublishGameService = publisherPublishGameService;
     }
 
     @HasAuthority({PublisherAuthority.CREATE_GAME})
-    @PostMapping("/create-project")
+    @PostMapping("/create")
     public ResponseEntity<?> createProject(@RequestParam String name) {
         return ResponseEntity.ok(Map.of(
                 "projectId", publisherPublishGameService.createProject(name)
@@ -32,7 +34,7 @@ public class PublishGameController {
     }
 
     @HasAuthority({PublisherAuthority.CREATE_GAME})
-    @PostMapping("/update-project")
+    @PostMapping("/update")
     public ResponseEntity<?> saveDraftProject(@RequestBody @Validated SaveProjectRequest saveProjectRequest) {
         publisherPublishGameService.saveDraftProject(saveProjectRequest);
         return ResponseEntity.ok().build();
@@ -57,6 +59,20 @@ public class PublishGameController {
         return ResponseEntity.ok().body(Map.of(
                 "message", "Game published successfully"
         ));
+    }
+
+    @GetMapping("/list")
+    @HasAuthority({PublisherAuthority.READ_GAMES})
+    public ResponseEntity<?> getProjectListByPublisher(@RequestParam Optional<String> status,
+                                                       @RequestParam(defaultValue = "1") Integer page,
+                                                       @RequestParam(defaultValue = "20") Integer size,
+                                                       @RequestParam Optional<String> keyword) {
+        if(page < 1 || size <= 0) {
+            throw new BadRequestException("Please check page and size values.");
+        }
+        return ResponseEntity.ok(publisherPublishGameService.getProjectListByPublisher
+                (status.orElse(null),keyword.orElse(null),page - 1,size)
+        );
     }
 
 }

@@ -22,7 +22,7 @@ public class SaveProjectRequest implements Serializable {
 
     String name;
 
-    Date price;
+    Double price;
     String[] developerTeam;
     String region;
     String thumbnail;

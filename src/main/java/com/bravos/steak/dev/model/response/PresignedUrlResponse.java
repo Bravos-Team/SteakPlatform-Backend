@@ -15,4 +15,6 @@ public class PresignedUrlResponse {
 
     String signedUrl;
 
+    String cdnFileName;
+
 }
