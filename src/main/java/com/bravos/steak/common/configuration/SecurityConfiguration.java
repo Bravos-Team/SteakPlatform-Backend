@@ -67,6 +67,8 @@ public class SecurityConfiguration implements WebMvcConfigurer {
                             "/api/v1/support/**")
                     .authenticated();
 
+            request.anyRequest().denyAll();
+
         });
 
         http.exceptionHandling(ex -> {

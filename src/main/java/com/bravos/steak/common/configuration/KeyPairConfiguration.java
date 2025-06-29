@@ -1,5 +1,6 @@
 package com.bravos.steak.common.configuration;
 
+import com.bravos.steak.common.model.CdnKeyPair;
 import com.bravos.steak.common.model.GeneralKeyPair;
 import com.bravos.steak.common.model.SecretKeyX;
 import com.bravos.steak.common.service.encryption.KeyVaultService;
@@ -46,6 +47,24 @@ public class KeyPairConfiguration {
     public SecretKeyX prodSecretKeyX(KeyVaultService keyVaultService) {
         String secretKey = keyVaultService.getSecretKey(System.getProperty("STEAK_SECRET_KEY"));
         return new SecretKeyX(secretKey);
+    }
+
+    @Bean
+    @Profile("dev")
+    public CdnKeyPair devCdnKeyPair(RSAService rSAService) {
+        PrivateKey privateKey = rSAService.convertPrivateKey(readPemFile("cdn-private-key.pem"));
+        PublicKey publicKey = rSAService.convertPublicKey(readPemFile("cdn-public-key.pem"));
+        String cdnKeyPairId = System.getProperty("CDN_KEY_PAIR_ID");
+        return new CdnKeyPair(privateKey, publicKey, cdnKeyPairId);
+    }
+
+    @Bean
+    @Profile("prod")
+    public CdnKeyPair prodCdnKeyPair(RSAService rSAService, KeyVaultService keyVaultService) {
+        PrivateKey privateKey = rSAService.convertPrivateKey(keyVaultService.getSecretKey(System.getProperty("CDN_PRIVATE_KEY")));
+        PublicKey publicKey = rSAService.convertPublicKey(keyVaultService.getSecretKey(System.getProperty("CDN_PUBLIC_KEY")));
+        String cdnKeyPairId = keyVaultService.getSecretKey(System.getProperty("CDN_KEY_PAIR_ID"));
+        return new CdnKeyPair(privateKey, publicKey, cdnKeyPairId);
     }
 
     private String readPemFile(String path) {

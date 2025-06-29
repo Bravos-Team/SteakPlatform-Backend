@@ -42,9 +42,6 @@ public class JwtServiceImpl implements JwtService {
         this.generalKeyPair = generalKeyPair;
     }
 
-
-
-
     @Override
     public String generateToken(JwtTokenClaims jwtTokenClaims) {
         try {
@@ -75,7 +72,9 @@ public class JwtServiceImpl implements JwtService {
             throw new UnauthorizeException("Token is invalid");
         }
 
-        if(!rSAService.verifyData(parts[0] + "." + parts[1],parts[2],generalKeyPair.getPublicKey())) {
+        if(!rSAService.verifyData(parts[0] + "." + parts[1],
+                parts[2],
+                generalKeyPair.getPublicKey())) {
             throw new UnauthorizeException("Token is invalid");
         }
 
@@ -96,7 +95,7 @@ public class JwtServiceImpl implements JwtService {
         if(payload == null ||
                 now.isBefore(LocalDateTime.ofInstant(Instant.ofEpochSecond(payload.getIat()),ZoneOffset.UTC)) ||
                 now.isAfter(LocalDateTime.ofInstant(Instant.ofEpochSecond(payload.getExp()), ZoneOffset.UTC))) {
-            throw new UnauthorizeException("Token is invalid");
+            throw new UnauthorizeException("Token is expired or not yet valid");
         }
 
         return payload;

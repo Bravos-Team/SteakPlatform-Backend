@@ -28,6 +28,12 @@ public interface RSAService {
 
     String getSignatureData(String data, PrivateKey privateKey);
 
+    String getSignatureData(String data, PrivateKey privateKey, String algorithm);
+
+    String getSignatureData(String data, String privateKey, String algorithm);
+
+    String getSignatureData(Object data, PrivateKey privateKey, String algorithm);
+
     boolean verifyData(String data, String signatureData, String publicKey);
 
     boolean verifyData(String data, String signatureData, PublicKey publicKey);
