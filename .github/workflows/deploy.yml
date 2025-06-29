@@ -33,7 +33,7 @@ jobs:
             cd SteakPlatform-Backend && atlas migrate apply --dir "file://migrations" --url "${{ secrets.POSTGRES_URL }}"
             docker login --username ${{ secrets.DOCKER_USERNAME }} --password ${{ secrets.DOCKER_PASSWORD }}
             docker pull bravos/steak-server:latest
-            docker run --memory="1.4g" -d -p 8888:8888 --name steak-server \
+            docker run --memory="1.5g" -d -p 8888:8888 --name steak-server \
               -e AZURE_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }} \
               -e AZURE_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET }} \
               -e AZURE_TENANT_ID=${{ secrets.AZURE_TENANT_ID }} \
