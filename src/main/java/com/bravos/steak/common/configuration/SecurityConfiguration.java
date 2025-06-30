@@ -98,7 +98,7 @@ public class SecurityConfiguration implements WebMvcConfigurer {
         CorsConfiguration config = new CorsConfiguration();
         String[] allowOrigins = System.getProperty("ALLOW_ORIGINS").split(",");
         config.setAllowedOrigins(Arrays.stream(allowOrigins).toList());
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE","OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 
