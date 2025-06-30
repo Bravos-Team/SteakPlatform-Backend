@@ -3,6 +3,7 @@ package com.bravos.steak.dev.service.impl;
 import com.bravos.steak.common.model.GameS3Config;
 import com.bravos.steak.common.security.JwtTokenClaims;
 import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
+import com.bravos.steak.common.service.storage.impl.AwsS3Service;
 import com.bravos.steak.dev.entity.gamesubmission.BuildInfo;
 import com.bravos.steak.dev.entity.gamesubmission.GameSubmission;
 import com.bravos.steak.dev.entity.gamesubmission.GameSubmissionStatus;
@@ -25,6 +26,8 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.awscore.exception.AwsServiceException;
+import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectAttributesRequest;
@@ -46,11 +49,12 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
     private final ObjectMapper objectMapper;
     private final S3Client gameS3Client;
     private final GameS3Config gameS3Config;
+    private final AwsS3Service awsS3Service;
 
     @Autowired
     public PublisherPublishGameServiceImpl(SnowflakeGenerator snowflakeGenerator, GameSubmissionRepository gameSubmissionRepository,
                                            LogDevService logDevService, MongoTemplate mongoTemplate, ObjectMapper objectMapper,
-                                           S3Client gameS3Client, GameS3Config gameS3Config) {
+                                           S3Client gameS3Client, GameS3Config gameS3Config, AwsS3Service awsS3Service) {
         this.snowflakeGenerator = snowflakeGenerator;
         this.gameSubmissionRepository = gameSubmissionRepository;
         this.logDevService = logDevService;
@@ -58,6 +62,7 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
         this.objectMapper = objectMapper;
         this.gameS3Client = gameS3Client;
         this.gameS3Config = gameS3Config;
+        this.awsS3Service = awsS3Service;
     }
 
     @Override
@@ -285,8 +290,6 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
         }
     }
 
-
-
     private long checkProjectOwnership(long projectId) {
         JwtTokenClaims jwtTokenClaims = (JwtTokenClaims)
                 SecurityContextHolder.getContext().getAuthentication().getDetails();
@@ -318,25 +321,26 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
                         ObjectAttributes.OBJECT_SIZE
                 )
                 .build();
-        GetObjectAttributesResponse response = gameS3Client.getObjectAttributes(getObjectAttributesRequest);
-        if(response == null || response.objectSize() <= 0) {
+        GetObjectAttributesResponse response;
+        try {
+            response = gameS3Client.getObjectAttributes(getObjectAttributesRequest);
+        } catch (AwsServiceException | SdkClientException e) {
+            throw new BadRequestException("Failed to get object attributes: " + e.getMessage());
+        }
+        if(response == null) {
             throw new BadRequestException("Upload failed or file not found");
         }
         if(!response.checksum().checksumCRC32C().equals(checksum)) {
-            DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
-                    .bucket(gameS3Config.getBucketName())
-                    .key(getClientName(uploadUrl))
-                    .build();
-            Thread.startVirtualThread(() -> gameS3Client.deleteObject(deleteObjectRequest));
+            awsS3Service.deleteObject(gameS3Config.getBucketName(), getClientName(uploadUrl));
             throw new BadRequestException("Checksum mismatch, upload failed");
         }
     }
 
     private String getClientName(String uploadUrl) {
-        if (uploadUrl == null || uploadUrl.isBlank()) {
+        if (uploadUrl.isBlank()) {
             throw new BadRequestException("URL cannot be null or blank");
         }
-        if(!uploadUrl.startsWith("https://" + gameS3Config.getBucketName())) {
+        if(!uploadUrl.startsWith("https://")) {
             throw new BadRequestException("Invalid S3 URL format, must start with https://");
         }
         int idx = uploadUrl.indexOf(".amazonaws.com/");

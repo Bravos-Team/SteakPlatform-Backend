@@ -163,6 +163,7 @@ public abstract class S3Service {
                     .completeMultipartUpload(completeRequest);
 
             if(completeResponse.checksumCRC32C() != null && !completeResponse.checksumCRC32C().equals(checksum)) {
+                deleteObject(bucket, objectKey);
                 throw new BadRequestException("Checksum mismatch: expected " + checksum + ", got " + completeResponse.checksumCRC32C());
             }
 
@@ -173,6 +174,21 @@ public abstract class S3Service {
 
         return completeResponse.location();
 
+    }
+
+    public void deleteObject(String bucket, String objectKey) {
+        DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
+                .bucket(bucket)
+                .key(objectKey)
+                .build();
+
+        Thread.startVirtualThread(() -> {
+            try {
+                getS3Client().deleteObject(deleteObjectRequest);
+            } catch (AwsServiceException | SdkClientException e) {
+                log.error("Failed to delete object {} from bucket {}: {}", objectKey, bucket, e.getMessage(), e);
+            }
+        });
     }
 
     public PartUploadPresignedUrl[] regenerateS3MultipartUploadUrls(String bucket, String objectKey,

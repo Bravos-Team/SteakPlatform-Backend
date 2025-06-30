@@ -85,8 +85,8 @@ public abstract class AuthService {
         Set<String> paths = getCookiePaths();
         for (String path : paths) {
             this.addAccessTokenCookie(jwt, path);
-            this.addRefreshTokenCookie(refreshToken);
         }
+        this.addRefreshTokenCookie(refreshToken);
     }
 
     private void validateAccount(Account accountInfo, String rawPassword, String deviceId) {
