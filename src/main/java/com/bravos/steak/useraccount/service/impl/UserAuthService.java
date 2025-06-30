@@ -43,7 +43,6 @@ public class UserAuthService extends AuthService {
         this.sessionService = sessionService;
     }
 
-
     @Override
     protected Set<String> getCookiePaths() {
         return Set.of("/api/v1/store", "/api/v1/user", "/api/v1/support/user", "/api/v1/hub/user");

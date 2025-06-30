@@ -2,7 +2,6 @@ package com.bravos.steak.useraccount.controller;
 
 import com.bravos.steak.common.entity.Account;
 import com.bravos.steak.common.service.auth.AuthService;
-import com.bravos.steak.useraccount.entity.UserAccount;
 import com.bravos.steak.useraccount.model.request.EmailLoginRequest;
 import com.bravos.steak.useraccount.model.request.RefreshRequest;
 import com.bravos.steak.useraccount.model.request.UserRegistrationRequest;
@@ -10,16 +9,13 @@ import com.bravos.steak.useraccount.model.request.UsernameLoginRequest;
 import com.bravos.steak.useraccount.model.response.UserLoginResponse;
 import com.bravos.steak.useraccount.service.UserRegistrationService;
 import com.bravos.steak.useraccount.service.UserAccountService;
-import com.bravos.steak.useraccount.service.impl.UserAuthService;
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-
 @RequestMapping("/api/v1/user/auth")
 public class UserAuthController {
 
