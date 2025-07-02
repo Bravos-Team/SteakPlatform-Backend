@@ -1,0 +1,343 @@
+openapi: 3.1.0
+info:
+  title: Steak API Documentation
+  description: Steak is a full-stack platform inspired by Steam and Epic Games, designed for buying,
+    downloading, and managing licensed PC games. It supports both players and game publishers.
+  version: 1.0.0
+servers:
+  - url: 'https://api.steak.io.vn/'
+  - url: 'http://localhost:8888/'
+tags:
+  - name: user-auth
+    description: Liên quan đến các chức năng đăng ký, đăng nhập, xác thực, vv... của người dùng
+  - name: dev-auth
+    description: Liên quan đến các chức năng đăng ký, đăng nhập, xác thực, vv... của nhà phát hành
+  - name: admin-auth
+    description: Liên quan đến các chức năng đăng nhập, xác thực, vv... của quản trị viên
+  - name: publisher-upload
+    description: Upload tài nguyên cho publisher
+paths:
+  /api/v1/user/auth/register:
+    post:
+      tags:
+        - user-auth
+      summary: Gửi yêu cầu tạo tài khoản người dùng
+      description: Gửi yêu cầu tạo tài khoản người dùng (kiểm tra thông tin và gửi email xác nhận)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "./components.yaml#/components/schemas/UserRegisterRequest"
+      responses:
+        200:
+          description: Thông tin tài khoản hợp lệ, check mail để xác nhận tài khoản
+        409:
+          description: Thông tin tài khoản đã tồn tại trên hệ thống
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml#/components/schemas/Error"
+        default:
+          description: Lỗi khác
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml#/components/schemas/Error"
+
+
+  /api/v1/user/auth/username-login:
+    post:
+      tags:
+        - user-auth
+      summary: Đăng nhập tài khoản
+      description: Đăng nhập vào tài khoản bằng username
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "./components.yaml/#/components/schemas/UsernameLoginRequest"
+
+      responses:
+        200:
+          description: Đăng nhập thành công, token và refreshToken được lưu vào cookie set full cờ
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/UserLoginResponse"
+        default:
+          description: Đăng nhập thất bại
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/Error"
+
+  /api/v1/user/auth/email-login:
+    post:
+      tags:
+        - user-auth
+      summary: Đăng nhập tài khoản
+      description: Đăng nhập vào tài khoản bằng email
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "./components.yaml/#/components/schemas/EmailLoginRequest"
+
+      responses:
+        200:
+          description: Đăng nhập thành công, token và refreshToken được lưu vào cookie set full cờ
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/UserLoginResponse"
+        default:
+          description: Đăng nhập thất bại
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/Error"
+
+  /api/v1/dev/auth/register:
+    post:
+      tags:
+        - dev-auth
+      summary: Đăng ký nhà phát hành
+      description: Đăng ký nhà phát hành
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "./components.yaml/#/components/schemas/PublisherRegisterRequest"
+      responses:
+        200:
+          description: Thông tin tài khoản hợp lệ, check mail để xác nhận tài khoản
+        409:
+          description: Thông tin tài khoản đã tồn tại trên hệ thống
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml#/components/schemas/Error"
+        default:
+          description: Lỗi khác
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml#/components/schemas/Error"
+
+
+  /api/v1/dev/auth/username-login:
+    post:
+      tags:
+        - dev-auth
+      summary: Đăng nhập tài khoản nhà phát hành
+      description: Đăng nhập vào tài khoản
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "./components.yaml/#/components/schemas/UsernameLoginRequest"
+      responses:
+        200:
+          description: Đăng nhập thành công, token và refreshToken được lưu vào cookie set full cờ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  username:
+                    type: string
+                    example: publisher123
+        default:
+          description: Đăng nhập thất bại
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/Error"
+
+  /api/v1/dev/auth/email-login:
+    post:
+      tags:
+        - dev-auth
+      summary: Đăng nhập tài khoản nhà phát hành
+      description: Đăng nhập vào tài khoản bằng email
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "./components.yaml/#/components/schemas/EmailLoginRequest"
+      responses:
+        200:
+          description: Đăng nhập thành công, token và refreshToken được lưu vào cookie set full cờ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  username:
+                    type: string
+                    example: publisher123
+        default:
+          description: Đăng nhập thất bại
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/Error"
+
+
+  /api/v1/admin/auth/username-login:
+    post:
+      tags:
+        - admin-auth
+      summary: Đăng nhập vào tài khoản quản trị
+      description: Đăng nhập vào tải khoản quản trị bằng username
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "./components.yaml/#/components/schemas/UsernameLoginRequest"
+      responses:
+        200:
+          description: Đăng nhập thành công, token và refreshToken được lưu vào cookie set full cờ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  username:
+                    type: string
+                    example: admin123
+        default:
+          description: Đăng nhập thất bại
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/Error"
+
+  /api/v1/admin/auth/email-login:
+    post:
+      tags:
+        - admin-auth
+      summary: Đăng nhập vào tài khoản quản trị
+      description: Đăng nhập vào tải khoản quản trị bằng email
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "./components.yaml/#/components/schemas/EmailLoginRequest"
+      responses:
+        200:
+          description: Đăng nhập thành công, token và refreshToken được lưu vào cookie set full cờ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  username:
+                    type: string
+                    example: admin123@gmail.com
+        default:
+          description: Đăng nhập thất bại
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml#/components/schemas/Error"
+
+  /api/v1/dev/upload/presigned-image-url:
+    post:
+      tags:
+        - publisher-upload
+      summary: Lấy URL để upload ảnh
+      description: Lấy URL để upload ảnh cho game
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "./components.yaml/#/components/schemas/ImageUploadPresignRequest"
+      responses:
+        200:
+          description: Trả về URL để upload ảnh
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/ImageUploadPresignResponse"
+        default:
+          description: Lỗi khác
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/Error"
+  /api/v1/dev/upload/presigned-image-urls:
+    post:
+      tags:
+        - publisher-upload
+      summary: Lấy URL để upload nhiều ảnh
+      description: Lấy URL để upload nhiều ảnh cho game
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "./components.yaml/#/components/schemas/ImageUploadPresignRequest"
+      responses:
+        200:
+          description: Trả về URL để upload ảnh
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  urls:
+                    type: array
+                    items:
+                      $ref: "./components.yaml/#/components/schemas/ImageUploadPresignResponse"
+        default:
+          description: Lỗi khác
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/Error"
+
+  /api/v1/dev/upload/delete-image:
+    delete:
+      tags:
+        - publisher-upload
+      summary: Xoá ảnh đã upload
+      description: Xoá ảnh đã upload trên S3
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "./components.yaml/#/components/schemas/ImageDeleteRequest"
+      responses:
+        200:
+          description: Xoá ảnh thành công
+        default:
+          description: Lỗi khác
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/Error"
+
+  /api/v1/dev/upload/delete-images:
+    delete:
+      tags:
+        - publisher-upload
+      summary: Xoá nhiều ảnh đã upload
+      description: Xoá nhiều ảnh đã upload trên S3
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "./components.yaml/#/components/schemas/ImageDeleteRequest"
+      responses:
+        200:
+          description: Xoá ảnh thành công
+        default:
+          description: Lỗi khác
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/Error"

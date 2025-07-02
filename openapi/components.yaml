@@ -1,0 +1,131 @@
+components:
+  schemas:
+    Error:
+      description: Lỗi trả về
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Username or password is invalid"
+        error:
+          require: false
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            username: username cannot contains special characters
+            password: password cannot be blank
+
+    UsernameLoginRequest:
+      description: Đăng nhập bằng username
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 6
+          maxLength: 32
+          example: bravos123
+        password:
+          type: password
+          example: PassW0rD@
+        deviceId:
+          type: string
+          example: 1q2w3whj4j3nk
+        deviceInfo:
+          type: string
+          example: ubuntu chrome browser
+    EmailLoginRequest:
+      description: Đăng nhập bằng email
+      type: object
+      properties:
+        email:
+          type: email
+          minLength: 6
+          maxLength: 32
+          example: bravos123@baodepzai.com
+        password:
+          type: password
+          example: PassW0rD@
+        deviceId:
+          type: string
+          example: 1q2w3whj4j3nk
+        deviceInfo:
+          type: string
+          example: ubuntu chrome browser
+    UserLoginResponse:
+      type: object
+      properties:
+        name:
+          type: string
+          example: QuocBaoDepTrai
+        avatar:
+          type: string
+          example: https://ccdn.steak.io.vn
+    UserRegisterRequest:
+      type: object
+      properties:
+        username:
+          type: string
+          minLength: 6
+          maxLength: 32
+          example: bravos123
+        email:
+          type: email
+          example: bravos@steak.vn
+        password:
+          type: password
+          example: PassworD2@
+    RefreshRequest:
+      type: object
+      properties:
+        deviceId:
+          type: string
+          example: 1q2w3whj4j3nk
+    PublisherRegisterRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: Ubisuck
+        businessEmail:
+          type: string
+          example: steak@bravos.io.vn
+        phone:
+          type: string
+          example: sdt liên hệ nhà phát hành
+        masterUsername:
+          type: string
+          example: ubisuckmaster
+        masterEmail:
+          type: string
+          example: master@steak.io.vn
+        masterPassword:
+          type: string
+          example: 1982912@kja@AA
+    ImageUploadPresignRequest:
+      type: object
+      properties:
+        fileName:
+          type: string
+          example: 1q2w3e4r5t6y7u8i9o0p.jpg
+        fileSize:
+          type: long
+          example: 1024000 (bytes)
+
+    ImageUploadPresignResponse:
+      type: object
+      properties:
+          fileName:
+              type: string
+              example: 1q2w3e4r5t6y7u8i9o0p.jpg
+          signedUrl:
+            type: string
+            example: https://steak.io.vn/upload/1q2w3e4r5t6y7u8i9o0p.jpg
+
+    ImageDeleteRequest:
+      type: object
+      properties:
+        url:
+          type: string
+          example: https://ccdn.steak.io.vn/1q2w3e4r5t6y7u8i9o0p.jpg
+
