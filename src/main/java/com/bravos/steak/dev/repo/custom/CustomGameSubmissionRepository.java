@@ -2,14 +2,13 @@ package com.bravos.steak.dev.repo.custom;
 
 import com.bravos.steak.dev.entity.gamesubmission.GameSubmissionStatus;
 import com.bravos.steak.dev.model.GameSubmissionListDisplay;
-
-import java.util.List;
+import org.springframework.data.domain.Page;
 
 public interface CustomGameSubmissionRepository {
 
     Long getPublisherIdByProjectId(Long projectId);
 
-    List<GameSubmissionListDisplay> getGameSubmissionListDisplay(
+    Page<GameSubmissionListDisplay> getGameSubmissionListDisplay(
             Long publisherId,
             GameSubmissionStatus status,
             String keyword,

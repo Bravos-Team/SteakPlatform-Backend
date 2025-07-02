@@ -18,6 +18,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -178,7 +180,7 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
         }
 
         if(gameSubmission.getBuildInfo() == null) {
-            errorMessage.append("Project build info cannot be null. \n");
+            errorMessage.append("You need to submit project build \n");
         } else {
             if(gameSubmission.getBuildInfo().getVersionName().isBlank()) {
                 errorMessage.append("Project version name cannot be blank. \n");
@@ -234,7 +236,7 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
     }
 
     @Override
-    public List<GameSubmissionListDisplay> getProjectListByPublisher(String status, String keyword, int page, int size) {
+    public Page<GameSubmissionListDisplay> getProjectListByPublisher(String status, String keyword, int page, int size) {
         GameSubmissionStatus submissionStatus = null;
         if (status != null && !status.isBlank()) {
             try {
@@ -256,9 +258,9 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
                 }
                 GameSubmissionListDisplay submission = gameSubmissionRepository.getGameSubmissionListById(projectId, publisherId);
                 if(submission == null) {
-                    return List.of();
+                    return new PageImpl<>(List.of(), Page.empty().getPageable(), 0);
                 }
-                return List.of(submission);
+                return new PageImpl<>(List.of(submission), Page.empty().getPageable(), 1);
             }
             return gameSubmissionRepository.getGameSubmissionListDisplay(
                     publisherId, submissionStatus, keyword, page, size);
