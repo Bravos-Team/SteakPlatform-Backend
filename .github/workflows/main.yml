@@ -76,7 +76,7 @@ jobs:
               -e VAULT_URL=${{ secrets.VAULT_URL }} \
               -e SPRING_PROFILES_ACTIVE=prod \
               bravos/steak-server:latest
-            sleep 10
+            sleep 30
             docker ps | grep steak-server || (echo "Container failed to start" && exit 1)
     
 

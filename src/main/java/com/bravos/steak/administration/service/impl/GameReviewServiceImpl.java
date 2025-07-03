@@ -35,6 +35,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
@@ -111,7 +112,7 @@ public class GameReviewServiceImpl implements GameReviewService {
                 .name(submission.getName())
                 .publisher(publisher)
                 .status(GameStatus.OPENING)
-                .price(submission.getPrice())
+                .price(BigDecimal.valueOf(submission.getPrice()))
                 .createdAt(now)
                 .updatedAt(now)
                 .releaseDate(submission.getEstimatedReleaseDate()
@@ -197,7 +198,7 @@ public class GameReviewServiceImpl implements GameReviewService {
                     .from(new From("reviewer",revieerId))
                     .content(request.getContent())
                     .attachments(request.getAttachments())
-                    .repliedAt(LocalDateTime.now())
+                    .repliedAt(new Date())
                     .build();
             try {
                 return reviewReplyRepository.save(reply);

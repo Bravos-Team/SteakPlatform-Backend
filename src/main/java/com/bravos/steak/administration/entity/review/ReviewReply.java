@@ -7,7 +7,7 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
-import java.time.LocalDateTime;
+import java.util.Date;
 
 @Document("ReviewReply")
 @AllArgsConstructor
@@ -39,6 +39,6 @@ public class ReviewReply {
 
     @Field("repliedAt")
     @NonNull
-    private LocalDateTime repliedAt;
+    private Date repliedAt;
 
 }

@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -28,7 +29,7 @@ public class Game {
     String name;
 
     @Column(precision = 13, scale = 2, nullable = false)
-    Double price;
+    BigDecimal price;
 
     @Builder.Default
     @Enumerated(EnumType.ORDINAL)
