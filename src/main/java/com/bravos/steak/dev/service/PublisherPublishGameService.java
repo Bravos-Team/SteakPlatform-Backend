@@ -1,11 +1,10 @@
 package com.bravos.steak.dev.service;
 
-import com.bravos.steak.dev.model.GameSubmissionListDisplay;
+import com.bravos.steak.dev.model.GameSubmissionListItem;
 import com.bravos.steak.dev.model.request.SaveProjectRequest;
 import com.bravos.steak.dev.model.request.UpdatePreBuildRequest;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public interface PublisherPublishGameService {
@@ -16,9 +15,9 @@ public interface PublisherPublishGameService {
 
     void updateBuild(UpdatePreBuildRequest updatePreBuildRequest);
 
-    void publishGame(Long projectId);
+    void submitGameSubmission(Long projectId);
 
-    List<GameSubmissionListDisplay> getProjectListByPublisher(
+    Page<GameSubmissionListItem> getProjectListByPublisher(
             String status,
             String keyword,
             int page,

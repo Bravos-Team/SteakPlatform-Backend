@@ -61,7 +61,7 @@ public class GameSubmission {
     private String longDescription;
 
     @Field("platform")
-    private String platform;
+    private String[] platform;
 
     @Field("systemRequirements")
     private SystemRequirements systemRequirements;

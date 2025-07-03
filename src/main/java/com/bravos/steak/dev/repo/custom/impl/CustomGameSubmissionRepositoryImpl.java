@@ -2,18 +2,20 @@ package com.bravos.steak.dev.repo.custom.impl;
 
 import com.bravos.steak.common.repo.CustomMongoRepository;
 import com.bravos.steak.dev.entity.gamesubmission.GameSubmissionStatus;
-import com.bravos.steak.dev.model.GameSubmissionListDisplay;
+import com.bravos.steak.dev.model.GameSubmissionListItem;
 import com.bravos.steak.dev.repo.custom.CustomGameSubmissionRepository;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
 @Repository
-public class CustomGameSubmissionRepositoryImpl extends CustomMongoRepository implements CustomGameSubmissionRepository {
+public class CustomGameSubmissionRepositoryImpl
+        extends CustomMongoRepository
+        implements CustomGameSubmissionRepository {
 
     public CustomGameSubmissionRepositoryImpl(MongoTemplate mongoTemplate) {
         super(mongoTemplate);
@@ -33,29 +35,41 @@ public class CustomGameSubmissionRepositoryImpl extends CustomMongoRepository im
     }
 
     @Override
-    public List<GameSubmissionListDisplay> getGameSubmissionListDisplay(
+    public Page<GameSubmissionListItem> getGameSubmissionListDisplay(
             Long publisherId,
             GameSubmissionStatus status,
             String keyword,
-            int page, int size) {
-        Query query =  Query.query(Criteria
-                .where("publisherId").is(publisherId));
+            int page, int size, Sort sort) {
+        Query query =  new Query();
+        if(publisherId != null) {
+            query.addCriteria(Criteria.where("publisherId").is(publisherId));
+        }
         if(status != null) {
             query.addCriteria(Criteria.where("status").is(status));
         }
         if(keyword != null && !keyword.isBlank()) {
             query.addCriteria(Criteria.where("name").regex(keyword, "i"));
         }
-        query.fields().include("id", "publisherId", "name", "status", "versionName", "updatedAt");
-        return this.getPageProjectionsByQuery(query, GameSubmissionListDisplay.class, PageRequest.of(page, size)).getContent();
+        if(sort != null) {
+            query.with(sort);
+        }
+        query.fields().include("id", "publisherId", "name", "status", "buildInfo.versionName", "updatedAt");
+        return this.getPageProjectionsByQuery(query, GameSubmissionListItem.class, PageRequest.of(page, size));
     }
 
     @Override
-    public GameSubmissionListDisplay getGameSubmissionListById(Long id, Long publisherId) {
+    public GameSubmissionListItem getGameSubmissionListById(Long id, Long publisherId) {
         Query query = Query.query(Criteria.where("_id").is(id)
                 .and("publisherId").is(publisherId));
         query.fields().include("id", "publisherId", "name", "status", "updatedAt");
-        return this.getProjectionByQuery(query, GameSubmissionListDisplay.class);
+        return this.getProjectionByQuery(query, GameSubmissionListItem.class);
+    }
+
+    @Override
+    public PublisherIdAndStatus getPublisherIdAndStatusById(Long id) {
+        Query query = Query.query(Criteria.where("_id").is(id));
+        query.fields().include("publisherId", "status");
+        return this.getProjectionByQuery(query, PublisherIdAndStatus.class);
     }
 
     private static class GameSubmissionProjection {
