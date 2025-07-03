@@ -55,7 +55,7 @@ public class PublisherPublishGameController {
                     "error", "Invalid project ID"
             ));
         }
-        publisherPublishGameService.publishGame(projectId);
+        publisherPublishGameService.submitGameSubmission(projectId);
         return ResponseEntity.ok().body(Map.of(
                 "message", "Game published successfully"
         ));

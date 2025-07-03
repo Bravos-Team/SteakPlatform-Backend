@@ -29,7 +29,7 @@ public class SaveProjectRequest implements Serializable {
     Media[] media;
     String shortDescription;
     String longDescription;
-    String platform;
+    String[] platform;
     SystemRequirements systemRequirements;
     Boolean internetConnection;
     String[] languageSupported;

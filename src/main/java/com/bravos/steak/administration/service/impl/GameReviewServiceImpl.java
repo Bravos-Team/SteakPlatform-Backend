@@ -1,4 +1,227 @@
 package com.bravos.steak.administration.service.impl;
 
-public class GameReviewServiceImpl {
+import com.bravos.steak.administration.entity.review.From;
+import com.bravos.steak.administration.entity.review.ReviewReply;
+import com.bravos.steak.administration.model.request.CreateReviewReplyRequest;
+import com.bravos.steak.administration.repo.ReviewReplyRepository;
+import com.bravos.steak.administration.service.GameReviewService;
+import com.bravos.steak.common.security.JwtAuthentication;
+import com.bravos.steak.common.service.auth.SessionService;
+import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
+import com.bravos.steak.dev.entity.Publisher;
+import com.bravos.steak.dev.entity.gamesubmission.GameSubmission;
+import com.bravos.steak.dev.entity.gamesubmission.GameSubmissionStatus;
+import com.bravos.steak.dev.model.GameSubmissionListItem;
+import com.bravos.steak.dev.model.enums.PublisherStatus;
+import com.bravos.steak.dev.repo.GameSubmissionRepository;
+import com.bravos.steak.dev.repo.PublisherRepository;
+import com.bravos.steak.exceptions.BadRequestException;
+import com.bravos.steak.exceptions.ResourceNotFoundException;
+import com.bravos.steak.store.entity.Game;
+import com.bravos.steak.store.entity.GameVersion;
+import com.bravos.steak.store.entity.details.GameDetails;
+import com.bravos.steak.store.model.enums.GameStatus;
+import com.bravos.steak.store.model.enums.VersionStatus;
+import com.bravos.steak.store.repo.GameDetailsRepository;
+import com.bravos.steak.store.repo.GameRepository;
+import com.bravos.steak.store.repo.GameVersionRepository;
+import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
+import java.util.List;
+
+@Slf4j
+@Service
+public class GameReviewServiceImpl implements GameReviewService {
+
+    private final GameSubmissionRepository gameSubmissionRepository;
+    private final ReviewReplyRepository reviewReplyRepository;
+    private final SessionService sessionService;
+    private final MongoTemplate mongoTemplate;
+    private final PublisherRepository publisherRepository;
+    private final GameRepository gameRepository;
+    private final SnowflakeGenerator snowflakeGenerator;
+    private final GameVersionRepository gameVersionRepository;
+    private final GameDetailsRepository gameDetailsRepository;
+
+    public GameReviewServiceImpl(GameSubmissionRepository gameSubmissionRepository, ReviewReplyRepository reviewReplyRepository,
+                                 SessionService sessionService, MongoTemplate mongoTemplate,
+                                 PublisherRepository publisherRepository, GameRepository gameRepository,
+                                 SnowflakeGenerator snowflakeGenerator, GameVersionRepository gameVersionRepository,
+                                 GameDetailsRepository gameDetailsRepository) {
+        this.gameSubmissionRepository = gameSubmissionRepository;
+        this.reviewReplyRepository = reviewReplyRepository;
+        this.sessionService = sessionService;
+        this.mongoTemplate = mongoTemplate;
+        this.publisherRepository = publisherRepository;
+        this.gameRepository = gameRepository;
+        this.snowflakeGenerator = snowflakeGenerator;
+        this.gameVersionRepository = gameVersionRepository;
+        this.gameDetailsRepository = gameDetailsRepository;
+    }
+
+    @Override
+    public Page<GameSubmissionListItem> getNeedReviewGames(GameSubmissionStatus status, String keyword,
+                                                           Long publisherId, int page, int size, Sort sort) {
+        return gameSubmissionRepository.getGameSubmissionListDisplay(
+                publisherId, status, keyword,
+                page, size, sort
+        );
+    }
+
+    @Override
+    public GameSubmission getGameSubmissionById(Long submissionId) {
+        return gameSubmissionRepository.findById(submissionId).orElse(null);
+    }
+
+    @Override
+    @Transactional
+    public void approveGameSubmission(Long submissionId) {
+        GameSubmission submission = gameSubmissionRepository.findById(submissionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Game submission not found with ID: " + submissionId));
+
+        if(submission.getStatus() != GameSubmissionStatus.PENDING_REVIEW) {
+            throw new BadRequestException("Game submission is not in pending review status");
+        }
+
+        Publisher publisher = publisherRepository.findById(submission.getPublisherId()).orElse(null);
+
+        if (publisher == null) {
+            throw new ResourceNotFoundException("Publisher not found with ID: " + submission.getPublisherId());
+        }
+
+        if(publisher.getStatus() == PublisherStatus.BANNED) {
+            throw new BadRequestException("Publisher is banned and cannot submit games");
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+
+        Game game = Game.builder()
+                .id(submission.getId())
+                .name(submission.getName())
+                .publisher(publisher)
+                .status(GameStatus.OPENING)
+                .price(submission.getPrice())
+                .createdAt(now)
+                .updatedAt(now)
+                .releaseDate(submission.getEstimatedReleaseDate()
+                        .toInstant()
+                        .atZone(ZoneId.systemDefault()).toLocalDateTime())
+                .build();
+
+        try {
+            game = gameRepository.save(game);
+        } catch (Exception e) {
+            log.error("Failed to save game to database: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to save game to database");
+        }
+
+        GameVersion gameVersion = GameVersion.builder()
+                .id(snowflakeGenerator.generateId())
+                .game(game)
+                .changeLog("First version of the game")
+                .name(submission.getBuildInfo().getVersionName())
+                .execPath(submission.getBuildInfo().getExecPath())
+                .downloadUrl(submission.getBuildInfo().getDownloadUrl())
+                .createdAt(now)
+                .releaseDate(game.getReleaseDate())
+                .status(VersionStatus.STABLE)
+                .build();
+
+        try {
+            gameVersion = gameVersionRepository.save(gameVersion);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to save game version to database" );
+        }
+
+        GameDetails gameDetails = GameDetails.builder()
+                .id(game.getId())
+                .developersTeam(submission.getDeveloperTeam())
+                .region(submission.getRegion())
+                .thumbnail(submission.getThumbnail())
+                .media(submission.getMedia())
+                .shortDescription(submission.getShortDescription())
+                .longDescription(submission.getLongDescription())
+                .platforms(submission.getPlatform())
+                .systemRequirements(submission.getSystemRequirements())
+                .internetConnection(submission.getInternetConnection())
+                .languageSupported(submission.getLanguageSupported())
+                .updatedAt(new Date())
+                .build();
+
+        try {
+            gameDetailsRepository.save(gameDetails);
+        } catch (Exception e) {
+            gameVersionRepository.deleteById(gameVersion.getId());
+            gameRepository.deleteById(game.getId());
+            log.error("Failed to save game details to database: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to save game details to database");
+        }
+
+        updateGameSubmissionStatus(submissionId, GameSubmissionStatus.ACCEPTED);
+
+    }
+
+    @Override
+    public void requireUpdateGameSubmission(Long submissionId) {
+        updateGameSubmissionStatus(submissionId, GameSubmissionStatus.NEED_UPDATE);
+    }
+
+    @Override
+    public void rejectGameSubmission(Long submissionId) {
+        updateGameSubmissionStatus(submissionId, GameSubmissionStatus.REJECTED);
+    }
+
+    @Override
+    public List<ReviewReply> getReviewRepliesBySubmissionId(Long submissionId) {
+        return reviewReplyRepository.findByGameSubmissionId(submissionId);
+    }
+
+    @Override
+    public ReviewReply createReviewReply(CreateReviewReplyRequest request) {
+        JwtAuthentication auth = sessionService.getAuthentication();
+        Long revieerId = (Long) auth.getPrincipal();
+        if(gameSubmissionRepository.existsById(request.getSubmissionId())) {
+            ReviewReply reply = ReviewReply.builder()
+                    .gameSubmissionId(request.getSubmissionId())
+                    .from(new From("reviewer",revieerId))
+                    .content(request.getContent())
+                    .attachments(request.getAttachments())
+                    .repliedAt(LocalDateTime.now())
+                    .build();
+            try {
+                return reviewReplyRepository.save(reply);
+            } catch (Exception e) {
+                log.error("Failed to create review reply: {}", e.getMessage(), e);
+                throw new RuntimeException("Failed to create review reply: " + e.getMessage());
+            }
+        }
+        throw new ResourceNotFoundException("Game submission not found with ID: " + request.getSubmissionId());
+    }
+
+    @Override
+    public void updateGameSubmissionStatus(Long submissionId, GameSubmissionStatus status) {
+        Update update = Update.update("status", status)
+                .set("updatedAt", LocalDateTime.now());
+        try {
+            mongoTemplate.updateFirst(
+                    Query.query(Criteria.where("id").is(submissionId)),
+                    update,
+                    GameSubmission.class
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to update game submission status: " + e.getMessage());
+        }
+    }
+
 }

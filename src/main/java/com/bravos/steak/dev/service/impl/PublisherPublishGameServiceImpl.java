@@ -5,10 +5,11 @@ import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
 import com.bravos.steak.dev.entity.gamesubmission.BuildInfo;
 import com.bravos.steak.dev.entity.gamesubmission.GameSubmission;
 import com.bravos.steak.dev.entity.gamesubmission.GameSubmissionStatus;
-import com.bravos.steak.dev.model.GameSubmissionListDisplay;
+import com.bravos.steak.dev.model.GameSubmissionListItem;
 import com.bravos.steak.dev.model.request.SaveProjectRequest;
 import com.bravos.steak.dev.model.request.UpdatePreBuildRequest;
 import com.bravos.steak.dev.repo.GameSubmissionRepository;
+import com.bravos.steak.dev.repo.custom.CustomGameSubmissionRepository;
 import com.bravos.steak.dev.service.LogDevService;
 import com.bravos.steak.dev.service.PublisherPublishGameService;
 import com.bravos.steak.exceptions.BadRequestException;
@@ -17,9 +18,11 @@ import com.bravos.steak.exceptions.ForbiddenException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -94,7 +97,12 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
 
         long projectId = saveProjectRequest.getId();
 
-        long publisherId = checkProjectOwnership(projectId);
+        var publisherIdAndStatus = checkProjectOwnership(projectId);
+
+        if(publisherIdAndStatus.status != GameSubmissionStatus.DRAFT &&
+                publisherIdAndStatus.status != GameSubmissionStatus.PENDING_REVIEW) {
+            throw new BadRequestException("You can only update draft or pending review project");
+        }
 
         Map<String,Object> changedData = objectMapper.convertValue(
                 saveProjectRequest,
@@ -112,12 +120,13 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
                 }
             }
             update.set("updatedAt",new Date());
+            update.set("status", GameSubmissionStatus.DRAFT);
 
             try {
                 Query query = Query.query(Criteria.where("_id").is(projectId));
                 mongoTemplate.updateFirst(query,update, GameSubmission.class);
-                logDevService.saveLog(jwtTokenClaims.getId(),publisherId,
-                        "Project {} has been updated by {}",projectId,publisherId);
+                logDevService.saveLog(jwtTokenClaims.getId(),publisherIdAndStatus.publisherId,
+                        "Project {} has been updated by {}",projectId,jwtTokenClaims.getId());
             } catch (Exception e) {
                 log.error("Error when saving project: {}",e.getMessage(),e);
                 throw new RuntimeException("Error when saving project");
@@ -127,16 +136,18 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
 
     @Override
     public void updateBuild(UpdatePreBuildRequest updatePreBuildRequest) {
+
         JwtTokenClaims jwtTokenClaims = (JwtTokenClaims)
                 SecurityContextHolder.getContext().getAuthentication().getDetails();
         long projectId = updatePreBuildRequest.getProjectId();
-        long publisherId = checkProjectOwnership(projectId);
+        var publisherIdAndStatus = checkProjectOwnership(projectId);
 
         GameSubmission gameSubmission = gameSubmissionRepository.findById(projectId)
                 .orElseThrow(() -> new BadRequestException("Project not found"));
 
-        if(gameSubmission.getStatus() == GameSubmissionStatus.PENDING_REVIEW) {
-            throw new BadRequestException("You cannot update build of a project that is pending review");
+        if(gameSubmission.getStatus() != GameSubmissionStatus.DRAFT &&
+                gameSubmission.getStatus() != GameSubmissionStatus.PENDING_REVIEW) {
+            throw new BadRequestException("You can only update build for draft or pending review project");
         }
 
         BuildInfo buildInfo = new BuildInfo();
@@ -150,8 +161,8 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
 
         try {
             gameSubmissionRepository.save(gameSubmission);
-            logDevService.saveLog(jwtTokenClaims.getId(), publisherId,
-                    "Project {} has been updated build by {}", projectId, publisherId);
+            logDevService.saveLog(jwtTokenClaims.getId(), publisherIdAndStatus.publisherId,
+                    "Project {} has been updated build by {}", projectId, jwtTokenClaims.getId());
         } catch (Exception e) {
             log.error("Error when updating build: {}", e.getMessage(), e);
             throw new RuntimeException("Error when updating build");
@@ -160,11 +171,12 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
     }
 
     @Override
-    public void publishGame(Long projectId) {
+    public void submitGameSubmission(Long projectId) {
+
         JwtTokenClaims jwtTokenClaims = (JwtTokenClaims)
                 SecurityContextHolder.getContext().getAuthentication().getDetails();
 
-        long publisherId = checkProjectOwnership(projectId);
+        var publisherIdAndStatus = checkProjectOwnership(projectId);
 
         GameSubmission gameSubmission = gameSubmissionRepository.findById(projectId)
                 .orElseThrow(() -> new BadRequestException("Project not found"));
@@ -173,6 +185,29 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
             throw new BadRequestException("You can only publish draft project");
         }
 
+        StringBuilder errorMessage = getErrorMessage(gameSubmission);
+
+        if(!errorMessage.isEmpty()) {
+            errorMessage.insert(0, "Cannot publish project: \n");
+            throw new BadRequestException("Cannot publish project: " + errorMessage);
+        }
+
+        gameSubmission.setStatus(GameSubmissionStatus.PENDING_REVIEW);
+        gameSubmission.setUpdatedAt(new Date());
+
+        try {
+            gameSubmissionRepository.save(gameSubmission);
+            logDevService.saveLog(jwtTokenClaims.getId(), publisherIdAndStatus.publisherId,
+                    "Project {} has been requested by {}", projectId, jwtTokenClaims.getId());
+        } catch (Exception e) {
+            log.error("Error when publishing project: {}", e.getMessage(), e);
+            throw new RuntimeException("Error when publishing project");
+        }
+
+    }
+
+    @NotNull
+    private StringBuilder getErrorMessage(GameSubmission gameSubmission) {
         StringBuilder errorMessage = new StringBuilder();
 
         if(gameSubmission.getName().isBlank()) {
@@ -181,21 +216,6 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
 
         if(gameSubmission.getBuildInfo() == null) {
             errorMessage.append("You need to submit project build \n");
-        } else {
-            if(gameSubmission.getBuildInfo().getVersionName().isBlank()) {
-                errorMessage.append("Project version name cannot be blank. \n");
-            }
-            if(gameSubmission.getBuildInfo().getExecPath().isBlank()) {
-                errorMessage.append("Project exec path cannot be blank. \n");
-            }
-            if(gameSubmission.getBuildInfo().getDownloadUrl() == null ||
-                    gameSubmission.getBuildInfo().getDownloadUrl().isBlank()) {
-                errorMessage.append("Project download URL cannot be blank. \n");
-            }
-            if(gameSubmission.getBuildInfo().getChecksum() == null ||
-                    gameSubmission.getBuildInfo().getChecksum().isBlank()) {
-                errorMessage.append("Project checksum cannot be blank. \n");
-            }
         }
 
         if(gameSubmission.getThumbnail() == null || gameSubmission.getThumbnail().isBlank()) {
@@ -218,25 +238,14 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
             errorMessage.append("You must upload at least one media file. \n");
         }
 
-        if(!errorMessage.isEmpty()) {
-            throw new BadRequestException("Cannot publish project: " + errorMessage);
+        if(gameSubmission.getSystemRequirements() == null) {
+            errorMessage.append("You must provide system requirements for your project. \n");
         }
-
-        gameSubmission.setStatus(GameSubmissionStatus.PENDING_REVIEW);
-        gameSubmission.setUpdatedAt(new Date());
-
-        try {
-            gameSubmissionRepository.save(gameSubmission);
-            logDevService.saveLog(jwtTokenClaims.getId(), publisherId,
-                    "Project {} has been requested by {}", projectId, publisherId);
-        } catch (Exception e) {
-            log.error("Error when publishing project: {}", e.getMessage(), e);
-            throw new RuntimeException("Error when publishing project");
-        }
+        return errorMessage;
     }
 
     @Override
-    public Page<GameSubmissionListDisplay> getProjectListByPublisher(String status, String keyword, int page, int size) {
+    public Page<GameSubmissionListItem> getProjectListByPublisher(String status, String keyword, int page, int size) {
         GameSubmissionStatus submissionStatus = null;
         if (status != null && !status.isBlank()) {
             try {
@@ -256,40 +265,42 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
                 } catch (BadRequestException e) {
                     throw new BadRequestException("Invalid project ID format");
                 }
-                GameSubmissionListDisplay submission = gameSubmissionRepository.getGameSubmissionListById(projectId, publisherId);
+                GameSubmissionListItem submission = gameSubmissionRepository.getGameSubmissionListById(projectId, publisherId);
                 if(submission == null) {
                     return new PageImpl<>(List.of(), Page.empty().getPageable(), 0);
                 }
                 return new PageImpl<>(List.of(submission), Page.empty().getPageable(), 1);
             }
             return gameSubmissionRepository.getGameSubmissionListDisplay(
-                    publisherId, submissionStatus, keyword, page, size);
+                    publisherId, submissionStatus, keyword, page, size, Sort.by(
+                            Sort.Direction.DESC, "updatedAt"
+                    ));
         } catch (Exception e) {
             log.error("Error when fetching project list: {}", e.getMessage(), e);
             throw new RuntimeException("Error when fetching project list");
         }
     }
 
-    private long checkProjectOwnership(long projectId) {
+    private CustomGameSubmissionRepository.PublisherIdAndStatus checkProjectOwnership(long projectId) {
         JwtTokenClaims jwtTokenClaims = (JwtTokenClaims)
                 SecurityContextHolder.getContext().getAuthentication().getDetails();
 
         Long publisherId = (long) jwtTokenClaims.getOtherClaims().get("publisherId");
 
-        Long realPublisherId;
+        CustomGameSubmissionRepository.PublisherIdAndStatus publisherIdAndStatus;
 
         try {
-            realPublisherId = gameSubmissionRepository.getPublisherIdByProjectId(projectId);
+            publisherIdAndStatus = gameSubmissionRepository.getPublisherIdAndStatusById(projectId);
         } catch (Exception e) {
             log.error("Error when verifying project: {}", e.getMessage(), e);
             throw new RuntimeException("Cannot verify your project");
         }
 
-        if(!publisherId.equals(realPublisherId)) {
+        if(!publisherId.equals(publisherIdAndStatus.publisherId)) {
             throw new ForbiddenException("You are not owner of this project");
         }
 
-        return realPublisherId;
+        return publisherIdAndStatus;
     }
 
 }

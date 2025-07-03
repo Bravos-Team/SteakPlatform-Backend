@@ -10,7 +10,7 @@ import java.util.Date;
  * DTO for {@link com.bravos.steak.dev.entity.gamesubmission.GameSubmission}
  */
 @Value
-public class GameSubmissionListDisplay implements Serializable {
+public class GameSubmissionListItem implements Serializable {
     Long id;
     Long publisherId;
     String name;
