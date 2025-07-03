@@ -232,4 +232,6 @@ public abstract class S3Service {
 
     public abstract S3Client getS3Client();
 
+    public abstract String getObjectNameFromUrl(String url);
+
 }

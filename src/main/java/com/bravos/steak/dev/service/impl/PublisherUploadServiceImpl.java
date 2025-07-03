@@ -139,10 +139,12 @@ public class PublisherUploadServiceImpl implements PublisherUploadService {
             throw new ForbiddenException("Unauthorized attempt to delete image");
         }
 
+        String objectKey = cloudflareS3Service.getObjectNameFromUrl(deleteImageRequest.getUrl());
+
         executorService.submit(() -> {
             DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
                     .bucket(imageS3Config.getBucketName())
-                    .key(getFileNameFromUrl(deleteImageRequest.getUrl()))
+                    .key(objectKey)
                     .build();
             cloudflareS3Client.deleteObject(deleteObjectRequest);
         });
@@ -164,7 +166,7 @@ public class PublisherUploadServiceImpl implements PublisherUploadService {
             for (DeleteImageRequest deleteImageRequest : deleteImageRequests) {
                 DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
                         .bucket(imageS3Config.getBucketName())
-                        .key(getFileNameFromUrl(deleteImageRequest.getUrl()))
+                        .key(cloudflareS3Service.getObjectNameFromUrl(deleteImageRequest.getUrl()))
                         .build();
                 cloudflareS3Client.deleteObject(deleteObjectRequest);
             }
@@ -239,11 +241,6 @@ public class PublisherUploadServiceImpl implements PublisherUploadService {
 
         return new CompleteUploadResponse(objectUrl,completeMultipartRequest.getChecksum());
 
-    }
-
-    private String getFileNameFromUrl(String url) {
-        int idx = url.indexOf("/", url.indexOf("//") + 2);
-        return idx != -1 ? url.substring(idx + 1) : url;
     }
 
     private long calculatePartSize(long fileSize) {
