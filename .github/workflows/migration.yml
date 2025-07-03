@@ -1,0 +1,51 @@
+name: Migration database Atlasgo cloud
+on:
+  push:
+    branches: [master]
+
+jobs:
+    push-migration:
+        runs-on: ubuntu-latest
+        services:
+          postgres:
+            image: postgres:15
+            ports:
+              - 5432:5432
+            env:
+              POSTGRES_USER: postgres
+              POSTGRES_PASSWORD: postgres
+            options: >-
+              --health-cmd pg_isready
+              --health-interval 10s
+              --health-timeout 5s
+              --health-retries 5
+        steps:
+          - name: Checkout repo
+            uses: actions/checkout@v4
+
+          - name: Install Atlas
+            uses: ariga/setup-atlas@v0
+            with:
+              cloud-token: ${{ secrets.ATLAS_TOKEN }}
+
+          - name: Push migration
+            uses: ariga/atlas-action/migrate/push@v1
+            with:
+              dir: 'file://migrations'
+              dir-name: 'steak'
+              dev-url: 'postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable'
+
+          - name: Apply migration
+            uses: appleboy/ssh-action@v1.2.2
+            with:
+              host: ${{ secrets.HOST }}
+              username: ${{ secrets.USERNAME }}
+              key: ${{ secrets.PRIVATE_KEY }}
+              port: ${{ secrets.PORT }}
+              script: |
+                curl -sSf https://atlasgo.sh | sh -s -- -y
+                atlas login --token "${{ secrets.ATLAS_TOKEN }}"
+                atlas migrate apply --dir atlas://steak --url ${{ secrets.POSTGRES_URL }}
+
+
+
