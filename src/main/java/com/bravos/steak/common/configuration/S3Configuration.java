@@ -25,7 +25,8 @@ public class S3Configuration {
         String s3SecretKey = keyVaultService.getSecretKey(System.getProperty("CF_S3_SECRET_KEY"));
         String s3Endpoint = keyVaultService.getSecretKey(System.getProperty("CF_S3_ENDPOINT"));
         String bucketName = keyVaultService.getSecretKey(System.getProperty("CF_S3_BUCKET_NAME"));
-        return new ImageS3Config(s3AccessKey, s3SecretKey,s3Endpoint,bucketName);
+        String cdnUrl = keyVaultService.getSecretKey(System.getProperty("CF_S3_CDN_URL"));
+        return new ImageS3Config(s3AccessKey, s3SecretKey,s3Endpoint,bucketName,cdnUrl);
     }
 
     @Bean
@@ -35,7 +36,8 @@ public class S3Configuration {
         String s3SecretKey = System.getProperty("CF_S3_SECRET_KEY");
         String s3Endpoint = System.getProperty("CF_S3_ENDPOINT");
         String bucketName = System.getProperty("CF_S3_BUCKET_NAME");
-        return new ImageS3Config(s3AccessKey, s3SecretKey,s3Endpoint,bucketName);
+        String cdnUrl = System.getProperty("CF_S3_CDN_URL");
+        return new ImageS3Config(s3AccessKey, s3SecretKey,s3Endpoint,bucketName,cdnUrl);
     }
 
     @Bean
@@ -45,7 +47,9 @@ public class S3Configuration {
         String s3SecretKey = keyVaultService.getSecretKey(System.getProperty("GAME_S3_SECRET_KEY"));
         String bucketName = keyVaultService.getSecretKey(System.getProperty("GAME_S3_BUCKET_NAME"));
         String region = keyVaultService.getSecretKey(System.getProperty("GAME_S3_REGION"));
-        return new GameS3Config(s3AccessKey, s3SecretKey, bucketName, region);
+        String baseUrl = keyVaultService.getSecretKey(System.getProperty("GAME_S3_BASE_URL"));
+        String cdnUrl = keyVaultService.getSecretKey(System.getProperty("GAME_S3_CDN_URL"));
+        return new GameS3Config(s3AccessKey, s3SecretKey, bucketName, region, baseUrl,cdnUrl);
     }
 
     @Bean
@@ -55,7 +59,9 @@ public class S3Configuration {
         String s3SecretKey = System.getProperty("GAME_S3_SECRET_KEY");
         String bucketName = System.getProperty("GAME_S3_BUCKET_NAME");
         String region = System.getProperty("GAME_S3_REGION");
-        return new GameS3Config(s3AccessKey, s3SecretKey, bucketName, region);
+        String baseUrl = System.getProperty("GAME_S3_BASE_URL");
+        String cdnUrl = System.getProperty("GAME_S3_CDN_URL");
+        return new GameS3Config(s3AccessKey, s3SecretKey, bucketName, region, baseUrl,cdnUrl);
     }
 
     @Bean

@@ -15,5 +15,7 @@ public class GameS3Config {
     private String secretKey;
     private String bucketName;
     private String region;
+    private String baseUrl;
+    private String cdnUrl;
 
 }

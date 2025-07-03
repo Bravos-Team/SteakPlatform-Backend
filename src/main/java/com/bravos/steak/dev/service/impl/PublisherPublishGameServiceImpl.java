@@ -1,7 +1,9 @@
 package com.bravos.steak.dev.service.impl;
 
+import com.bravos.steak.common.model.GameS3Config;
 import com.bravos.steak.common.security.JwtTokenClaims;
 import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
+import com.bravos.steak.common.service.storage.impl.AwsS3Service;
 import com.bravos.steak.dev.entity.gamesubmission.BuildInfo;
 import com.bravos.steak.dev.entity.gamesubmission.GameSubmission;
 import com.bravos.steak.dev.entity.gamesubmission.GameSubmissionStatus;
@@ -43,15 +45,20 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
     private final LogDevService logDevService;
     private final MongoTemplate mongoTemplate;
     private final ObjectMapper objectMapper;
+    private final AwsS3Service awsS3Service;
+    private final GameS3Config gameS3Config;
 
     @Autowired
     public PublisherPublishGameServiceImpl(SnowflakeGenerator snowflakeGenerator, GameSubmissionRepository gameSubmissionRepository,
-                                           LogDevService logDevService, MongoTemplate mongoTemplate, ObjectMapper objectMapper) {
+                                           LogDevService logDevService, MongoTemplate mongoTemplate, ObjectMapper objectMapper,
+                                           AwsS3Service awsS3Service, GameS3Config gameS3Config) {
         this.snowflakeGenerator = snowflakeGenerator;
         this.gameSubmissionRepository = gameSubmissionRepository;
         this.logDevService = logDevService;
         this.mongoTemplate = mongoTemplate;
         this.objectMapper = objectMapper;
+        this.awsS3Service = awsS3Service;
+        this.gameS3Config = gameS3Config;
     }
 
     @Override
@@ -150,6 +157,9 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
             throw new BadRequestException("You can only update build for draft or pending review project");
         }
 
+        String oldDownloadUrl = gameSubmission.getBuildInfo() != null ?
+                gameSubmission.getBuildInfo().getDownloadUrl() : null;
+
         BuildInfo buildInfo = new BuildInfo();
         buildInfo.setVersionName(updatePreBuildRequest.getVersionName());
         buildInfo.setExecPath(updatePreBuildRequest.getExecPath());
@@ -167,6 +177,13 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
             log.error("Error when updating build: {}", e.getMessage(), e);
             throw new RuntimeException("Error when updating build");
         }
+
+        Thread.startVirtualThread(() -> {
+            if(oldDownloadUrl != null && !oldDownloadUrl.isBlank()) {
+                String objectKey = oldDownloadUrl.replace(gameS3Config.getBaseUrl(), "");
+                awsS3Service.deleteObject(gameS3Config.getBucketName(),objectKey);
+            }
+        });
 
     }
 
@@ -230,7 +247,7 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
             errorMessage.append("Project short description cannot be blank. \n");
         }
 
-        if(gameSubmission.getPrice() == null || gameSubmission.getPrice().doubleValue() < 0) {
+        if(gameSubmission.getPrice() == null || gameSubmission.getPrice() < 0) {
             errorMessage.append("Project price cannot be negative. \n");
         }
 

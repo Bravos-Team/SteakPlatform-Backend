@@ -19,4 +19,6 @@ public class ImageS3Config {
 
     private String bucketName;
 
+    private String cdnUrl;
+
 }
