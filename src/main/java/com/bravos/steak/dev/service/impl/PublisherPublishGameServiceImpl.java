@@ -230,7 +230,7 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
             errorMessage.append("Project short description cannot be blank. \n");
         }
 
-        if(gameSubmission.getPrice() == null || gameSubmission.getPrice() < 0) {
+        if(gameSubmission.getPrice() == null || gameSubmission.getPrice().doubleValue() < 0) {
             errorMessage.append("Project price cannot be negative. \n");
         }
 
