@@ -5,10 +5,10 @@ import com.bravos.steak.common.annotation.PublisherController;
 import com.bravos.steak.dev.model.PublisherAuthority;
 import com.bravos.steak.dev.model.request.SaveProjectRequest;
 import com.bravos.steak.dev.model.request.UpdatePreBuildRequest;
-import com.bravos.steak.dev.service.PublisherPublishGameService;
+import com.bravos.steak.dev.service.GameSubmissionService;
 import com.bravos.steak.exceptions.BadRequestException;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -19,31 +19,31 @@ import java.util.Optional;
 @PublisherController
 public class PublisherPublishGameController {
 
-    private final PublisherPublishGameService publisherPublishGameService;
+    private final GameSubmissionService gameSubmissionService;
 
-    public PublisherPublishGameController(PublisherPublishGameService publisherPublishGameService) {
-        this.publisherPublishGameService = publisherPublishGameService;
+    public PublisherPublishGameController(GameSubmissionService gameSubmissionService) {
+        this.gameSubmissionService = gameSubmissionService;
     }
 
     @HasAuthority({PublisherAuthority.CREATE_GAME})
     @PostMapping("/create")
     public ResponseEntity<?> createProject(@RequestParam String name) {
         return ResponseEntity.ok(Map.of(
-                "projectId", publisherPublishGameService.createProject(name)
+                "projectId", gameSubmissionService.createProject(name)
         ));
     }
 
     @HasAuthority({PublisherAuthority.CREATE_GAME})
     @PostMapping("/update")
-    public ResponseEntity<?> saveDraftProject(@RequestBody @Validated SaveProjectRequest saveProjectRequest) {
-        publisherPublishGameService.saveDraftProject(saveProjectRequest);
+    public ResponseEntity<?> saveDraftProject(@RequestBody @Valid SaveProjectRequest saveProjectRequest) {
+        gameSubmissionService.saveDraftProject(saveProjectRequest);
         return ResponseEntity.ok().build();
     }
 
     @HasAuthority({PublisherAuthority.CREATE_GAME})
     @PostMapping("/update-build")
-    public ResponseEntity<?> updateBuild(@RequestBody @Validated UpdatePreBuildRequest updatePreBuildRequest) {
-        publisherPublishGameService.updateBuild(updatePreBuildRequest);
+    public ResponseEntity<?> updateBuild(@RequestBody @Valid UpdatePreBuildRequest updatePreBuildRequest) {
+        gameSubmissionService.updateBuild(updatePreBuildRequest);
         return ResponseEntity.ok().build();
     }
 
@@ -55,7 +55,7 @@ public class PublisherPublishGameController {
                     "error", "Invalid project ID"
             ));
         }
-        publisherPublishGameService.submitGameSubmission(projectId);
+        gameSubmissionService.submitGameSubmission(projectId);
         return ResponseEntity.ok().body(Map.of(
                 "message", "Game published successfully"
         ));
@@ -70,7 +70,7 @@ public class PublisherPublishGameController {
         if(page < 1 || size <= 0) {
             throw new BadRequestException("Please check page and size values.");
         }
-        return ResponseEntity.ok(publisherPublishGameService.getProjectListByPublisher
+        return ResponseEntity.ok(gameSubmissionService.getProjectListByPublisher
                 (status.orElse(null),keyword.orElse(null),page - 1,size)
         );
     }

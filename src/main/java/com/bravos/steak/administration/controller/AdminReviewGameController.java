@@ -1,16 +1,15 @@
 package com.bravos.steak.administration.controller;
 
 import com.bravos.steak.administration.model.AdminAuthority;
+import com.bravos.steak.administration.model.request.ReviewerReviewReplyRequest;
 import com.bravos.steak.administration.service.GameReviewService;
 import com.bravos.steak.common.annotation.AdminController;
 import com.bravos.steak.common.annotation.HasAuthority;
 import com.bravos.steak.dev.entity.gamesubmission.GameSubmissionStatus;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 
@@ -75,5 +74,12 @@ public class AdminReviewGameController {
                 sort.orElse(Sort.by(Sort.Direction.DESC, "updatedAt"))
         ));
     }
+
+    @HasAuthority({AdminAuthority.REVIEW_GAME})
+    @GetMapping("/response-review")
+    public ResponseEntity<?> responseReview(@RequestBody @Valid ReviewerReviewReplyRequest request) {
+        return ResponseEntity.ok(gameReviewService.createReviewReply(request));
+    }
+
 
 }

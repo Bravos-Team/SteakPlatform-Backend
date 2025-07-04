@@ -8,19 +8,19 @@ import com.bravos.steak.dev.entity.gamesubmission.BuildInfo;
 import com.bravos.steak.dev.entity.gamesubmission.GameSubmission;
 import com.bravos.steak.dev.entity.gamesubmission.GameSubmissionStatus;
 import com.bravos.steak.dev.model.GameSubmissionListItem;
+import com.bravos.steak.dev.model.request.PublisherReviewReplyRequest;
 import com.bravos.steak.dev.model.request.SaveProjectRequest;
 import com.bravos.steak.dev.model.request.UpdatePreBuildRequest;
 import com.bravos.steak.dev.repo.GameSubmissionRepository;
 import com.bravos.steak.dev.repo.custom.CustomGameSubmissionRepository;
 import com.bravos.steak.dev.service.LogDevService;
-import com.bravos.steak.dev.service.PublisherPublishGameService;
+import com.bravos.steak.dev.service.GameSubmissionService;
 import com.bravos.steak.exceptions.BadRequestException;
 import com.bravos.steak.exceptions.ConflictDataException;
 import com.bravos.steak.exceptions.ForbiddenException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -38,7 +38,7 @@ import java.util.Map;
 
 @Slf4j
 @Service
-public class PublisherPublishGameServiceImpl implements PublisherPublishGameService {
+public class GameSubmissionServiceImpl implements GameSubmissionService {
 
     private final SnowflakeGenerator snowflakeGenerator;
     private final GameSubmissionRepository gameSubmissionRepository;
@@ -49,9 +49,9 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
     private final GameS3Config gameS3Config;
 
     @Autowired
-    public PublisherPublishGameServiceImpl(SnowflakeGenerator snowflakeGenerator, GameSubmissionRepository gameSubmissionRepository,
-                                           LogDevService logDevService, MongoTemplate mongoTemplate, ObjectMapper objectMapper,
-                                           AwsS3Service awsS3Service, GameS3Config gameS3Config) {
+    public GameSubmissionServiceImpl(SnowflakeGenerator snowflakeGenerator, GameSubmissionRepository gameSubmissionRepository,
+                                     LogDevService logDevService, MongoTemplate mongoTemplate, ObjectMapper objectMapper,
+                                     AwsS3Service awsS3Service, GameS3Config gameS3Config) {
         this.snowflakeGenerator = snowflakeGenerator;
         this.gameSubmissionRepository = gameSubmissionRepository;
         this.logDevService = logDevService;
@@ -223,7 +223,6 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
 
     }
 
-    @NotNull
     private StringBuilder getErrorMessage(GameSubmission gameSubmission) {
         StringBuilder errorMessage = new StringBuilder();
 
@@ -295,6 +294,27 @@ public class PublisherPublishGameServiceImpl implements PublisherPublishGameServ
         } catch (Exception e) {
             log.error("Error when fetching project list: {}", e.getMessage(), e);
             throw new RuntimeException("Error when fetching project list");
+        }
+    }
+
+    @Override
+    public void reSubmitGameSubmission(PublisherReviewReplyRequest publisherReviewReplyRequest) {
+
+    }
+
+    @Override
+    public void updateGameSubmissionStatus(Long submissionId, GameSubmissionStatus status) {
+        Update update = new Update();
+        update.set("status", status);
+        update.set("updatedAt", new Date());
+        try {
+            mongoTemplate.updateFirst(
+                    Query.query(Criteria.where("id").is(submissionId)),
+                    update,
+                    GameSubmission.class
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to update game submission status: " + e.getMessage());
         }
     }
 

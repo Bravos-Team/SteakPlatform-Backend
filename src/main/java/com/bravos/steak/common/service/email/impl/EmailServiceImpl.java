@@ -3,7 +3,6 @@ package com.bravos.steak.common.service.email.impl;
 import com.bravos.steak.common.model.EmailPayload;
 import com.bravos.steak.common.service.email.EmailService;
 import com.bravos.steak.common.service.webhook.DiscordWebhookService;
-import kotlin.collections.ArrayDeque;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +23,7 @@ public class EmailServiceImpl implements EmailService {
     private final WebClient emailSenderWebClient;
     private static final int MAX_RETRIES = 3;
 
-    private final List<EmailPayload> emailPayloads = new ArrayDeque<>(50);
+    private final Deque<EmailPayload> emailPayloads = new ArrayDeque<>(50);
     private final DiscordWebhookService discordWebhookService;
 
     public EmailServiceImpl(WebClient emailSenderWebClient, DiscordWebhookService discordWebhookService) {

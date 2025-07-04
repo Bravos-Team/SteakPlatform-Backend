@@ -6,14 +6,12 @@ import com.mongodb.lang.NonNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
-import java.math.BigDecimal;
 import java.util.Date;
 
 @Document("GameSubmission")
@@ -85,7 +83,7 @@ public class GameSubmission {
     @Field("updatedAt")
     private Date updatedAt;
 
-    public GameSubmission(long id, long publisherId, long createdBy, @NotNull String name) {
+    public GameSubmission(long id, long publisherId, long createdBy, @NonNull String name) {
         this.id = id;
         this.publisherId = publisherId;
         this.createdBy = createdBy;

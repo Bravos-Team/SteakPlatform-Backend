@@ -1,7 +1,8 @@
-package com.bravos.steak.dev.service.impl;
+package com.bravos.steak.store.service.impl;
 
 import com.bravos.steak.common.model.CdnKeyPair;
-import com.bravos.steak.dev.service.DownloadGameService;
+import com.bravos.steak.common.model.GameS3Config;
+import com.bravos.steak.store.service.DownloadGameService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.services.cloudfront.CloudFrontUtilities;
@@ -14,14 +15,16 @@ import java.time.Instant;
 public class DownloadGameServiceImpl implements DownloadGameService {
 
     private final CdnKeyPair cdnKeyPair;
+    private final GameS3Config gameS3Config;
 
     @Autowired
-    public DownloadGameServiceImpl(CdnKeyPair cdnKeyPair) {
+    public DownloadGameServiceImpl(CdnKeyPair cdnKeyPair, GameS3Config gameS3Config) {
         this.cdnKeyPair = cdnKeyPair;
+        this.gameS3Config = gameS3Config;
     }
 
     @Override
-    public String downloadGame(String gameUrl, String ipAddress) {
+    public String getGameDownloadUrl(String gameUrl, String ipAddress) {
         gameUrl = convertS3UrlToCdnUrl(gameUrl);
         CloudFrontUtilities cloudFrontUtilities = CloudFrontUtilities.create();
         Instant expirationTime = Instant.now().plusSeconds(300);
@@ -38,12 +41,7 @@ public class DownloadGameServiceImpl implements DownloadGameService {
     }
 
     private String convertS3UrlToCdnUrl(String s3Url) {
-        String cdnBaseUrl = "https://cdn.steak.io.vn";
-        if(!s3Url.startsWith("https://steak-storage.s3.ap-southeast-1.amazonaws.com/") ||
-                !s3Url.startsWith("https://cdn.steak.io.vn/")) {
-            throw new IllegalArgumentException("Invalid S3 URL format");
-        }
-        return s3Url.replace("https://steak-storage.s3.ap-southeast-1.amazonaws.com", cdnBaseUrl);
+        return s3Url.replace(gameS3Config.getBaseUrl(), gameS3Config.getCdnUrl());
     }
 
 }
