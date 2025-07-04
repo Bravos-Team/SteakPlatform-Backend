@@ -8,6 +8,8 @@ import com.bravos.steak.common.security.JwtTokenClaims;
 import com.bravos.steak.common.security.JwtAuthentication;
 import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.common.service.redis.RedisService;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,6 +27,7 @@ public class SessionServiceImpl implements SessionService {
     private final AdminRefreshTokenRepository adminRefreshTokenRepository;
     private final PublisherRefreshTokenRepository publisherRefreshTokenRepository;
     private final DiscordWebhookService discordWebhookService;
+    private final HttpServletRequest httpServletRequest;
 
     @Override
     public JwtAuthentication getAuthentication() {
@@ -93,6 +96,19 @@ public class SessionServiceImpl implements SessionService {
                 log.error(e.getMessage());
             }
         }
+    }
+
+    @Override
+    public Cookie getCookie(String name) {
+        Cookie[] cookies = httpServletRequest.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equalsIgnoreCase(name)) {
+                    return cookie;
+                }
+            }
+        }
+        return null;
     }
 
 }

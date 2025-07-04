@@ -1,7 +1,7 @@
 package com.bravos.steak.administration.service;
 
 import com.bravos.steak.administration.entity.review.ReviewReply;
-import com.bravos.steak.administration.model.request.CreateReviewReplyRequest;
+import com.bravos.steak.administration.model.request.ReviewerReviewReplyRequest;
 import com.bravos.steak.dev.entity.gamesubmission.GameSubmission;
 import com.bravos.steak.dev.entity.gamesubmission.GameSubmissionStatus;
 import com.bravos.steak.dev.model.GameSubmissionListItem;
@@ -25,8 +25,6 @@ public interface GameReviewService {
 
     List<ReviewReply> getReviewRepliesBySubmissionId(Long submissionId);
 
-    ReviewReply createReviewReply(CreateReviewReplyRequest request);
-
-    void updateGameSubmissionStatus(Long submissionId, GameSubmissionStatus status);
+    ReviewReply createReviewReply(ReviewerReviewReplyRequest request);
 
 }

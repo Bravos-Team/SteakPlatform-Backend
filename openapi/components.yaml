@@ -268,4 +268,40 @@ components:
         storage:
           type: string
           example: 50GB
-    # ...existing code...
+    ReviewerReviewReplyRequest:
+      type: object
+      properties:
+        submissionId:
+          type: integer
+          example: 123456789
+        status:
+          type: string
+          enum: [PENDING_REVIEW, ACCEPTED, REJECTED]
+          example: ACCEPTED
+        content:
+          type: string
+          example: "Game meets all requirements."
+        attachments:
+          type: array
+          items:
+            type: string
+          example: ["https://cdn.steak.io.vn/review-attachment1.jpg"]
+    UpdatePreBuildRequest:
+      type: object
+      properties:
+        projectId:
+          type: integer
+          example: 900000000000001
+        versionName:
+          type: string
+          example: "v1.0.0"
+        execPath:
+          type: string
+          example: "bin/steak.exe"
+        downloadUrl:
+          type: string
+          format: uri
+          example: "https://cdn.steak.io.vn/game/steak-v1.0.0.zip"
+        checksum:
+          type: string
+          example: "d41d8cd98f00b204e9800998ecf8427e"

@@ -2,7 +2,7 @@ package com.bravos.steak.administration.service.impl;
 
 import com.bravos.steak.administration.entity.review.From;
 import com.bravos.steak.administration.entity.review.ReviewReply;
-import com.bravos.steak.administration.model.request.CreateReviewReplyRequest;
+import com.bravos.steak.administration.model.request.ReviewerReviewReplyRequest;
 import com.bravos.steak.administration.repo.ReviewReplyRepository;
 import com.bravos.steak.administration.service.GameReviewService;
 import com.bravos.steak.common.security.JwtAuthentication;
@@ -15,6 +15,7 @@ import com.bravos.steak.dev.model.GameSubmissionListItem;
 import com.bravos.steak.dev.model.enums.PublisherStatus;
 import com.bravos.steak.dev.repo.GameSubmissionRepository;
 import com.bravos.steak.dev.repo.PublisherRepository;
+import com.bravos.steak.dev.service.GameSubmissionService;
 import com.bravos.steak.exceptions.BadRequestException;
 import com.bravos.steak.exceptions.ResourceNotFoundException;
 import com.bravos.steak.store.entity.Game;
@@ -29,10 +30,6 @@ import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -48,27 +45,26 @@ public class GameReviewServiceImpl implements GameReviewService {
     private final GameSubmissionRepository gameSubmissionRepository;
     private final ReviewReplyRepository reviewReplyRepository;
     private final SessionService sessionService;
-    private final MongoTemplate mongoTemplate;
     private final PublisherRepository publisherRepository;
     private final GameRepository gameRepository;
     private final SnowflakeGenerator snowflakeGenerator;
     private final GameVersionRepository gameVersionRepository;
     private final GameDetailsRepository gameDetailsRepository;
+    private final GameSubmissionService gameSubmissionService;
 
     public GameReviewServiceImpl(GameSubmissionRepository gameSubmissionRepository, ReviewReplyRepository reviewReplyRepository,
-                                 SessionService sessionService, MongoTemplate mongoTemplate,
-                                 PublisherRepository publisherRepository, GameRepository gameRepository,
+                                 SessionService sessionService, PublisherRepository publisherRepository, GameRepository gameRepository,
                                  SnowflakeGenerator snowflakeGenerator, GameVersionRepository gameVersionRepository,
-                                 GameDetailsRepository gameDetailsRepository) {
+                                 GameDetailsRepository gameDetailsRepository, GameSubmissionService gameSubmissionService) {
         this.gameSubmissionRepository = gameSubmissionRepository;
         this.reviewReplyRepository = reviewReplyRepository;
         this.sessionService = sessionService;
-        this.mongoTemplate = mongoTemplate;
         this.publisherRepository = publisherRepository;
         this.gameRepository = gameRepository;
         this.snowflakeGenerator = snowflakeGenerator;
         this.gameVersionRepository = gameVersionRepository;
         this.gameDetailsRepository = gameDetailsRepository;
+        this.gameSubmissionService = gameSubmissionService;
     }
 
     @Override
@@ -169,18 +165,18 @@ public class GameReviewServiceImpl implements GameReviewService {
             throw new RuntimeException("Failed to save game details to database");
         }
 
-        updateGameSubmissionStatus(submissionId, GameSubmissionStatus.ACCEPTED);
+        gameSubmissionService.updateGameSubmissionStatus(submissionId, GameSubmissionStatus.ACCEPTED);
 
     }
 
     @Override
     public void requireUpdateGameSubmission(Long submissionId) {
-        updateGameSubmissionStatus(submissionId, GameSubmissionStatus.NEED_UPDATE);
+        gameSubmissionService.updateGameSubmissionStatus(submissionId, GameSubmissionStatus.NEED_UPDATE);
     }
 
     @Override
     public void rejectGameSubmission(Long submissionId) {
-        updateGameSubmissionStatus(submissionId, GameSubmissionStatus.REJECTED);
+        gameSubmissionService.updateGameSubmissionStatus(submissionId, GameSubmissionStatus.REJECTED);
     }
 
     @Override
@@ -189,40 +185,51 @@ public class GameReviewServiceImpl implements GameReviewService {
     }
 
     @Override
-    public ReviewReply createReviewReply(CreateReviewReplyRequest request) {
-        JwtAuthentication auth = sessionService.getAuthentication();
-        Long revieerId = (Long) auth.getPrincipal();
-        if(gameSubmissionRepository.existsById(request.getSubmissionId())) {
-            ReviewReply reply = ReviewReply.builder()
-                    .gameSubmissionId(request.getSubmissionId())
-                    .from(new From("reviewer",revieerId))
-                    .content(request.getContent())
-                    .attachments(request.getAttachments())
-                    .repliedAt(new Date())
-                    .build();
-            try {
-                return reviewReplyRepository.save(reply);
-            } catch (Exception e) {
-                log.error("Failed to create review reply: {}", e.getMessage(), e);
-                throw new RuntimeException("Failed to create review reply: " + e.getMessage());
-            }
-        }
-        throw new ResourceNotFoundException("Game submission not found with ID: " + request.getSubmissionId());
-    }
+    @Transactional
+    public ReviewReply createReviewReply(ReviewerReviewReplyRequest request) {
 
-    @Override
-    public void updateGameSubmissionStatus(Long submissionId, GameSubmissionStatus status) {
-        Update update = Update.update("status", status)
-                .set("updatedAt", LocalDateTime.now());
+        JwtAuthentication auth = sessionService.getAuthentication();
+        Long reviewerId = (Long) auth.getPrincipal();
+
+        if(!gameSubmissionRepository.existsById(request.getSubmissionId())) {
+            throw new ResourceNotFoundException("Game submission not found with ID: " + request.getSubmissionId());
+        }
+
+        ReviewReply reply = ReviewReply.builder()
+                .id(snowflakeGenerator.generateId())
+                .gameSubmissionId(request.getSubmissionId())
+                .from(new From("reviewer",reviewerId))
+                .content(request.getContent())
+                .attachments(request.getAttachments())
+                .repliedAt(new Date())
+                .build();
+
         try {
-            mongoTemplate.updateFirst(
-                    Query.query(Criteria.where("id").is(submissionId)),
-                    update,
-                    GameSubmission.class
-            );
+            reply = reviewReplyRepository.save(reply);
         } catch (Exception e) {
+            log.error("Failed to create review reply: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to create review reply: " + e.getMessage());
+        }
+
+        try {
+            if(request.getStatus() == GameSubmissionStatus.ACCEPTED) {
+                approveGameSubmission(request.getSubmissionId());
+            } else if (request.getStatus() == GameSubmissionStatus.REJECTED) {
+                rejectGameSubmission(request.getSubmissionId());
+            } else if (request.getStatus() == GameSubmissionStatus.NEED_UPDATE) {
+                requireUpdateGameSubmission(request.getSubmissionId());
+            }
+        } catch (Exception e) {
+            final ReviewReply finalReply = reply;
+            Thread.startVirtualThread(() -> reviewReplyRepository.deleteById(finalReply.getId()));
+            log.error("Failed to update game submission status: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to update game submission status: " + e.getMessage());
         }
+
+        return reply;
+
     }
+
+
 
 }

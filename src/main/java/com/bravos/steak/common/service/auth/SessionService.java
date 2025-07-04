@@ -1,6 +1,7 @@
 package com.bravos.steak.common.service.auth;
 
 import com.bravos.steak.common.security.JwtAuthentication;
+import jakarta.servlet.http.Cookie;
 
 import java.util.concurrent.TimeUnit;
 
@@ -16,4 +17,5 @@ public interface SessionService {
 
     void logout(String role);
 
+    Cookie getCookie(String name);
 }

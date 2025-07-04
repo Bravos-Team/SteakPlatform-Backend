@@ -727,3 +727,34 @@ paths:
               schema:
                 $ref: "./components.yaml/#/components/schemas/Error"
 
+  /api/v1/admin/review-game/response-review:
+    post:
+      tags:
+        - admin
+      summary: Phản hồi review game
+      description: Quản trị viên phản hồi kết quả review game (duyệt hoặc từ chối)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "./components.yaml#/components/schemas/ReviewerReviewReplyRequest"
+      responses:
+        200:
+          description: Phản hồi review thành công
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Yêu cầu không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml#/components/schemas/Error"
+        default:
+          description: Lỗi khác
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml#/components/schemas/Error"
