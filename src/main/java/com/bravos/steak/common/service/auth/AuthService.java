@@ -110,7 +110,7 @@ public abstract class AuthService {
             log.error("Error when checking login attemps: {}", e.getMessage(), e);
             throw new RuntimeException("Error when checking login attemp");
         }
-        if(attempts != null && attempts > 3) {
+        if(attempts != null && attempts > 100) {
             throw new TooManyRequestException("Too many login attempts");
         }
     }
