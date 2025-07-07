@@ -6,6 +6,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration;
 import org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration;
 import org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration;
+import org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration;
+import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
@@ -13,6 +15,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
         MongoAutoConfiguration.class,
         MongoDataAutoConfiguration.class,
         RedisRepositoriesAutoConfiguration.class,
+        UserDetailsServiceAutoConfiguration.class,
+        SecurityAutoConfiguration.class
 })
 @EnableScheduling
 @EnableAsync

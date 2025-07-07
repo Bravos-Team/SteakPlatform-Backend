@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.Set;
 
@@ -28,7 +27,7 @@ public class AdminRole {
 
     String description;
 
-    LocalDateTime updatedAt;
+    Long updatedAt;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(

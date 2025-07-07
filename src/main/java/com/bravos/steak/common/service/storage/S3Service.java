@@ -1,8 +1,8 @@
 package com.bravos.steak.common.service.storage;
 
 import com.bravos.steak.dev.model.PartInfo;
-import com.bravos.steak.dev.model.response.PartUploadPresignedResponse;
 import com.bravos.steak.dev.model.PartUploadPresignedUrl;
+import com.bravos.steak.dev.model.response.PartUploadPresignedResponse;
 import com.bravos.steak.exceptions.BadRequestException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

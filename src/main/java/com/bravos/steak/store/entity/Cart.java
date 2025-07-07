@@ -4,7 +4,6 @@ import com.bravos.steak.useraccount.entity.UserAccount;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -29,8 +28,8 @@ public class Cart {
     )
     private List<CartItem> cartItems;
 
-    private LocalDateTime createdAt;
+    private Long createdAt;
 
-    private LocalDateTime updatedAt;
+    private Long updatedAt;
 
 }

@@ -6,10 +6,13 @@ import org.springframework.stereotype.Service;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.HexFormat;
 
 @Slf4j
 @Service
@@ -24,19 +27,22 @@ public class Hmac512ServiceImpl implements Hmac512Service {
             SecretKeySpec secretKeySpec = new SecretKeySpec(keyBytes, "HmacSHA512");
             Mac mac = Mac.getInstance("HmacSHA512");
             mac.init(secretKeySpec);
-            byte[] hmacBytes = mac.doFinal(data.getBytes());
-            return Base64.getEncoder().encodeToString(hmacBytes);
+            byte[] hmacBytes = mac.doFinal(data.getBytes(StandardCharsets.US_ASCII));
+            return HexFormat.of().formatHex(hmacBytes);
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Error signing data with HMAC SHA-512", e);
         }
     }
 
     @Override
     public boolean verifyData(String data, String secret, String signature) {
         try {
-            return signData(data, secret).equals(signature);
+            String signData = signData(data, secret);
+            return MessageDigest.isEqual(
+                    HexFormat.of().parseHex(signData),
+                    HexFormat.of().parseHex(signature));
         } catch (Exception e) {
-            log.error(e.getMessage());
+            log.error("Error verifying HMAC SHA-512 signature", e);
             return false;
         }
     }

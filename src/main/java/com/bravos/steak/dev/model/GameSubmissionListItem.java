@@ -4,7 +4,6 @@ import com.bravos.steak.dev.entity.gamesubmission.GameSubmissionStatus;
 import lombok.Value;
 
 import java.io.Serializable;
-import java.util.Date;
 
 /**
  * DTO for {@link com.bravos.steak.dev.entity.gamesubmission.GameSubmission}
@@ -16,5 +15,5 @@ public class GameSubmissionListItem implements Serializable {
     String name;
     GameSubmissionStatus status;
     String versionName;
-    Date updatedAt;
+    Long updatedAt;
 }

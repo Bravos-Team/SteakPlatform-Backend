@@ -7,6 +7,7 @@ import com.bravos.steak.administration.repo.ReviewReplyRepository;
 import com.bravos.steak.administration.service.GameReviewService;
 import com.bravos.steak.common.security.JwtAuthentication;
 import com.bravos.steak.common.service.auth.SessionService;
+import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
 import com.bravos.steak.dev.entity.Publisher;
 import com.bravos.steak.dev.entity.gamesubmission.GameSubmission;
@@ -33,9 +34,6 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
 import java.util.List;
 
 @Slf4j
@@ -101,19 +99,13 @@ public class GameReviewServiceImpl implements GameReviewService {
             throw new BadRequestException("Publisher is banned and cannot submit games");
         }
 
-        LocalDateTime now = LocalDateTime.now();
-
         Game game = Game.builder()
                 .id(submission.getId())
                 .name(submission.getName())
                 .publisher(publisher)
                 .status(GameStatus.OPENING)
                 .price(BigDecimal.valueOf(submission.getPrice()))
-                .createdAt(now)
-                .updatedAt(now)
-                .releaseDate(submission.getEstimatedReleaseDate()
-                        .toInstant()
-                        .atZone(ZoneId.systemDefault()).toLocalDateTime())
+                .releaseDate(submission.getEstimatedReleaseDate())
                 .build();
 
         try {
@@ -130,7 +122,7 @@ public class GameReviewServiceImpl implements GameReviewService {
                 .name(submission.getBuildInfo().getVersionName())
                 .execPath(submission.getBuildInfo().getExecPath())
                 .downloadUrl(submission.getBuildInfo().getDownloadUrl())
-                .createdAt(now)
+                .createdAt(DateTimeHelper.currentTimeMillis())
                 .releaseDate(game.getReleaseDate())
                 .status(VersionStatus.STABLE)
                 .build();
@@ -153,7 +145,7 @@ public class GameReviewServiceImpl implements GameReviewService {
                 .systemRequirements(submission.getSystemRequirements())
                 .internetConnection(submission.getInternetConnection())
                 .languageSupported(submission.getLanguageSupported())
-                .updatedAt(new Date())
+                .updatedAt(DateTimeHelper.currentTimeMillis())
                 .build();
 
         try {
@@ -201,7 +193,7 @@ public class GameReviewServiceImpl implements GameReviewService {
                 .from(new From("reviewer",reviewerId))
                 .content(request.getContent())
                 .attachments(request.getAttachments())
-                .repliedAt(new Date())
+                .repliedAt(DateTimeHelper.currentTimeMillis())
                 .build();
 
         try {

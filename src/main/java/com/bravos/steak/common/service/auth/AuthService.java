@@ -1,17 +1,18 @@
 package com.bravos.steak.common.service.auth;
 
 import com.bravos.steak.common.entity.Account;
-import com.bravos.steak.useraccount.model.enums.AccountStatus;
-import com.bravos.steak.useraccount.model.request.EmailLoginRequest;
-import com.bravos.steak.useraccount.model.request.RefreshRequest;
-import com.bravos.steak.useraccount.model.request.UsernameLoginRequest;
 import com.bravos.steak.common.entity.RefreshToken;
 import com.bravos.steak.common.security.JwtTokenClaims;
 import com.bravos.steak.common.service.encryption.JwtService;
+import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.common.service.redis.RedisService;
 import com.bravos.steak.exceptions.ForbiddenException;
 import com.bravos.steak.exceptions.TooManyRequestException;
 import com.bravos.steak.exceptions.UnauthorizeException;
+import com.bravos.steak.useraccount.model.enums.AccountStatus;
+import com.bravos.steak.useraccount.model.request.EmailLoginRequest;
+import com.bravos.steak.useraccount.model.request.RefreshRequest;
+import com.bravos.steak.useraccount.model.request.UsernameLoginRequest;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -22,8 +23,7 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
@@ -186,25 +186,26 @@ public abstract class AuthService {
             throw new UnauthorizeException("Refresh token is revoked");
         }
 
-        if(refreshToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+        long currentTimeMillis = DateTimeHelper.currentTimeMillis();
+
+        if(refreshToken.getExpiresAt() < currentTimeMillis) {
             this.recordFailedLoginAttempt(refreshToken.getDeviceId());
             throw new UnauthorizeException("Refresh token is expired");
         }
 
-        if(refreshToken.getIssuesAt().isBefore(account.getUpdatedAt())) {
+        if(refreshToken.getIssuesAt() > currentTimeMillis) {
             this.recordFailedLoginAttempt(refreshToken.getDeviceId());
             throw new UnauthorizeException("Refresh token cannot be used");
         }
     }
 
     private String generateJwtToken(Account account, long jti) {
-        LocalDateTime now = LocalDateTime.now();
         JwtTokenClaims jwtTokenClaims = JwtTokenClaims.builder()
                 .id(account.getId())
                 .jti(jti)
                 .authorities(account.getPermissions())
-                .iat(now.toEpochSecond(ZoneOffset.UTC))
-                .exp(now.plusSeconds(Long.parseLong(System.getProperty("USER_TOKEN_EXP"))).toEpochSecond(ZoneOffset.UTC))
+                .iat(DateTimeHelper.currentTimeMillis())
+                .exp(DateTimeHelper.from(DateTimeHelper.now().plusMinutes(30)))
                 .role(account.getRole().getAuthority())
                 .otherClaims(this.otherClaims(account))
                 .build();
@@ -212,14 +213,13 @@ public abstract class AuthService {
     }
 
     private void addAccessTokenCookie(String jwt, String path) {
-        LocalDateTime now = LocalDateTime.now();
         ResponseCookie accessCookie = ResponseCookie.from(ACCESS_TOKEN_NAME, jwt)
                 .httpOnly(true)
                 .secure(false)
                 .path(path)
                 .domain(System.getProperty("COOKIE_DOMAIN"))
                 .sameSite("Lax")
-                .maxAge(now.plusSeconds(Long.parseLong(System.getProperty("USER_TOKEN_EXP"))).toEpochSecond(ZoneOffset.UTC))
+                .maxAge(Duration.ofMinutes(30))
                 .build();
         httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
     }
@@ -231,7 +231,7 @@ public abstract class AuthService {
                 .path(refreshPath())
                 .domain(System.getProperty("COOKIE_DOMAIN"))
                 .sameSite("Lax")
-                .maxAge(refreshToken.getExpiresAt().toEpochSecond(ZoneOffset.UTC))
+                .maxAge(Duration.ofDays(30))
                 .build();
         httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
     }

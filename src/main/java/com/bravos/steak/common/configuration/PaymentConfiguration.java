@@ -2,6 +2,7 @@ package com.bravos.steak.common.configuration;
 
 import com.bravos.steak.common.model.PaymentInfo;
 import com.bravos.steak.common.service.encryption.KeyVaultService;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 
@@ -15,6 +16,7 @@ public class PaymentConfiguration {
     }
 
     @Profile("dev")
+    @Bean
     public PaymentInfo devPaymentInfo() {
         return PaymentInfo.builder()
                 .tmnCode(System.getProperty("PAYMENT_TMN_CODE"))
@@ -24,6 +26,7 @@ public class PaymentConfiguration {
     }
 
     @Profile("prod")
+    @Bean
     public PaymentInfo prodPaymentInfo() {
         return PaymentInfo.builder()
                 .tmnCode(keyVaultService.getSecretKey(System.getProperty("PAYMENT_TMN_CODE")))

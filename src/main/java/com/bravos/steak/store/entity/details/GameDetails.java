@@ -5,8 +5,6 @@ import jakarta.persistence.Id;
 import lombok.*;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.Date;
-
 @Getter
 @Setter
 @NoArgsConstructor
@@ -40,6 +38,6 @@ public class GameDetails {
     private String[] languageSupported;
 
     @NonNull
-    private Date updatedAt;
+    private Long updatedAt;
 
 }

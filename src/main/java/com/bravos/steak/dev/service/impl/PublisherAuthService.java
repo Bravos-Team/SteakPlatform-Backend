@@ -5,6 +5,7 @@ import com.bravos.steak.common.entity.RefreshToken;
 import com.bravos.steak.common.service.auth.AuthService;
 import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.common.service.encryption.JwtService;
+import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.common.service.redis.RedisService;
 import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
 import com.bravos.steak.dev.entity.PublisherAccount;
@@ -72,7 +73,7 @@ public class PublisherAuthService extends AuthService {
                 .token(UUID.randomUUID().toString())
                 .deviceId(deviceId)
                 .deviceInfo(deviceInfo)
-                .expiresAt(LocalDateTime.now().plusSeconds(Long.parseLong(System.getProperty("USER_REFRESH_TOKEN_EXP"))))
+                .expiresAt(DateTimeHelper.from(DateTimeHelper.now().plusDays(30)))
                 .revoked(false)
                 .build();
 

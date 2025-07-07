@@ -2,7 +2,6 @@ package com.bravos.steak.useraccount.repo;
 
 import com.bravos.steak.useraccount.entity.UserAccount;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 
 @Repository

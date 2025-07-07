@@ -38,6 +38,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleInternalServerError(RuntimeException ex) {
         ErrorResponse errorResponse = new ErrorResponse(ex.getMessage());
         discordWebhookService.sendError(ex.getMessage(), ex);
+        ex.printStackTrace();
         return ResponseEntity.internalServerError().body(errorResponse);
     }
 

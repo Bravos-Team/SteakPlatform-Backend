@@ -1,5 +1,13 @@
 package com.bravos.steak.useraccount.service.impl;
 
+import com.bravos.steak.common.model.EmailPayload;
+import com.bravos.steak.common.model.EmailTemplate;
+import com.bravos.steak.common.service.email.EmailService;
+import com.bravos.steak.common.service.encryption.EncryptionService;
+import com.bravos.steak.common.service.redis.RedisService;
+import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
+import com.bravos.steak.exceptions.BadRequestException;
+import com.bravos.steak.exceptions.ConflictDataException;
 import com.bravos.steak.useraccount.entity.UserAccount;
 import com.bravos.steak.useraccount.entity.UserProfile;
 import com.bravos.steak.useraccount.model.request.UserRegistrationRequest;
@@ -7,14 +15,6 @@ import com.bravos.steak.useraccount.repo.UserAccountRepository;
 import com.bravos.steak.useraccount.repo.UserProfileRepository;
 import com.bravos.steak.useraccount.service.UserAccountService;
 import com.bravos.steak.useraccount.service.UserRegistrationService;
-import com.bravos.steak.common.model.EmailPayload;
-import com.bravos.steak.common.service.email.EmailService;
-import com.bravos.steak.common.model.EmailTemplate;
-import com.bravos.steak.common.service.encryption.EncryptionService;
-import com.bravos.steak.common.service.redis.RedisService;
-import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
-import com.bravos.steak.exceptions.ConflictDataException;
-import com.bravos.steak.exceptions.BadRequestException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;

@@ -2,6 +2,7 @@ package com.bravos.steak.dev.service.impl;
 
 import com.bravos.steak.common.model.GameS3Config;
 import com.bravos.steak.common.security.JwtTokenClaims;
+import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
 import com.bravos.steak.common.service.storage.impl.AwsS3Service;
 import com.bravos.steak.dev.entity.gamesubmission.BuildInfo;
@@ -13,8 +14,8 @@ import com.bravos.steak.dev.model.request.SaveProjectRequest;
 import com.bravos.steak.dev.model.request.UpdatePreBuildRequest;
 import com.bravos.steak.dev.repo.GameSubmissionRepository;
 import com.bravos.steak.dev.repo.custom.CustomGameSubmissionRepository;
-import com.bravos.steak.dev.service.LogDevService;
 import com.bravos.steak.dev.service.GameSubmissionService;
+import com.bravos.steak.dev.service.LogDevService;
 import com.bravos.steak.exceptions.BadRequestException;
 import com.bravos.steak.exceptions.ConflictDataException;
 import com.bravos.steak.exceptions.ForbiddenException;
@@ -81,7 +82,7 @@ public class GameSubmissionServiceImpl implements GameSubmissionService {
 
         GameSubmission gameSubmission = new GameSubmission(submissionId,publisherId,createrid,projectName);
         gameSubmission.setStatus(GameSubmissionStatus.DRAFT);
-        gameSubmission.setUpdatedAt(new Date());
+        gameSubmission.setUpdatedAt(DateTimeHelper.currentTimeMillis());
 
         try {
             gameSubmission = gameSubmissionRepository.save(gameSubmission);
@@ -167,7 +168,7 @@ public class GameSubmissionServiceImpl implements GameSubmissionService {
         buildInfo.setChecksum(updatePreBuildRequest.getChecksum());
 
         gameSubmission.setBuildInfo(buildInfo);
-        gameSubmission.setUpdatedAt(new Date());
+        gameSubmission.setUpdatedAt(DateTimeHelper.currentTimeMillis());
 
         try {
             gameSubmissionRepository.save(gameSubmission);
@@ -210,7 +211,7 @@ public class GameSubmissionServiceImpl implements GameSubmissionService {
         }
 
         gameSubmission.setStatus(GameSubmissionStatus.PENDING_REVIEW);
-        gameSubmission.setUpdatedAt(new Date());
+        gameSubmission.setUpdatedAt(DateTimeHelper.currentTimeMillis());
 
         try {
             gameSubmissionRepository.save(gameSubmission);
@@ -221,6 +222,15 @@ public class GameSubmissionServiceImpl implements GameSubmissionService {
             throw new RuntimeException("Error when publishing project");
         }
 
+    }
+
+    @Override
+    public GameSubmission detailByIdAndPublisher(Long submissionId, Long publisherId) {
+        GameSubmission gameSubmission = gameSubmissionRepository.findByIdAndPublisherId(submissionId, publisherId);
+        if(gameSubmission == null) {
+            throw new BadRequestException("Project not found or you are not the owner of this project");
+        }
+        return gameSubmissionRepository.findByIdAndPublisherId(submissionId,publisherId);
     }
 
     private StringBuilder getErrorMessage(GameSubmission gameSubmission) {
@@ -331,6 +341,10 @@ public class GameSubmissionServiceImpl implements GameSubmissionService {
         } catch (Exception e) {
             log.error("Error when verifying project: {}", e.getMessage(), e);
             throw new RuntimeException("Cannot verify your project");
+        }
+
+        if(publisherIdAndStatus == null) {
+            throw new BadRequestException("Project not found");
         }
 
         if(!publisherId.equals(publisherIdAndStatus.publisherId)) {
