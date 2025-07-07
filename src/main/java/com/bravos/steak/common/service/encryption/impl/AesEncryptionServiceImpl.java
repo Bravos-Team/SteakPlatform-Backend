@@ -99,4 +99,8 @@ public class AesEncryptionServiceImpl implements AesEncryptionService {
         return iv;
     }
 
+    public static void main(String[] args) {
+        System.out.println(new AesEncryptionServiceImpl().generateSecretKey());
+    }
+
 }

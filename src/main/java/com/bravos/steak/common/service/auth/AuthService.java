@@ -85,8 +85,8 @@ public abstract class AuthService {
         Set<String> paths = getCookiePaths();
         for (String path : paths) {
             this.addAccessTokenCookie(jwt, path);
-            this.addRefreshTokenCookie(refreshToken, path);
         }
+        this.addRefreshTokenCookie(refreshToken);
     }
 
     private void validateAccount(Account accountInfo, String rawPassword, String deviceId) {
@@ -110,7 +110,7 @@ public abstract class AuthService {
             log.error("Error when checking login attemps: {}", e.getMessage(), e);
             throw new RuntimeException("Error when checking login attemp");
         }
-        if(attempts != null && attempts > 3) {
+        if(attempts != null && attempts > 100) {
             throw new TooManyRequestException("Too many login attempts");
         }
     }
@@ -121,10 +121,14 @@ public abstract class AuthService {
         redisService.expire(key, attempts > 3 ? 5 : 2, TimeUnit.MINUTES);
     }
 
-    public Long renewToken(RefreshRequest refreshRequest) {
+    public Account renewToken(RefreshRequest refreshRequest) {
+
+        this.checkLoginAttemptsLimit(refreshRequest.getDeviceId());
+
         String refreshToken = getRefreshToken();
 
         if(refreshToken == null || refreshToken.isBlank()) {
+            this.recordFailedLoginAttempt(refreshRequest.getDeviceId());
             throw new UnauthorizeException("Refresh token is invalid");
         }
 
@@ -133,7 +137,12 @@ public abstract class AuthService {
         RefreshToken accountRefreshToken = getRefreshToken(refreshToken,deviceId);
 
         if(accountRefreshToken == null) {
+            this.recordFailedLoginAttempt(deviceId);
             throw new UnauthorizeException("Refresh token is invalid");
+        }
+
+        if(!accountRefreshToken.getDeviceId().equals(deviceId)) {
+            throw new UnauthorizeException("Refresh token is invalid for this device");
         }
 
         Account account = accountRefreshToken.getAccount();
@@ -145,10 +154,10 @@ public abstract class AuthService {
         Set<String> paths = getCookiePaths();
         for (String path : paths) {
             this.addAccessTokenCookie(token, path);
-            this.addRefreshTokenCookie(accountRefreshToken, path);
+            this.addRefreshTokenCookie(accountRefreshToken);
         }
 
-        return account.getId();
+        return account;
     }
 
     protected abstract Set<String> getCookiePaths();
@@ -168,18 +177,22 @@ public abstract class AuthService {
 
     private void validateRefreshToken(Account account, RefreshToken refreshToken) {
         if(account.getStatus() == AccountStatus.BANNED) {
+            this.recordFailedLoginAttempt(refreshToken.getDeviceId());
             throw new ForbiddenException("Your account is banned");
         }
 
         if(refreshToken.getRevoked()) {
+            this.recordFailedLoginAttempt(refreshToken.getDeviceId());
             throw new UnauthorizeException("Refresh token is revoked");
         }
 
         if(refreshToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+            this.recordFailedLoginAttempt(refreshToken.getDeviceId());
             throw new UnauthorizeException("Refresh token is expired");
         }
 
         if(refreshToken.getIssuesAt().isBefore(account.getUpdatedAt())) {
+            this.recordFailedLoginAttempt(refreshToken.getDeviceId());
             throw new UnauthorizeException("Refresh token cannot be used");
         }
     }
@@ -203,7 +216,7 @@ public abstract class AuthService {
         ResponseCookie accessCookie = ResponseCookie.from(ACCESS_TOKEN_NAME, jwt)
                 .httpOnly(true)
                 .secure(false)
-                .path("/")
+                .path(path)
                 .domain(System.getProperty("COOKIE_DOMAIN"))
                 .sameSite("Lax")
                 .maxAge(now.plusSeconds(Long.parseLong(System.getProperty("USER_TOKEN_EXP"))).toEpochSecond(ZoneOffset.UTC))
@@ -211,17 +224,19 @@ public abstract class AuthService {
         httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
     }
 
-    private void addRefreshTokenCookie(RefreshToken refreshToken, String path) {
+    private void addRefreshTokenCookie(RefreshToken refreshToken) {
         ResponseCookie refreshCookie = ResponseCookie.from(REFRESH_TOKEN_NAME, refreshToken.getToken())
                 .httpOnly(true)
                 .secure(false)
-                .path(path)
+                .path(refreshPath())
                 .domain(System.getProperty("COOKIE_DOMAIN"))
                 .sameSite("Lax")
                 .maxAge(refreshToken.getExpiresAt().toEpochSecond(ZoneOffset.UTC))
                 .build();
         httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
     }
+
+    protected abstract String refreshPath();
 
     protected abstract Account getAccountByUsername(String username);
 
@@ -234,5 +249,7 @@ public abstract class AuthService {
     protected Map<String,Object> otherClaims(Account account) {
         return Map.of();
     }
+
+    public abstract void logout();
 
 }

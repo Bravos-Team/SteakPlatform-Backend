@@ -1001,5 +1001,183 @@ table "admin_role" {
     columns = [column.id]
   }
 }
+table "user_game" {
+  schema = schema.public
+  column "user_account_id" {
+    null = false
+    type = bigint
+  }
+  column "game_id" {
+    null = false
+    type = bigint
+  }
+  column "owned_date" {
+    null    = false
+    type    = timestamp
+    default = sql("CURRENT_TIMESTAMP")
+  }
+  column "play_seconds" {
+    null = false
+    type = bigint
+    default = 0
+  }
+  column "play_recent_date" {
+    null = true
+    type = timestamp
+  }
+  primary_key {
+    columns = [column.user_account_id, column.game_id]
+  }
+  foreign_key "user_game_game_id_fkey" {
+    columns     = [column.game_id]
+    ref_columns = [table.game.column.id]
+    on_update   = NO_ACTION
+    on_delete   = NO_ACTION
+  }
+  foreign_key "user_game_user_account_id_fkey" {
+    columns     = [column.user_account_id]
+    ref_columns = [table.user_account.column.id]
+    on_update   = NO_ACTION
+    on_delete   = NO_ACTION
+  }
+  index "idx_user_game_game_id" {
+    columns = [column.game_id]
+  }
+  index "idx_user_game_user_account_id" {
+    columns = [column.user_account_id]
+  }
+}
+table "cart" {
+  schema = schema.public
+  column "id" {
+    null = false
+    type = bigint
+  }
+  column "user_account_id" {
+    null = true
+    type = bigint
+  }
+  column "created_at" {
+    null    = false
+    type    = timestamp
+    default = sql("CURRENT_TIMESTAMP")
+  }
+  column "updated_at" {
+    null    = false
+    type    = timestamp
+    default = sql("CURRENT_TIMESTAMP")
+  }
+  primary_key {
+    columns = [column.id]
+  }
+  foreign_key "cart_user_account_id_fkey" {
+    columns     = [column.user_account_id]
+    ref_columns = [table.user_account.column.id]
+    on_update   = NO_ACTION
+    on_delete   = NO_ACTION
+  }
+  index "idx_cart_user_account_id" {
+    columns = [column.user_account_id]
+    unique = true
+  }
+}
+table "cart_item" {
+  schema = schema.public
+  column "id" {
+    null = false
+    type = bigint
+  }
+  column "cart_id" {
+    null = false
+    type = bigint
+  }
+  column "game_id" {
+    null = false
+    type = bigint
+  }
+  column "added_at" {
+    null    = false
+    type    = timestamp
+    default = sql("CURRENT_TIMESTAMP")
+  }
+  primary_key {
+    columns = [column.id]
+  }
+  foreign_key "cart_item_cart_id_fkey" {
+    columns     = [column.cart_id]
+    ref_columns = [table.cart.column.id]
+    on_update   = NO_ACTION
+    on_delete   = CASCADE
+  }
+  foreign_key "cart_item_game_id_fkey" {
+    columns     = [column.game_id]
+    ref_columns = [table.game.column.id]
+    on_update   = NO_ACTION
+    on_delete   = NO_ACTION
+  }
+  index "idx_cart_item_cart_id" {
+    columns = [column.cart_id]
+  }
+  index "unque_cart_item_game_id" {
+    columns = [column.cart_id, column.game_id]
+    unique = true
+  }
+}
+table "order" {
+  schema = schema.public
+  column "id" {
+    null = false
+    type = bigint
+  }
+  column "user_account_id" {
+    null = false
+    type = bigint
+  }
+  column "status" {
+    null = false
+    type = smallint
+  }
+  column "created_at" {
+    null    = false
+    type    = timestamp
+    default = sql("CURRENT_TIMESTAMP")
+  }
+  column "updated_at" {
+    null    = false
+    type    = timestamp
+    default = sql("CURRENT_TIMESTAMP")
+  }
+  primary_key {
+    columns = [column.id]
+  }
+  foreign_key "order_user_account_id_fkey" {
+    columns     = [column.user_account_id]
+    ref_columns = [table.user_account.column.id]
+    on_update   = NO_ACTION
+    on_delete   = NO_ACTION
+  }
+  index "idx_order_user_account_id" {
+    columns = [column.user_account_id]
+  }
+}
+table "order_details" {
+  schema = schema.public
+  column "id" {
+    null = false
+    type = bigint
+  }
+  column "order_id" {
+    null = false
+    type = bigint
+  }
+  column "game_id" {
+    null = false
+    type = bigint
+  }
+  column "price" {
+    null = false
+    type = numeric(13, 2)
+  }
+}
 
 

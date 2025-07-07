@@ -8,10 +8,9 @@ COPY src ./src
 RUN mvn clean package -DskipTests && rm -rf /root/.m2
 
 FROM azul/zulu-openjdk-alpine:21-jre-headless-latest AS runtime
-
 WORKDIR /app
 COPY --from=build /app/target/*.jar steak.jar
 COPY prod.env .env
 
-ENTRYPOINT ["java", "-Xms1g", "-Xmx1g", "-XX:+UseContainerSupport", "-jar", "steak.jar", "--spring.profiles.active=prod"]
+ENTRYPOINT ["java", "-Xms1300m", "-Xmx1300m", "-XX:+UseContainerSupport", "-Duser.timezone=GMT+7", "-jar", "steak.jar", "--spring.profiles.active=prod"]
 

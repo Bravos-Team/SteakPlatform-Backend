@@ -7,6 +7,7 @@ import com.bravos.steak.administration.repo.AdminRefreshTokenRepository;
 import com.bravos.steak.common.entity.Account;
 import com.bravos.steak.common.entity.RefreshToken;
 import com.bravos.steak.common.service.auth.AuthService;
+import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.common.service.encryption.JwtService;
 import com.bravos.steak.common.service.redis.RedisService;
 import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
@@ -28,21 +29,28 @@ public class AdminAuthService extends AuthService {
     private final AdminAccountRepository adminAccountRepository;
     private final SnowflakeGenerator snowflakeGenerator;
     private final AdminRefreshTokenRepository adminRefreshTokenRepository;
+    private final SessionService sessionService;
 
     @Autowired
     public AdminAuthService(RedisService redisService, PasswordEncoder passwordEncoder, JwtService jwtService,
                             HttpServletResponse httpServletResponse, HttpServletRequest httpServletRequest,
                             AdminAccountRepository adminAccountRepository, SnowflakeGenerator snowflakeGenerator,
-                            AdminRefreshTokenRepository adminRefreshTokenRepository) {
+                            AdminRefreshTokenRepository adminRefreshTokenRepository, SessionService sessionService) {
         super(redisService, passwordEncoder, jwtService, httpServletResponse, httpServletRequest);
         this.adminAccountRepository = adminAccountRepository;
         this.snowflakeGenerator = snowflakeGenerator;
         this.adminRefreshTokenRepository = adminRefreshTokenRepository;
+        this.sessionService = sessionService;
     }
 
     @Override
     protected Set<String> getCookiePaths() {
         return Set.of("/api/v1/admin");
+    }
+
+    @Override
+    protected String refreshPath() {
+        return "/api/v1/admin/auth/refresh";
     }
 
     @Override
@@ -80,6 +88,11 @@ public class AdminAuthService extends AuthService {
     @Override
     protected RefreshToken getRefreshToken(String token, String deviceId) {
         return adminRefreshTokenRepository.findByTokenAndDeviceId(token,deviceId);
+    }
+
+    @Override
+    public void logout() {
+        sessionService.logout("ADMIN");
     }
 
 }

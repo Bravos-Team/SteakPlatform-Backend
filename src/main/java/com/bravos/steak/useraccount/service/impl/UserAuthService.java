@@ -1,6 +1,7 @@
 package com.bravos.steak.useraccount.service.impl;
 
 import com.bravos.steak.common.entity.Account;
+import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.useraccount.entity.UserAccount;
 import com.bravos.steak.useraccount.entity.UserRefreshToken;
 import com.bravos.steak.useraccount.repo.UserAccountRepository;
@@ -28,22 +29,28 @@ public class UserAuthService extends AuthService {
     private final UserAccountRepository userAccountRepository;
     private final SnowflakeGenerator snowflakeGenerator;
     private final UserRefreshTokenRepository userRefreshTokenRepository;
+    private final SessionService sessionService;
 
     @Autowired
     public UserAuthService(RedisService redisService, PasswordEncoder passwordEncoder, JwtService jwtService,
                            HttpServletResponse httpServletResponse, HttpServletRequest httpServletRequest,
                            UserAccountRepository userAccountRepository, SnowflakeGenerator snowflakeGenerator,
-                           UserRefreshTokenRepository userRefreshTokenRepository) {
+                           UserRefreshTokenRepository userRefreshTokenRepository, SessionService sessionService) {
         super(redisService, passwordEncoder, jwtService, httpServletResponse, httpServletRequest);
         this.userAccountRepository = userAccountRepository;
         this.snowflakeGenerator = snowflakeGenerator;
         this.userRefreshTokenRepository = userRefreshTokenRepository;
+        this.sessionService = sessionService;
     }
-
 
     @Override
     protected Set<String> getCookiePaths() {
         return Set.of("/api/v1/store", "/api/v1/user", "/api/v1/support/user", "/api/v1/hub/user");
+    }
+
+    @Override
+    protected String refreshPath() {
+        return "/api/v1/auth/user/refresh";
     }
 
     @Override
@@ -78,6 +85,11 @@ public class UserAuthService extends AuthService {
     @Override
     protected RefreshToken getRefreshToken(String token, String deviceId) {
         return userRefreshTokenRepository.findByTokenAndDeviceId(token, deviceId);
+    }
+
+    @Override
+    public void logout() {
+        sessionService.logout("USER");
     }
 
 }

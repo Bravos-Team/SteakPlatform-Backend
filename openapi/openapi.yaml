@@ -1,0 +1,760 @@
+openapi: 3.1.0
+info:
+  title: Steak API Documentation
+  description: Steak is a full-stack platform inspired by Steam and Epic Games, designed for buying,
+    downloading, and managing licensed PC games. It supports both players and game publishers.
+  version: 1.0.0
+servers:
+  - url: 'https://api.steak.io.vn/'
+  - url: 'http://localhost:8888/'
+tags:
+  - name: user
+    description: Liên quan đến các chức năng của người dùng
+  - name: dev
+    description: Liên quan đến các chức năng của nhà phát hành game
+  - name: admin
+    description: Liên quan đến các chức năng của quản trị viên hệ thống
+  - name: publisher-upload
+    description: Upload tài nguyên cho publisher
+paths:
+  /api/v1/user/auth/register:
+    post:
+      tags:
+        - user
+      summary: Gửi yêu cầu tạo tài khoản người dùng
+      description: Gửi yêu cầu tạo tài khoản người dùng (kiểm tra thông tin và gửi email xác nhận)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "./components.yaml#/components/schemas/UserRegisterRequest"
+      responses:
+        200:
+          description: Thông tin tài khoản hợp lệ, check mail để xác nhận tài khoản
+        409:
+          description: Thông tin tài khoản đã tồn tại trên hệ thống
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml#/components/schemas/Error"
+        default:
+          description: Lỗi khác
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml#/components/schemas/Error"
+
+
+  /api/v1/user/auth/username-login:
+    post:
+      tags:
+        - user
+      summary: Đăng nhập tài khoản
+      description: Đăng nhập vào tài khoản bằng username
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "./components.yaml/#/components/schemas/UsernameLoginRequest"
+
+      responses:
+        200:
+          description: Đăng nhập thành công, token và refreshToken được lưu vào cookie set full cờ
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/UserLoginResponse"
+        default:
+          description: Đăng nhập thất bại
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/Error"
+
+  /api/v1/user/auth/email-login:
+    post:
+      tags:
+        - user
+      summary: Đăng nhập tài khoản
+      description: Đăng nhập vào tài khoản bằng email
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "./components.yaml/#/components/schemas/EmailLoginRequest"
+
+      responses:
+        200:
+          description: Đăng nhập thành công, token và refreshToken được lưu vào cookie set full cờ
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/UserLoginResponse"
+        default:
+          description: Đăng nhập thất bại
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/Error"
+
+  /api/v1/dev/auth/register:
+    post:
+      tags:
+        - dev
+      summary: Đăng ký nhà phát hành
+      description: Đăng ký nhà phát hành
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "./components.yaml/#/components/schemas/PublisherRegisterRequest"
+      responses:
+        200:
+          description: Thông tin tài khoản hợp lệ, check mail để xác nhận tài khoản
+        409:
+          description: Thông tin tài khoản đã tồn tại trên hệ thống
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml#/components/schemas/Error"
+        default:
+          description: Lỗi khác
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml#/components/schemas/Error"
+
+
+  /api/v1/dev/auth/username-login:
+    post:
+      tags:
+        - dev
+      summary: Đăng nhập tài khoản nhà phát hành
+      description: Đăng nhập vào tài khoản
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "./components.yaml/#/components/schemas/UsernameLoginRequest"
+      responses:
+        200:
+          description: Đăng nhập thành công, token và refreshToken được lưu vào cookie set full cờ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  username:
+                    type: string
+                    example: publisher123
+        default:
+          description: Đăng nhập thất bại
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/Error"
+
+  /api/v1/dev/auth/email-login:
+    post:
+      tags:
+        - dev
+      summary: Đăng nhập tài khoản nhà phát hành
+      description: Đăng nhập vào tài khoản bằng email
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "./components.yaml/#/components/schemas/EmailLoginRequest"
+      responses:
+        200:
+          description: Đăng nhập thành công, token và refreshToken được lưu vào cookie set full cờ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  username:
+                    type: string
+                    example: publisher123
+        default:
+          description: Đăng nhập thất bại
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/Error"
+
+
+  /api/v1/admin/auth/username-login:
+    post:
+      tags:
+        - admin
+      summary: Đăng nhập vào tài khoản quản trị
+      description: Đăng nhập vào tải khoản quản trị bằng username
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "./components.yaml/#/components/schemas/UsernameLoginRequest"
+      responses:
+        200:
+          description: Đăng nhập thành công, token và refreshToken được lưu vào cookie set full cờ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  username:
+                    type: string
+                    example: admin123
+        default:
+          description: Đăng nhập thất bại
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/Error"
+
+  /api/v1/admin/auth/email-login:
+    post:
+      tags:
+        - admin
+      summary: Đăng nhập vào tài khoản quản trị
+      description: Đăng nhập vào tải khoản quản trị bằng email
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "./components.yaml/#/components/schemas/EmailLoginRequest"
+      responses:
+        200:
+          description: Đăng nhập thành công, token và refreshToken được lưu vào cookie set full cờ
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  username:
+                    type: string
+                    example: admin123@gmail.com
+        default:
+          description: Đăng nhập thất bại
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml#/components/schemas/Error"
+
+  /api/v1/dev/upload/presigned-image-url:
+    post:
+      tags:
+        - publisher-upload
+      summary: Lấy URL để upload ảnh
+      description: Lấy URL để upload ảnh cho game
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "./components.yaml/#/components/schemas/ImageUploadPresignRequest"
+      responses:
+        200:
+          description: Trả về URL để upload ảnh
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/ImageUploadPresignResponse"
+        default:
+          description: Lỗi khác
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/Error"
+  /api/v1/dev/upload/presigned-image-urls:
+    post:
+      tags:
+        - publisher-upload
+      summary: Lấy URL để upload nhiều ảnh
+      description: Lấy URL để upload nhiều ảnh cho game
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "./components.yaml/#/components/schemas/ImageUploadPresignRequest"
+      responses:
+        200:
+          description: Trả về URL để upload ảnh
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  urls:
+                    type: array
+                    items:
+                      $ref: "./components.yaml/#/components/schemas/ImageUploadPresignResponse"
+        default:
+          description: Lỗi khác
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/Error"
+
+  /api/v1/dev/upload/delete-image:
+    delete:
+      tags:
+        - publisher-upload
+      summary: Xoá ảnh đã upload
+      description: Xoá ảnh đã upload trên S3
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "./components.yaml/#/components/schemas/ImageDeleteRequest"
+      responses:
+        200:
+          description: Xoá ảnh thành công
+        default:
+          description: Lỗi khác
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/Error"
+
+  /api/v1/dev/upload/delete-images:
+    delete:
+      tags:
+        - publisher-upload
+      summary: Xoá nhiều ảnh đã upload
+      description: Xoá nhiều ảnh đã upload trên S3
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "./components.yaml/#/components/schemas/ImageDeleteRequest"
+      responses:
+        200:
+          description: Xoá ảnh thành công
+        default:
+          description: Lỗi khác
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/Error"
+
+  /api/v1/dev/upload/presigned-part-game-url:
+    post:
+      tags:
+        - publisher-upload
+      summary: Lấy URL upload từng phần cho file game lớn
+      description: Lấy presigned URL để upload từng phần của file game (multipart upload)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "./components.yaml/#/components/schemas/GameUploadPresignedRequest"
+      responses:
+        200:
+          description: Trả về thông tin presigned URL cho từng part
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/PresignedUrlResponse"
+        default:
+          description: Lỗi khác
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/Error"
+
+  /api/v1/dev/upload/recreate-presigned-upload-url:
+    post:
+      tags:
+        - publisher-upload
+      summary: Tạo lại presigned URL upload cho file game
+      description: Tạo lại presigned URL upload cho file game khi URL cũ hết hạn
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "./components.yaml/#/components/schemas/RecreatePresignedUrlRequest"
+      responses:
+        200:
+          description: Trả về presigned URL mới
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/PresignedUrlResponse"
+        default:
+          description: Lỗi khác
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/Error"
+
+  /api/v1/dev/upload/complete-part-upload:
+    post:
+      tags:
+        - publisher-upload
+      summary: Hoàn thành upload multipart file game
+      description: Thông báo đã upload xong các part, hoàn thành upload file game lớn
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "./components.yaml/#/components/schemas/CompleteMultipartRequest"
+      responses:
+        200:
+          description: Hoàn thành upload thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Upload completed successfully
+        default:
+          description: Lỗi khác
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/Error"
+
+  /api/v1/dev/project/create:
+    post:
+      tags:
+        - publisher-upload
+      summary: Tạo mới project game
+      description: Tạo mới một project game cho publisher
+      parameters:
+        - name: name
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Tạo project thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  projectId:
+                    type: integer
+                    example: 900000000000001
+        default:
+          description: Lỗi khác
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/Error"
+
+  /api/v1/dev/project/update:
+    post:
+      tags:
+        - publisher-upload
+      summary: Lưu nháp thông tin project game
+      description: Lưu nháp thông tin project game (draft)
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "./components.yaml/#/components/schemas/SaveProjectRequest"
+      responses:
+        200:
+          description: Lưu nháp thành công
+        default:
+          description: Lỗi khác
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/Error"
+
+  /api/v1/dev/project/update-build:
+    post:
+      tags:
+        - publisher-upload
+      summary: Cập nhật build cho project game
+      description: Cập nhật build cho project game
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "./components.yaml/#/components/schemas/UpdatePreBuildRequest"
+      responses:
+        200:
+          description: Cập nhật build thành công
+        default:
+          description: Lỗi khác
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/Error"
+
+  /api/v1/dev/project/publish:
+    post:
+      tags:
+        - publisher-upload
+      summary: Đăng game lên hệ thống
+      description: Đăng game lên hệ thống (publish)
+      parameters:
+        - name: projectId
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Đăng game thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Game published successfully
+        400:
+          description: Project ID không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/Error"
+        default:
+          description: Lỗi khác
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/Error"
+
+  /api/v1/dev/project/list:
+    get:
+      tags:
+        - publisher-upload
+      summary: Lấy danh sách project game của publisher
+      description: Lấy danh sách project game của publisher, có thể lọc theo trạng thái, từ khoá, phân trang
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+        - name: keyword
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        200:
+          description: Danh sách project game
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  projects:
+                    type: array
+                    items:
+                      type: object
+        400:
+          description: Tham số phân trang không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/Error"
+        default:
+          description: Lỗi khác
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/Error"
+
+  /api/v1/admin/review-game/list/need-review:
+    get:
+      tags:
+        - admin
+      summary: Lấy danh sách game chờ duyệt
+      description: Lấy danh sách game đang ở trạng thái chờ duyệt (PENDING_REVIEW)
+      parameters:
+        - name: keyword
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+        - name: publisherId
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Danh sách game chờ duyệt
+          content:
+            application/json:
+              schema:
+                type: object
+        default:
+          description: Lỗi khác
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/Error"
+
+  /api/v1/admin/review-game/list/rejected:
+    get:
+      tags:
+        - admin
+      summary: Lấy danh sách game bị từ chối
+      description: Lấy danh sách game đã bị từ chối (REJECTED)
+      parameters:
+        - name: keyword
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+        - name: publisherId
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Danh sách game bị từ chối
+          content:
+            application/json:
+              schema:
+                type: object
+        default:
+          description: Lỗi khác
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/Error"
+
+  /api/v1/admin/review-game/list/accepted:
+    get:
+      tags:
+        - admin
+      summary: Lấy danh sách game đã duyệt
+      description: Lấy danh sách game đã được duyệt (ACCEPTED)
+      parameters:
+        - name: keyword
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: sort
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 1
+        - name: size
+          in: query
+          required: false
+          schema:
+            type: integer
+            default: 20
+        - name: publisherId
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Danh sách game đã duyệt
+          content:
+            application/json:
+              schema:
+                type: object
+        default:
+          description: Lỗi khác
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml/#/components/schemas/Error"
+
+  /api/v1/admin/review-game/response-review:
+    post:
+      tags:
+        - admin
+      summary: Phản hồi review game
+      description: Quản trị viên phản hồi kết quả review game (duyệt hoặc từ chối)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "./components.yaml#/components/schemas/ReviewerReviewReplyRequest"
+      responses:
+        200:
+          description: Phản hồi review thành công
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Yêu cầu không hợp lệ
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml#/components/schemas/Error"
+        default:
+          description: Lỗi khác
+          content:
+            application/json:
+              schema:
+                $ref: "./components.yaml#/components/schemas/Error"

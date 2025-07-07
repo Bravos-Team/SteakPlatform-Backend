@@ -9,5 +9,5 @@ import java.util.List;
 
 @Repository
 public interface GameSubmissionRepository extends MongoRepository<GameSubmission,Long>, CustomGameSubmissionRepository {
-    GameSubmission findByNameAndPublisherId(String name, long publisherId);
+    GameSubmission findByNameAndPublisherId(String name, Long publisherId);
 }

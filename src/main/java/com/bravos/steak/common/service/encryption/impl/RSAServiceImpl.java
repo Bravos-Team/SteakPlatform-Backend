@@ -1,6 +1,8 @@
 package com.bravos.steak.common.service.encryption.impl;
 
 import com.bravos.steak.common.service.encryption.RSAService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -9,6 +11,7 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
@@ -22,6 +25,11 @@ import java.util.Base64;
 public class RSAServiceImpl implements RSAService {
 
     private static final String ALGORITHM = "RSA";
+    private final ObjectMapper objectMapper;
+
+    public RSAServiceImpl(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
 
     @Override
     public String encrypt(String plainText, String publicKey) {
@@ -82,19 +90,45 @@ public class RSAServiceImpl implements RSAService {
 
     @Override
     public String getSignatureData(String data, String privateKey) {
-        return getSignatureData(data,convertPrivateKey(privateKey));
+        return getSignatureData(data,convertPrivateKey(privateKey), "SHA256withRSA");
     }
 
     @Override
     public String getSignatureData(String data, PrivateKey privateKey) {
+        return getSignatureData(data, privateKey, "SHA256withRSA");
+    }
+
+    @Override
+    public String getSignatureData(String data, PrivateKey privateKey, String algorithm) {
         try {
-            Signature signature = Signature.getInstance("SHA256withRSA");
+            Signature signature = Signature.getInstance(algorithm);
             signature.initSign(privateKey);
-            signature.update(data.getBytes());
+            signature.update(data.getBytes(StandardCharsets.UTF_8));
             byte[] signDataBytes = signature.sign();
             return Base64.getUrlEncoder().withoutPadding().encodeToString(signDataBytes);
         } catch (InvalidKeyException | SignatureException | NoSuchAlgorithmException e) {
             log.error("Error when get signature data: {}",e.getMessage(),e);
+            throw new RuntimeException(e.getMessage());
+        }
+    }
+
+    @Override
+    public String getSignatureData(String data, String privateKey, String algorithm) {
+        return getSignatureData(data, convertPrivateKey(privateKey), algorithm);
+    }
+
+    @Override
+    public String getSignatureData(Object data, PrivateKey privateKey, String algorithm) {
+        try {
+            Signature signature = Signature.getInstance(algorithm);
+            signature.initSign(privateKey);
+            signature.update(objectMapper.writeValueAsString(data).getBytes(StandardCharsets.UTF_8));
+            byte[] signDataBytes = signature.sign();
+            return Base64.getUrlEncoder().withoutPadding().encodeToString(signDataBytes);
+        } catch (InvalidKeyException | SignatureException | NoSuchAlgorithmException e) {
+            log.error("Error when get signature data: {}",e.getMessage(),e);
+            throw new RuntimeException(e.getMessage());
+        } catch (JsonProcessingException e) {
             throw new RuntimeException(e.getMessage());
         }
     }

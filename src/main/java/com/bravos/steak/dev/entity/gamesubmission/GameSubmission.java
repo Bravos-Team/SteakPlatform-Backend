@@ -6,7 +6,6 @@ import com.mongodb.lang.NonNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.CompoundIndex;
 import org.springframework.data.mongodb.core.index.Indexed;
@@ -61,7 +60,7 @@ public class GameSubmission {
     private String longDescription;
 
     @Field("platform")
-    private String platform;
+    private String[] platform;
 
     @Field("systemRequirements")
     private SystemRequirements systemRequirements;
@@ -84,7 +83,7 @@ public class GameSubmission {
     @Field("updatedAt")
     private Date updatedAt;
 
-    public GameSubmission(long id, long publisherId, long createdBy, @NotNull String name) {
+    public GameSubmission(long id, long publisherId, long createdBy, @NonNull String name) {
         this.id = id;
         this.publisherId = publisherId;
         this.createdBy = createdBy;

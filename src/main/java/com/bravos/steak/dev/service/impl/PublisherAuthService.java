@@ -3,6 +3,7 @@ package com.bravos.steak.dev.service.impl;
 import com.bravos.steak.common.entity.Account;
 import com.bravos.steak.common.entity.RefreshToken;
 import com.bravos.steak.common.service.auth.AuthService;
+import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.common.service.encryption.JwtService;
 import com.bravos.steak.common.service.redis.RedisService;
 import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
@@ -29,21 +30,28 @@ public class PublisherAuthService extends AuthService {
     private final PublisherAccountRepository publisherAccountRepository;
     private final SnowflakeGenerator snowflakeGenerator;
     private final PublisherRefreshTokenRepository publisherRefreshTokenRepository;
+    private final SessionService sessionService;
 
     @Autowired
     public PublisherAuthService(RedisService redisService, PasswordEncoder passwordEncoder, JwtService jwtService,
                                 HttpServletResponse httpServletResponse, HttpServletRequest httpServletRequest,
                                 PublisherAccountRepository publisherAccountRepository, SnowflakeGenerator snowflakeGenerator,
-                                PublisherRefreshTokenRepository publisherRefreshTokenRepository) {
+                                PublisherRefreshTokenRepository publisherRefreshTokenRepository, SessionService sessionService) {
         super(redisService, passwordEncoder, jwtService, httpServletResponse, httpServletRequest);
         this.publisherAccountRepository = publisherAccountRepository;
         this.snowflakeGenerator = snowflakeGenerator;
         this.publisherRefreshTokenRepository = publisherRefreshTokenRepository;
+        this.sessionService = sessionService;
     }
 
     @Override
     protected Set<String> getCookiePaths() {
         return Set.of("/api/v1/dev", "/api/v1/hub/publisher");
+    }
+
+    @Override
+    protected String refreshPath() {
+        return "/api/v1/dev/auth/refresh";
     }
 
     @Override
@@ -92,6 +100,11 @@ public class PublisherAuthService extends AuthService {
     protected Map<String, Object> otherClaims(Account account) {
         Long publisherId = ((PublisherAccount) account).getPublisher().getId();
         return Map.of("publisherId",publisherId);
+    }
+
+    @Override
+    public void logout() {
+        sessionService.logout("PUBLISHER");
     }
 
 }

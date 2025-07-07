@@ -1,5 +1,6 @@
 package com.bravos.steak.exceptions;
 
+import com.bravos.steak.common.service.webhook.DiscordWebhookService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -15,6 +16,11 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     private static final String VALIDATE_ERROR_MESSAGE = "Invalid request parameters";
+    private final DiscordWebhookService discordWebhookService;
+
+    public GlobalExceptionHandler(DiscordWebhookService discordWebhookService) {
+        this.discordWebhookService = discordWebhookService;
+    }
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex){
@@ -31,6 +37,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponse> handleInternalServerError(RuntimeException ex) {
         ErrorResponse errorResponse = new ErrorResponse(ex.getMessage());
+        discordWebhookService.sendError(ex.getMessage(), ex);
         return ResponseEntity.internalServerError().body(errorResponse);
     }
 
