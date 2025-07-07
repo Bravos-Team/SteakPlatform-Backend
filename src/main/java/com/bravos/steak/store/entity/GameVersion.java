@@ -1,11 +1,10 @@
 package com.bravos.steak.store.entity;
 
+import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.store.model.enums.VersionStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-
-import java.time.LocalDateTime;
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Builder
@@ -35,12 +34,12 @@ public class GameVersion {
     @Enumerated(EnumType.ORDINAL)
     VersionStatus status;
 
-    LocalDateTime releaseDate;
+    Long releaseDate;
 
     @Builder.Default
-    LocalDateTime createdAt = LocalDateTime.now();
+    Long createdAt = DateTimeHelper.currentTimeMillis();
 
     @Builder.Default
-    LocalDateTime updatedAt = LocalDateTime.now();
+    Long updatedAt = DateTimeHelper.currentTimeMillis();
 
 }

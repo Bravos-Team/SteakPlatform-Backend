@@ -1,11 +1,10 @@
 package com.bravos.steak.dev.entity;
 
+import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.dev.model.enums.PublisherStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-
-import java.time.LocalDateTime;
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Getter
@@ -33,9 +32,9 @@ public class Publisher {
     String logoUrl;
 
     @Builder.Default
-    LocalDateTime createdAt = LocalDateTime.now();
+    Long createdAt = DateTimeHelper.currentTimeMillis();
 
     @Builder.Default
-    LocalDateTime updatedAt = LocalDateTime.now();
+    Long updatedAt = DateTimeHelper.currentTimeMillis();
 
 }

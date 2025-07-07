@@ -1,12 +1,11 @@
 package com.bravos.steak.store.entity;
 
+import com.bravos.steak.common.service.helper.DateTimeHelper;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import lombok.*;
-
-import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -28,6 +27,6 @@ public class CartItem {
     private Cart cart;
 
     @Builder.Default
-    private LocalDateTime addedAt = LocalDateTime.now();
+    private Long addedAt = DateTimeHelper.currentTimeMillis();
 
 }

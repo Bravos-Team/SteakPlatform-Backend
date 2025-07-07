@@ -1,5 +1,7 @@
 package com.bravos.steak.common.service.snowflake;
 
+import com.bravos.steak.common.service.helper.DateTimeHelper;
+
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
@@ -28,15 +30,15 @@ public class SnowflakeGenerator {
     }
 
     private long waitForNextMillis() {
-        long currentTimeMillis = System.currentTimeMillis();
+        long currentTimeMillis = DateTimeHelper.currentTimeMillis();
         while (currentTimeMillis <= lastTimestamp) {
-            currentTimeMillis = System.currentTimeMillis();
+            currentTimeMillis = DateTimeHelper.currentTimeMillis();
         }
         return currentTimeMillis;
     }
 
     public synchronized long generateId() {
-        long currentTimestamp = System.currentTimeMillis();
+        long currentTimestamp = DateTimeHelper.currentTimeMillis();
         long timestamp = currentTimestamp - EPOCH;
         if(currentTimestamp != lastTimestamp) {
             sequence = 0L;

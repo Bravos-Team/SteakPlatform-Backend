@@ -13,7 +13,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
@@ -54,7 +53,8 @@ public class SecurityConfiguration implements WebMvcConfigurer {
                             "/api/v1/admin/auth/**",
                             "/api/v1/hub/public/**",
                             "/api/v1/support/public/**",
-                            "/verificate/**")
+                            "/verificate/**",
+                            "/ipn/**")
                     .permitAll();
 
             request.requestMatchers("/api/v1/dev/**").hasRole("PUBLISHER");
@@ -86,11 +86,6 @@ public class SecurityConfiguration implements WebMvcConfigurer {
         http.addFilterAfter(benchmarkFilter, JwtFilter.class);
         return http.build();
 
-    }
-
-    @Bean
-    public UserDetailsService userDetailsService() {
-        return username -> null;
     }
 
     @Bean

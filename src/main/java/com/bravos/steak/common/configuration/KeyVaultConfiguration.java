@@ -1,7 +1,6 @@
 package com.bravos.steak.common.configuration;
 
 import com.azure.core.credential.TokenCredential;
-
 import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.SecretClientBuilder;

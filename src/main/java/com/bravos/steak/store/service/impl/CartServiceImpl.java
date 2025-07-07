@@ -2,6 +2,7 @@ package com.bravos.steak.store.service.impl;
 
 import com.bravos.steak.common.security.JwtAuthentication;
 import com.bravos.steak.common.service.auth.SessionService;
+import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
 import com.bravos.steak.exceptions.BadRequestException;
 import com.bravos.steak.store.entity.Cart;
@@ -19,8 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
 
 @Slf4j
 @Service
@@ -67,11 +66,10 @@ public class CartServiceImpl implements CartService {
                 cartId = snowflakeGenerator.generateId();
             }
 
-            LocalDateTime now = LocalDateTime.now();
             cart = Cart.builder()
                     .id(cartId)
                     .userAccount(null)
-                    .updatedAt(now)
+                    .updatedAt(DateTimeHelper.currentTimeMillis())
                     .build();
 
             try {
@@ -89,7 +87,7 @@ public class CartServiceImpl implements CartService {
                             .userAccount(UserAccount.builder()
                                     .id(userId)
                                     .build())
-                            .updatedAt(LocalDateTime.now())
+                            .updatedAt(DateTimeHelper.currentTimeMillis())
                             .build())
                 );
             } catch (Exception e) {
@@ -104,7 +102,7 @@ public class CartServiceImpl implements CartService {
                         .id(gameId)
                         .build())
                 .cart(cart)
-                .addedAt(LocalDateTime.now())
+                .addedAt(DateTimeHelper.currentTimeMillis())
                 .build();
 
         try {

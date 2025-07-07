@@ -1,5 +1,6 @@
 package com.bravos.steak.common.entity;
 
+import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.useraccount.model.enums.AccountStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -7,7 +8,6 @@ import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 import org.springframework.security.core.GrantedAuthority;
 
-import java.time.LocalDateTime;
 import java.util.Collection;
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -45,11 +45,11 @@ public abstract class Account {
 
     @Column(nullable = false, name = "created_at")
     @Builder.Default
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private Long createdAt = DateTimeHelper.currentTimeMillis();
 
     @Column(nullable = false, name = "updated_at")
     @Builder.Default
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    private Long updatedAt = DateTimeHelper.currentTimeMillis();
 
     public abstract GrantedAuthority getRole();
 

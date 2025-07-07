@@ -2,6 +2,7 @@ package com.bravos.steak.dev.controller;
 
 import com.bravos.steak.common.annotation.HasAuthority;
 import com.bravos.steak.common.annotation.PublisherController;
+import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.dev.model.PublisherAuthority;
 import com.bravos.steak.dev.model.request.SaveProjectRequest;
 import com.bravos.steak.dev.model.request.UpdatePreBuildRequest;
@@ -20,9 +21,11 @@ import java.util.Optional;
 public class PublisherPublishGameController {
 
     private final GameSubmissionService gameSubmissionService;
+    private final SessionService sessionService;
 
-    public PublisherPublishGameController(GameSubmissionService gameSubmissionService) {
+    public PublisherPublishGameController(GameSubmissionService gameSubmissionService, SessionService sessionService) {
         this.gameSubmissionService = gameSubmissionService;
+        this.sessionService = sessionService;
     }
 
     @HasAuthority({PublisherAuthority.CREATE_GAME})
@@ -50,7 +53,7 @@ public class PublisherPublishGameController {
     @HasAuthority({PublisherAuthority.CREATE_GAME})
     @PostMapping("/publish")
     public ResponseEntity<?> publishGame(@RequestParam Long projectId) {
-        if(projectId == null || projectId <= 900000000000000L) {
+        if(projectId == null) {
             return ResponseEntity.badRequest().body(Map.of(
                     "error", "Invalid project ID"
             ));
@@ -73,6 +76,17 @@ public class PublisherPublishGameController {
         return ResponseEntity.ok(gameSubmissionService.getProjectListByPublisher
                 (status.orElse(null),keyword.orElse(null),page - 1,size)
         );
+    }
+
+    @GetMapping("/detail/{projectId}")
+    public ResponseEntity<?> detailProject(@PathVariable Long projectId) {
+        if(projectId == null) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Invalid project ID"
+            ));
+        }
+        Long publisherId = (Long) sessionService.getAuthentication().getPrincipal();
+        return ResponseEntity.ok(gameSubmissionService.detailByIdAndPublisher(projectId,publisherId));
     }
 
 
