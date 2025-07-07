@@ -33,7 +33,6 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -127,7 +126,7 @@ public class GameSubmissionServiceImpl implements GameSubmissionService {
                     update.set(x.getKey(),value);
                 }
             }
-            update.set("updatedAt",new Date());
+            update.set("updatedAt",DateTimeHelper.currentTimeMillis());
             update.set("status", GameSubmissionStatus.DRAFT);
 
             try {
@@ -316,7 +315,7 @@ public class GameSubmissionServiceImpl implements GameSubmissionService {
     public void updateGameSubmissionStatus(Long submissionId, GameSubmissionStatus status) {
         Update update = new Update();
         update.set("status", status);
-        update.set("updatedAt", new Date());
+        update.set("updatedAt", DateTimeHelper.currentTimeMillis());
         try {
             mongoTemplate.updateFirst(
                     Query.query(Criteria.where("id").is(submissionId)),
