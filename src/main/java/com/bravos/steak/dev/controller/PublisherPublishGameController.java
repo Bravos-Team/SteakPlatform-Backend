@@ -2,6 +2,8 @@ package com.bravos.steak.dev.controller;
 
 import com.bravos.steak.common.annotation.HasAuthority;
 import com.bravos.steak.common.annotation.PublisherController;
+import com.bravos.steak.common.security.JwtAuthentication;
+import com.bravos.steak.common.security.JwtTokenClaims;
 import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.dev.model.PublisherAuthority;
 import com.bravos.steak.dev.model.request.SaveProjectRequest;
@@ -85,7 +87,9 @@ public class PublisherPublishGameController {
                     "error", "Invalid project ID"
             ));
         }
-        Long publisherId = (Long) sessionService.getAuthentication().getPrincipal();
+        JwtAuthentication authentication = sessionService.getAuthentication();
+        JwtTokenClaims claims = (JwtTokenClaims) authentication.getDetails();
+        Long publisherId = (Long) claims.getOtherClaims().get("publisherId");
         return ResponseEntity.ok(gameSubmissionService.detailByIdAndPublisher(projectId,publisherId));
     }
 
