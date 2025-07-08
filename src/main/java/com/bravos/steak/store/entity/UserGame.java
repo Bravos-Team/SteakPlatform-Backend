@@ -2,10 +2,7 @@ package com.bravos.steak.store.entity;
 
 import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.useraccount.entity.UserAccount;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import jakarta.persistence.*;
 import lombok.*;
 
 @Getter
@@ -13,7 +10,8 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Entity(name = "user_game")
+@Entity
+@Table(name = "user_game")
 public class UserGame {
 
     @Id

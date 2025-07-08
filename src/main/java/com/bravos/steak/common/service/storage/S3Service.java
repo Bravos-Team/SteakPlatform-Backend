@@ -35,7 +35,6 @@ public abstract class S3Service {
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(bucket)
                 .key(objectKey)
-                .metadata(metadata)
                 .build();
         PresignedPutObjectRequest presignedPutObjectRequest = presigner
                 .presignPutObject(p -> {

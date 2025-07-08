@@ -19,7 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.UUID;
 
@@ -34,10 +33,10 @@ public class UserAuthService extends AuthService {
 
     @Autowired
     public UserAuthService(RedisService redisService, PasswordEncoder passwordEncoder, JwtService jwtService,
-                           HttpServletResponse httpServletResponse, HttpServletRequest httpServletRequest,
+                           HttpServletResponse httpServletResponse,
                            UserAccountRepository userAccountRepository, SnowflakeGenerator snowflakeGenerator,
                            UserRefreshTokenRepository userRefreshTokenRepository, SessionService sessionService) {
-        super(redisService, passwordEncoder, jwtService, httpServletResponse, httpServletRequest);
+        super(redisService, passwordEncoder, jwtService, httpServletResponse, sessionService);
         this.userAccountRepository = userAccountRepository;
         this.snowflakeGenerator = snowflakeGenerator;
         this.userRefreshTokenRepository = userRefreshTokenRepository;

@@ -14,7 +14,6 @@ import com.bravos.steak.useraccount.model.request.EmailLoginRequest;
 import com.bravos.steak.useraccount.model.request.RefreshRequest;
 import com.bravos.steak.useraccount.model.request.UsernameLoginRequest;
 import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +23,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -39,10 +37,9 @@ public abstract class AuthService {
     private final JwtService jwtService;
     private final HttpServletResponse httpServletResponse;
 
-    private final HttpServletRequest httpServletRequest;
-
     public static final String ACCESS_TOKEN_NAME = "access_token";
     public static final String REFRESH_TOKEN_NAME = "refresh_token";
+    private final SessionService sessionService;
 
     public Account login(UsernameLoginRequest usernameLoginRequest) {
 
@@ -163,16 +160,8 @@ public abstract class AuthService {
     protected abstract Set<String> getCookiePaths();
 
     private String getRefreshToken() {
-        Cookie[] cookies = httpServletRequest.getCookies();
-        if(cookies != null) {
-            Cookie refreshCookie = Arrays.stream(cookies).filter(cookie ->
-                    cookie.getName().equals(REFRESH_TOKEN_NAME)).findFirst().orElse(null);
-            if(refreshCookie != null) {
-                return refreshCookie.getValue();
-            }
-            return null;
-        }
-        return null;
+        Cookie cookie = sessionService.getCookie(REFRESH_TOKEN_NAME);
+        return cookie != null ? cookie.getValue() : null;
     }
 
     private void validateRefreshToken(Account account, RefreshToken refreshToken) {

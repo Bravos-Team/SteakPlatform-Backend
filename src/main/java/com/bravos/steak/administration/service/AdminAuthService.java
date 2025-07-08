@@ -33,10 +33,10 @@ public class AdminAuthService extends AuthService {
 
     @Autowired
     public AdminAuthService(RedisService redisService, PasswordEncoder passwordEncoder, JwtService jwtService,
-                            HttpServletResponse httpServletResponse, HttpServletRequest httpServletRequest,
-                            AdminAccountRepository adminAccountRepository, SnowflakeGenerator snowflakeGenerator,
+                            HttpServletResponse httpServletResponse, AdminAccountRepository adminAccountRepository,
+                            SnowflakeGenerator snowflakeGenerator,
                             AdminRefreshTokenRepository adminRefreshTokenRepository, SessionService sessionService) {
-        super(redisService, passwordEncoder, jwtService, httpServletResponse, httpServletRequest);
+        super(redisService, passwordEncoder, jwtService, httpServletResponse, sessionService);
         this.adminAccountRepository = adminAccountRepository;
         this.snowflakeGenerator = snowflakeGenerator;
         this.adminRefreshTokenRepository = adminRefreshTokenRepository;
