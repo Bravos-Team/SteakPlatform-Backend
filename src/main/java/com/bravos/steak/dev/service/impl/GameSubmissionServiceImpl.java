@@ -15,7 +15,6 @@ import com.bravos.steak.dev.model.request.UpdatePreBuildRequest;
 import com.bravos.steak.dev.repo.GameSubmissionRepository;
 import com.bravos.steak.dev.repo.custom.CustomGameSubmissionRepository;
 import com.bravos.steak.dev.service.GameSubmissionService;
-import com.bravos.steak.dev.service.LogDevService;
 import com.bravos.steak.exceptions.BadRequestException;
 import com.bravos.steak.exceptions.ConflictDataException;
 import com.bravos.steak.exceptions.ForbiddenException;
@@ -42,7 +41,6 @@ public class GameSubmissionServiceImpl implements GameSubmissionService {
 
     private final SnowflakeGenerator snowflakeGenerator;
     private final GameSubmissionRepository gameSubmissionRepository;
-    private final LogDevService logDevService;
     private final MongoTemplate mongoTemplate;
     private final ObjectMapper objectMapper;
     private final AwsS3Service awsS3Service;
@@ -50,11 +48,10 @@ public class GameSubmissionServiceImpl implements GameSubmissionService {
 
     @Autowired
     public GameSubmissionServiceImpl(SnowflakeGenerator snowflakeGenerator, GameSubmissionRepository gameSubmissionRepository,
-                                     LogDevService logDevService, MongoTemplate mongoTemplate, ObjectMapper objectMapper,
+                                     MongoTemplate mongoTemplate, ObjectMapper objectMapper,
                                      AwsS3Service awsS3Service, GameS3Config gameS3Config) {
         this.snowflakeGenerator = snowflakeGenerator;
         this.gameSubmissionRepository = gameSubmissionRepository;
-        this.logDevService = logDevService;
         this.mongoTemplate = mongoTemplate;
         this.objectMapper = objectMapper;
         this.awsS3Service = awsS3Service;
@@ -89,9 +86,6 @@ public class GameSubmissionServiceImpl implements GameSubmissionService {
             log.error("Error when creating a project: {}",e.getMessage(),e);
             throw new RuntimeException("Error when creating a project");
         }
-
-        logDevService.saveLog(createrid,publisherId,"đã tạo project với tên {}",projectName);
-
         return gameSubmission.getId();
 
     }
@@ -132,8 +126,6 @@ public class GameSubmissionServiceImpl implements GameSubmissionService {
             try {
                 Query query = Query.query(Criteria.where("_id").is(projectId));
                 mongoTemplate.updateFirst(query,update, GameSubmission.class);
-                logDevService.saveLog(jwtTokenClaims.getId(),publisherIdAndStatus.publisherId,
-                        "Project {} has been updated by {}",projectId,jwtTokenClaims.getId());
             } catch (Exception e) {
                 log.error("Error when saving project: {}",e.getMessage(),e);
                 throw new RuntimeException("Error when saving project");
@@ -171,8 +163,6 @@ public class GameSubmissionServiceImpl implements GameSubmissionService {
 
         try {
             gameSubmissionRepository.save(gameSubmission);
-            logDevService.saveLog(jwtTokenClaims.getId(), publisherIdAndStatus.publisherId,
-                    "Project {} has been updated build by {}", projectId, jwtTokenClaims.getId());
         } catch (Exception e) {
             log.error("Error when updating build: {}", e.getMessage(), e);
             throw new RuntimeException("Error when updating build");
@@ -214,8 +204,6 @@ public class GameSubmissionServiceImpl implements GameSubmissionService {
 
         try {
             gameSubmissionRepository.save(gameSubmission);
-            logDevService.saveLog(jwtTokenClaims.getId(), publisherIdAndStatus.publisherId,
-                    "Project {} has been requested by {}", projectId, jwtTokenClaims.getId());
         } catch (Exception e) {
             log.error("Error when publishing project: {}", e.getMessage(), e);
             throw new RuntimeException("Error when publishing project");

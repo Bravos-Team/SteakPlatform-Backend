@@ -7,7 +7,6 @@ import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.Type;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Objects;
 
 @FieldDefaults(level = AccessLevel.PRIVATE)

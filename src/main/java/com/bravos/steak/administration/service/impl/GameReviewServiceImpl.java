@@ -135,6 +135,7 @@ public class GameReviewServiceImpl implements GameReviewService {
 
         GameDetails gameDetails = GameDetails.builder()
                 .id(game.getId())
+                .title(game.getName())
                 .developersTeam(submission.getDeveloperTeam())
                 .region(submission.getRegion())
                 .thumbnail(submission.getThumbnail())

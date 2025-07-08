@@ -73,7 +73,6 @@ public class PublisherUploadServiceImpl implements PublisherUploadService {
                     objectName,
                     getDurationBySize(fileSize),
                     Map.of(
-                            "Content-Type", "image/" + extension.replace(".", ""),
                             "Upload-File-Name", fileName,
                             "Uploader-Id", String.valueOf(jwtTokenClaims.getId()),
                             "Publisher-Id",String.valueOf(publisherId)

@@ -22,7 +22,7 @@ public class UserVerificateController {
     public String verificateRegisterRequest(@PathVariable("token") String token) {
         try {
             userRegistrationService.postRegisterAccount(token);
-            return "redirect:" + System.getProperty("BASE_URL_FRONTEND") + "/register-sucess";
+            return "redirect:" + System.getProperty("BASE_URL_FRONTEND") + "/register-success";
         } catch (Exception e) {
             return "redirect:" + System.getProperty("BASE_URL_FRONTEND") + "/register-failed";
         }

@@ -19,7 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -35,10 +34,10 @@ public class PublisherAuthService extends AuthService {
 
     @Autowired
     public PublisherAuthService(RedisService redisService, PasswordEncoder passwordEncoder, JwtService jwtService,
-                                HttpServletResponse httpServletResponse, HttpServletRequest httpServletRequest,
-                                PublisherAccountRepository publisherAccountRepository, SnowflakeGenerator snowflakeGenerator,
-                                PublisherRefreshTokenRepository publisherRefreshTokenRepository, SessionService sessionService) {
-        super(redisService, passwordEncoder, jwtService, httpServletResponse, httpServletRequest);
+                                HttpServletResponse httpServletResponse, PublisherAccountRepository publisherAccountRepository,
+                                SnowflakeGenerator snowflakeGenerator, PublisherRefreshTokenRepository publisherRefreshTokenRepository,
+                                SessionService sessionService) {
+        super(redisService, passwordEncoder, jwtService, httpServletResponse, sessionService);
         this.publisherAccountRepository = publisherAccountRepository;
         this.snowflakeGenerator = snowflakeGenerator;
         this.publisherRefreshTokenRepository = publisherRefreshTokenRepository;

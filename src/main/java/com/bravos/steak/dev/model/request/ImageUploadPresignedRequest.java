@@ -21,7 +21,6 @@ public class ImageUploadPresignedRequest {
     String fileName;
 
     @NotNull
-    @Range(min = 1, max = 20 * 1024 * 1024, message = "File size must be between 1 byte and 20 MB")
     Long fileSize;
 
 }

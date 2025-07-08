@@ -6,8 +6,6 @@ import com.bravos.steak.useraccount.entity.UserAccount;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
-
 @Entity
 @Table(name = "orders")
 @NoArgsConstructor
