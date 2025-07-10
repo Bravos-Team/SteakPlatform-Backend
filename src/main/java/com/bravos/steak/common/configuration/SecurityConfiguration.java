@@ -54,10 +54,7 @@ public class SecurityConfiguration implements WebMvcConfigurer {
                             "/api/v1/hub/public/**",
                             "/api/v1/support/public/**",
                             "/verificate/**",
-                            "/ipn/**",
-                            "/swagger-ui/**",
-                            "/swagger-ui.html",
-                            "/v3/api-docs/**")
+                            "/ipn/**")
                     .permitAll();
 
             request.requestMatchers("/api/v1/dev/**").hasRole("PUBLISHER");

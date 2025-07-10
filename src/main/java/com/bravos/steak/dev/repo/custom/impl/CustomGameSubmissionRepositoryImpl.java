@@ -53,7 +53,6 @@ public class CustomGameSubmissionRepositoryImpl
         if(sort != null) {
             query.with(sort);
         }
-        query.fields().include("id", "publisherId", "name", "status", "buildInfo.versionName", "updatedAt");
         return this.getPageProjectionsByQuery(query, GameSubmissionListItem.class, PageRequest.of(page, size));
     }
 
@@ -61,7 +60,6 @@ public class CustomGameSubmissionRepositoryImpl
     public GameSubmissionListItem getGameSubmissionListById(Long id, Long publisherId) {
         Query query = Query.query(Criteria.where("_id").is(id)
                 .and("publisherId").is(publisherId));
-        query.fields().include("id", "publisherId", "name", "status", "updatedAt");
         return this.getProjectionByQuery(query, GameSubmissionListItem.class);
     }
 

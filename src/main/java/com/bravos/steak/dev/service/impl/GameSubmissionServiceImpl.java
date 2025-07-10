@@ -1,7 +1,11 @@
 package com.bravos.steak.dev.service.impl;
 
+import com.bravos.steak.administration.entity.review.From;
+import com.bravos.steak.administration.entity.review.ReviewReply;
+import com.bravos.steak.administration.repo.ReviewReplyRepository;
 import com.bravos.steak.common.model.GameS3Config;
 import com.bravos.steak.common.security.JwtTokenClaims;
+import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
 import com.bravos.steak.common.service.storage.impl.AwsS3Service;
@@ -45,17 +49,22 @@ public class GameSubmissionServiceImpl implements GameSubmissionService {
     private final ObjectMapper objectMapper;
     private final AwsS3Service awsS3Service;
     private final GameS3Config gameS3Config;
+    private final SessionService sessionService;
+    private final ReviewReplyRepository reviewReplyRepository;
 
     @Autowired
     public GameSubmissionServiceImpl(SnowflakeGenerator snowflakeGenerator, GameSubmissionRepository gameSubmissionRepository,
-                                     MongoTemplate mongoTemplate, ObjectMapper objectMapper,
-                                     AwsS3Service awsS3Service, GameS3Config gameS3Config) {
+                                     MongoTemplate mongoTemplate, ObjectMapper objectMapper, AwsS3Service awsS3Service,
+                                     GameS3Config gameS3Config, SessionService sessionService,
+                                     ReviewReplyRepository reviewReplyRepository) {
         this.snowflakeGenerator = snowflakeGenerator;
         this.gameSubmissionRepository = gameSubmissionRepository;
         this.mongoTemplate = mongoTemplate;
         this.objectMapper = objectMapper;
         this.awsS3Service = awsS3Service;
         this.gameS3Config = gameS3Config;
+        this.sessionService = sessionService;
+        this.reviewReplyRepository = reviewReplyRepository;
     }
 
     @Override
@@ -92,12 +101,7 @@ public class GameSubmissionServiceImpl implements GameSubmissionService {
 
     @Override
     public void saveDraftProject(SaveProjectRequest saveProjectRequest) {
-
-        JwtTokenClaims jwtTokenClaims = (JwtTokenClaims)
-                SecurityContextHolder.getContext().getAuthentication().getDetails();
-
         long projectId = saveProjectRequest.getId();
-
         var publisherIdAndStatus = checkProjectOwnership(projectId);
 
         if(publisherIdAndStatus.status != GameSubmissionStatus.DRAFT &&
@@ -120,11 +124,13 @@ public class GameSubmissionServiceImpl implements GameSubmissionService {
                     update.set(x.getKey(),value);
                 }
             }
+
             update.set("updatedAt",DateTimeHelper.currentTimeMillis());
-            update.set("status", GameSubmissionStatus.DRAFT);
 
             try {
-                Query query = Query.query(Criteria.where("_id").is(projectId));
+                Query query = Query.query(Criteria.where("_id")
+                        .is(projectId)
+                        .and("publisherId").is(publisherIdAndStatus.publisherId));
                 mongoTemplate.updateFirst(query,update, GameSubmission.class);
             } catch (Exception e) {
                 log.error("Error when saving project: {}",e.getMessage(),e);
@@ -134,15 +140,18 @@ public class GameSubmissionServiceImpl implements GameSubmissionService {
     }
 
     @Override
-    public void updateBuild(UpdatePreBuildRequest updatePreBuildRequest) {
+    public void updateBuildProject(UpdatePreBuildRequest updatePreBuildRequest) {
 
-        JwtTokenClaims jwtTokenClaims = (JwtTokenClaims)
-                SecurityContextHolder.getContext().getAuthentication().getDetails();
         long projectId = updatePreBuildRequest.getProjectId();
-        var publisherIdAndStatus = checkProjectOwnership(projectId);
+        JwtTokenClaims jwtTokenClaims = (JwtTokenClaims) sessionService.getAuthentication().getDetails();
+        long publisherId = (long) jwtTokenClaims.getOtherClaims().get("publisherId");
 
         GameSubmission gameSubmission = gameSubmissionRepository.findById(projectId)
                 .orElseThrow(() -> new BadRequestException("Project not found"));
+
+        if(!gameSubmission.getPublisherId().equals(publisherId)) {
+            throw new ForbiddenException("You are not the owner of this project");
+        }
 
         if(gameSubmission.getStatus() != GameSubmissionStatus.DRAFT &&
                 gameSubmission.getStatus() != GameSubmissionStatus.PENDING_REVIEW) {
@@ -161,35 +170,43 @@ public class GameSubmissionServiceImpl implements GameSubmissionService {
         gameSubmission.setBuildInfo(buildInfo);
         gameSubmission.setUpdatedAt(DateTimeHelper.currentTimeMillis());
 
+        Update update = new Update();
+        update.set("buildInfo", buildInfo);
+        update.set("updatedAt", DateTimeHelper.currentTimeMillis());
+
         try {
-            gameSubmissionRepository.save(gameSubmission);
+            mongoTemplate.updateFirst(
+                    Query.query(Criteria.where("_id").is(projectId)),
+                    update,
+                    GameSubmission.class
+            );
         } catch (Exception e) {
             log.error("Error when updating build: {}", e.getMessage(), e);
             throw new RuntimeException("Error when updating build");
         }
 
-        Thread.startVirtualThread(() -> {
-            if(oldDownloadUrl != null && !oldDownloadUrl.isBlank()) {
-                String objectKey = oldDownloadUrl.replace(gameS3Config.getBaseUrl(), "");
-                awsS3Service.deleteObject(gameS3Config.getBucketName(),objectKey);
-            }
-        });
+        if(oldDownloadUrl != null && !oldDownloadUrl.isBlank()) {
+            awsS3Service.deleteObject(gameS3Config.getBucketName(),awsS3Service.getObjectNameFromUrl(oldDownloadUrl));
+        }
 
     }
 
     @Override
     public void submitGameSubmission(Long projectId) {
 
-        JwtTokenClaims jwtTokenClaims = (JwtTokenClaims)
-                SecurityContextHolder.getContext().getAuthentication().getDetails();
-
-        var publisherIdAndStatus = checkProjectOwnership(projectId);
+        JwtTokenClaims jwtTokenClaims = (JwtTokenClaims) sessionService.getAuthentication().getDetails();
+        long publisherId = (long) jwtTokenClaims.getOtherClaims().get("publisherId");
 
         GameSubmission gameSubmission = gameSubmissionRepository.findById(projectId)
                 .orElseThrow(() -> new BadRequestException("Project not found"));
 
-        if(gameSubmission.getStatus() != GameSubmissionStatus.DRAFT) {
-            throw new BadRequestException("You can only publish draft project");
+        if(!gameSubmission.getPublisherId().equals(publisherId)) {
+            throw new ForbiddenException("You are not the owner of this project");
+        }
+
+        if(gameSubmission.getStatus() != GameSubmissionStatus.DRAFT &&
+                gameSubmission.getStatus() != GameSubmissionStatus.PENDING_REVIEW) {
+            throw new BadRequestException("Project must be in draft or pending review status to submit");
         }
 
         StringBuilder errorMessage = getErrorMessage(gameSubmission);
@@ -199,14 +216,19 @@ public class GameSubmissionServiceImpl implements GameSubmissionService {
             throw new BadRequestException("Cannot publish project: " + errorMessage);
         }
 
-        gameSubmission.setStatus(GameSubmissionStatus.PENDING_REVIEW);
-        gameSubmission.setUpdatedAt(DateTimeHelper.currentTimeMillis());
+        Update update = new Update();
+        update.set("status", GameSubmissionStatus.PENDING_REVIEW);
+        update.set("updatedAt", DateTimeHelper.currentTimeMillis());
 
         try {
-            gameSubmissionRepository.save(gameSubmission);
+            mongoTemplate.updateFirst(
+                    Query.query(Criteria.where("_id").is(projectId)),
+                    update,
+                    GameSubmission.class
+            );
         } catch (Exception e) {
-            log.error("Error when publishing project: {}", e.getMessage(), e);
-            throw new RuntimeException("Error when publishing project");
+            log.error("Error when updating project status: {}", e.getMessage(), e);
+            throw new RuntimeException("Error when updating project status");
         }
 
     }
@@ -227,8 +249,26 @@ public class GameSubmissionServiceImpl implements GameSubmissionService {
             errorMessage.append("Project name cannot be blank. \n");
         }
 
-        if(gameSubmission.getBuildInfo() == null) {
+        BuildInfo buildInfo = gameSubmission.getBuildInfo();
+
+        if(buildInfo == null) {
             errorMessage.append("You need to submit project build \n");
+        } else {
+            if(buildInfo.getVersionName() == null || buildInfo.getVersionName().isBlank()) {
+                errorMessage.append("Project version name cannot be blank. \n");
+            }
+
+            if(buildInfo.getExecPath() == null || buildInfo.getExecPath().isBlank()) {
+                errorMessage.append("Project executable path cannot be blank. \n");
+            }
+
+            if(buildInfo.getDownloadUrl() == null || buildInfo.getDownloadUrl().isBlank()) {
+                errorMessage.append("Project download URL cannot be blank. \n");
+            }
+
+            if(buildInfo.getChecksum() == null || buildInfo.getChecksum().isBlank()) {
+                errorMessage.append("Project checksum cannot be blank. \n");
+            }
         }
 
         if(gameSubmission.getThumbnail() == null || gameSubmission.getThumbnail().isBlank()) {
@@ -267,8 +307,7 @@ public class GameSubmissionServiceImpl implements GameSubmissionService {
                 throw new BadRequestException("Invalid submission status: " + status);
             }
         }
-        JwtTokenClaims jwtTokenClaims = (JwtTokenClaims)
-                SecurityContextHolder.getContext().getAuthentication().getDetails();
+        JwtTokenClaims jwtTokenClaims = (JwtTokenClaims) sessionService.getAuthentication().getDetails();
         long publisherId = (long) jwtTokenClaims.getOtherClaims().get("publisherId");
         try {
             if(keyword != null && keyword.startsWith("id:")) {
@@ -296,6 +335,33 @@ public class GameSubmissionServiceImpl implements GameSubmissionService {
 
     @Override
     public void reSubmitGameSubmission(PublisherReviewReplyRequest publisherReviewReplyRequest) {
+        JwtTokenClaims tokenClaims = (JwtTokenClaims) sessionService.getAuthentication().getDetails();
+        var publisherIdAndStatus = checkProjectOwnership(publisherReviewReplyRequest.getSubmissionId());
+        if(publisherIdAndStatus.status != GameSubmissionStatus.NEED_UPDATE) {
+            throw new BadRequestException("You can only re-submit project that is in need update status");
+        }
+        ReviewReply reviewReply = ReviewReply.builder()
+                .id(snowflakeGenerator.generateId())
+                .gameSubmissionId(publisherReviewReplyRequest.getSubmissionId())
+                .attachments(publisherReviewReplyRequest.getAttachments())
+                .content(publisherReviewReplyRequest.getContent())
+                .from(new From("publisher",tokenClaims.getId()))
+                .repliedAt(DateTimeHelper.currentTimeMillis())
+                .build();
+        try {
+            reviewReplyRepository.save(reviewReply);
+        } catch (Exception e) {
+            log.error("Failed to save review reply: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to save review reply: " + e.getMessage());
+        }
+
+        try {
+            this.submitGameSubmission(publisherReviewReplyRequest.getSubmissionId());
+        } catch (Exception e) {
+            reviewReplyRepository.deleteById(reviewReply.getId());
+            log.error("Failed to re-submit game submission: {}", e.getMessage(), e);
+            throw new RuntimeException(e.getMessage());
+        }
 
     }
 

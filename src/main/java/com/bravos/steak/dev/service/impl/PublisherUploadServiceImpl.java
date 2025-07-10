@@ -71,12 +71,7 @@ public class PublisherUploadServiceImpl implements PublisherUploadService {
             String signedUrl = cloudflareS3Service.generateS3PutSignedUrl(
                     imageS3Config.getBucketName(),
                     objectName,
-                    getDurationBySize(fileSize),
-                    Map.of(
-                            "Upload-File-Name", fileName,
-                            "Uploader-Id", String.valueOf(jwtTokenClaims.getId()),
-                            "Publisher-Id",String.valueOf(publisherId)
-                    ));
+                    getDurationBySize(fileSize));
             return PresignedUrlResponse.builder()
                     .fileName(fileName)
                     .signedUrl(signedUrl)
@@ -94,7 +89,6 @@ public class PublisherUploadServiceImpl implements PublisherUploadService {
         JwtTokenClaims jwtTokenClaims = (JwtTokenClaims) authentication.getDetails();
         long publisherId = (long) jwtTokenClaims.getOtherClaims().get("publisherId");
         PresignedUrlResponse[] responses = new PresignedUrlResponse[imageUploadPresignedRequests.length];
-        String uploaderId = String.valueOf(jwtTokenClaims.getId());
         String publisherIdStr = String.valueOf(publisherId);
 
         for (int i = 0; i < imageUploadPresignedRequests.length; i++) {
@@ -107,13 +101,7 @@ public class PublisherUploadServiceImpl implements PublisherUploadService {
                 String signedUrl = cloudflareS3Service.generateS3PutSignedUrl(
                         imageS3Config.getBucketName(),
                         objectName,
-                        getDurationBySize(fileSize),
-                        Map.of(
-                                "Content-Type", "image/" + extension.replace(".", ""),
-                                "Upload-File-Name", fileName,
-                                "Uploader-Id", uploaderId,
-                                "Publisher-Id", publisherIdStr
-                        ));
+                        getDurationBySize(fileSize));
                 responses[i] = PresignedUrlResponse.builder()
                         .fileName(fileName)
                         .signedUrl(signedUrl)

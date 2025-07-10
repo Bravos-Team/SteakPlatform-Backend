@@ -3,6 +3,7 @@ package com.bravos.steak.exceptions;
 import com.bravos.steak.common.service.webhook.DiscordWebhookService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -34,11 +35,16 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(errorResponse);
     }
 
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<?> handleInvalidFormat(HttpMessageNotReadableException ex) {
+        ErrorResponse errorResponse = new ErrorResponse("Invalid input format");
+        return ResponseEntity.badRequest().body(errorResponse);
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ErrorResponse> handleInternalServerError(RuntimeException ex) {
         ErrorResponse errorResponse = new ErrorResponse(ex.getMessage());
         discordWebhookService.sendError(ex.getMessage(), ex);
-        ex.printStackTrace();
         return ResponseEntity.internalServerError().body(errorResponse);
     }
 

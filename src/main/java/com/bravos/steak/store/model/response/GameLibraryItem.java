@@ -9,7 +9,7 @@ import lombok.*;
 @Builder
 public class GameLibraryItem {
 
-    private Long id;
+    private Long libraryId;
 
     private Long gameId;
 
