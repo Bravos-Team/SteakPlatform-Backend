@@ -17,6 +17,7 @@ public class GameDetails {
     @NonNull
     private Long id;
 
+    @NonNull
     private String title;
 
     private String[] developersTeam;

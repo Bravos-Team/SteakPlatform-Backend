@@ -48,7 +48,7 @@ public class PublisherPublishGameController {
     @HasAuthority({PublisherAuthority.CREATE_GAME})
     @PostMapping("/update-build")
     public ResponseEntity<?> updateBuild(@RequestBody @Valid UpdatePreBuildRequest updatePreBuildRequest) {
-        gameSubmissionService.updateBuild(updatePreBuildRequest);
+        gameSubmissionService.updateBuildProject(updatePreBuildRequest);
         return ResponseEntity.ok().build();
     }
 

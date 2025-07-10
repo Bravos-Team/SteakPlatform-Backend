@@ -15,6 +15,9 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequ
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedUploadPartRequest;
 
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -171,7 +174,7 @@ public abstract class S3Service {
             throw new RuntimeException("Failed to complete multipart upload: " + e.getMessage());
         }
 
-        return completeResponse.location();
+        return URLDecoder.decode(completeResponse.location(), StandardCharsets.UTF_8);
 
     }
 

@@ -15,7 +15,7 @@ public interface GameSubmissionService {
 
     void saveDraftProject(SaveProjectRequest saveProjectRequest);
 
-    void updateBuild(UpdatePreBuildRequest updatePreBuildRequest);
+    void updateBuildProject(UpdatePreBuildRequest updatePreBuildRequest);
 
     void submitGameSubmission(Long projectId);
 
