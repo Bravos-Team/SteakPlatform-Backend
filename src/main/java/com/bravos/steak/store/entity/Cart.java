@@ -1,5 +1,6 @@
 package com.bravos.steak.store.entity;
 
+import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.useraccount.entity.UserAccount;
 import jakarta.persistence.*;
 import lombok.*;
@@ -29,8 +30,10 @@ public class Cart {
     )
     private List<CartItem> cartItems;
 
-    private Long createdAt;
+    @Builder.Default
+    private Long createdAt = DateTimeHelper.currentTimeMillis();
 
-    private Long updatedAt;
+    @Builder.Default
+    private Long updatedAt = DateTimeHelper.currentTimeMillis();
 
 }

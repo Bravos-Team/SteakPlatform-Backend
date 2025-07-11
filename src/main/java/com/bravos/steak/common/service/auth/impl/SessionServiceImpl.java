@@ -10,8 +10,11 @@ import com.bravos.steak.dev.repo.PublisherRefreshTokenRepository;
 import com.bravos.steak.useraccount.repo.UserRefreshTokenRepository;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +31,7 @@ public class SessionServiceImpl implements SessionService {
     private final PublisherRefreshTokenRepository publisherRefreshTokenRepository;
     private final DiscordWebhookService discordWebhookService;
     private final HttpServletRequest httpServletRequest;
+    private final HttpServletResponse httpServletResponse;
 
     @Override
     public JwtAuthentication getAuthentication() {
@@ -109,6 +113,13 @@ public class SessionServiceImpl implements SessionService {
             }
         }
         return null;
+    }
+
+    @Override
+    public void addCookie(ResponseCookie cookie) {
+        if (cookie != null) {
+            httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        }
     }
 
 }

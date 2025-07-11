@@ -105,8 +105,8 @@ public class GameSubmissionServiceImpl implements GameSubmissionService {
         var publisherIdAndStatus = checkProjectOwnership(projectId);
 
         if(publisherIdAndStatus.status != GameSubmissionStatus.DRAFT &&
-                publisherIdAndStatus.status != GameSubmissionStatus.PENDING_REVIEW) {
-            throw new BadRequestException("You can only update draft or pending review project");
+                publisherIdAndStatus.status != GameSubmissionStatus.NEED_UPDATE) {
+            throw new BadRequestException("You can only save draft project that is in draft or need update status");
         }
 
         Map<String,Object> changedData = objectMapper.convertValue(
@@ -154,8 +154,8 @@ public class GameSubmissionServiceImpl implements GameSubmissionService {
         }
 
         if(gameSubmission.getStatus() != GameSubmissionStatus.DRAFT &&
-                gameSubmission.getStatus() != GameSubmissionStatus.PENDING_REVIEW) {
-            throw new BadRequestException("You can only update build for draft or pending review project");
+                gameSubmission.getStatus() != GameSubmissionStatus.NEED_UPDATE) {
+            throw new BadRequestException("Project must be in draft or need update status to update build");
         }
 
         String oldDownloadUrl = gameSubmission.getBuildInfo() != null ?
@@ -205,8 +205,8 @@ public class GameSubmissionServiceImpl implements GameSubmissionService {
         }
 
         if(gameSubmission.getStatus() != GameSubmissionStatus.DRAFT &&
-                gameSubmission.getStatus() != GameSubmissionStatus.PENDING_REVIEW) {
-            throw new BadRequestException("Project must be in draft or pending review status to submit");
+                gameSubmission.getStatus() != GameSubmissionStatus.NEED_UPDATE) {
+            throw new BadRequestException("Project must be in draft or need update status to submit");
         }
 
         StringBuilder errorMessage = getErrorMessage(gameSubmission);
