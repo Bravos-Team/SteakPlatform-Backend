@@ -19,7 +19,7 @@ public class SaveProjectRequest implements Serializable {
     String name;
 
     Double price;
-    String[] developerTeam;
+    String[] developerTeams;
     String[] regions;
     String thumbnail;
     Media[] media;

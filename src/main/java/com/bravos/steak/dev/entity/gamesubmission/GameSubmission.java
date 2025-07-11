@@ -39,11 +39,11 @@ public class GameSubmission {
     @Field("price")
     private Double price;
 
-    @Field("developerTeam")
+    @Field("developerTeams")
     private String[] developerTeams;
 
     @Field("regions")
-    private String regions;
+    private String[] regions;
 
     @Field("thumbnail")
     private String thumbnail;
