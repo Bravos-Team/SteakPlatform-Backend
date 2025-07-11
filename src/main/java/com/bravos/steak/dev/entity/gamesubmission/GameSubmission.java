@@ -43,7 +43,7 @@ public class GameSubmission {
     private String[] developerTeams;
 
     @Field("regions")
-    private String regions;
+    private String[] regions;
 
     @Field("thumbnail")
     private String thumbnail;
