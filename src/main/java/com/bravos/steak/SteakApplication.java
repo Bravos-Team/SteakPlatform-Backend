@@ -25,7 +25,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class SteakApplication {
 
     public static void main(String[] args) {
-        Dotenv dotenv = Dotenv.configure().load();
+        Dotenv dotenv = Dotenv.configure().filename("prod.env").load();
         dotenv.entries().forEach(e -> System.setProperty(e.getKey(), e.getValue()));
         SpringApplication.run(SteakApplication.class, args);
     }

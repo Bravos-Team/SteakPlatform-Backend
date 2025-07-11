@@ -40,10 +40,10 @@ public class GameSubmission {
     private Double price;
 
     @Field("developerTeam")
-    private String[] developerTeam;
+    private String[] developerTeams;
 
-    @Field("region")
-    private String region;
+    @Field("regions")
+    private String regions;
 
     @Field("thumbnail")
     private String thumbnail;
@@ -58,13 +58,10 @@ public class GameSubmission {
     private String longDescription;
 
     @Field("platform")
-    private String[] platform;
+    private String[] platforms;
 
     @Field("systemRequirements")
     private SystemRequirements systemRequirements;
-
-    @Field("internetConnection")
-    private Boolean internetConnection;
 
     @Field("languageSupported")
     private String[] languageSupported;

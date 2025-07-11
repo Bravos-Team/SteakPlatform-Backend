@@ -27,7 +27,6 @@ public class SaveProjectRequest implements Serializable {
     String longDescription;
     String[] platforms;
     SystemRequirements systemRequirements;
-    Boolean internetConnection;
     String[] languageSupported;
     Long estimatedReleaseDate;
 

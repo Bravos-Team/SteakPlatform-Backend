@@ -76,7 +76,7 @@ public class AdminReviewGameController {
     }
 
     @HasAuthority({AdminAuthority.REVIEW_GAME})
-    @GetMapping("/response-review")
+    @PostMapping("/response-review")
     public ResponseEntity<?> responseReview(@RequestBody @Valid ReviewerReviewReplyRequest request) {
         return ResponseEntity.ok(gameReviewService.createReviewReply(request));
     }

@@ -20,9 +20,9 @@ public class GameDetails {
     @NonNull
     private String title;
 
-    private String[] developersTeam;
+    private String[] developersTeams;
 
-    private String region;
+    private String regions;
 
     private String thumbnail;
 
@@ -35,8 +35,6 @@ public class GameDetails {
     private String[] platforms;
 
     private SystemRequirements systemRequirements;
-
-    private Boolean internetConnection;
 
     private String[] languageSupported;
 

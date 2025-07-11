@@ -4,7 +4,6 @@ import com.bravos.steak.common.model.PaymentInfo;
 import com.bravos.steak.common.service.encryption.Hmac512Service;
 import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.common.service.redis.RedisService;
-import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
 import com.bravos.steak.store.event.PaymentFailureEvent;
 import com.bravos.steak.store.event.PaymentSuccessEvent;
 import com.bravos.steak.store.model.request.CreatePaymentRequest;
@@ -18,10 +17,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.StringJoiner;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -36,11 +32,10 @@ public class PaymentServiceImpl implements PaymentService {
     private final PaymentInfo paymentInfo;
     private final Hmac512Service hmac512Service;
     private final RedisService redisService;
-    private final SnowflakeGenerator snowflakeGenerator;
     private final ApplicationEventPublisher applicationEventPublisher;
 
-    public PaymentServiceImpl(PaymentInfo paymentInfo, Hmac512Service hmac512Service, RedisService redisService,
-                              SnowflakeGenerator snowflakeGenerator, ApplicationEventPublisher applicationEventPublisher) {
+    public PaymentServiceImpl(PaymentInfo paymentInfo, Hmac512Service hmac512Service,
+                              RedisService redisService, ApplicationEventPublisher applicationEventPublisher) {
         this.paymentInfo = paymentInfo;
         this.hmac512Service = hmac512Service;
 
@@ -58,8 +53,8 @@ public class PaymentServiceImpl implements PaymentService {
         vnpayStatusMessages.put("79", "Transaction failed: You entered the wrong payment password too many times. Please try the transaction again.");
 
         vnpayStatusMessages.forEach((key, value) -> vnpayStatusMessages.put(key, URLEncoder.encode(value, StandardCharsets.UTF_8)));
+
         this.redisService = redisService;
-        this.snowflakeGenerator = snowflakeGenerator;
         this.applicationEventPublisher = applicationEventPublisher;
     }
 
@@ -153,7 +148,7 @@ public class PaymentServiceImpl implements PaymentService {
 
     private boolean isLockTransaction(String vnpTxnRef) {
         String lockKey = "lock:" + vnpTxnRef;
-        return !redisService.saveIfAbsent(lockKey, snowflakeGenerator.generateId(), 15, TimeUnit.MINUTES);
+        return !redisService.saveIfAbsent(lockKey, UUID.randomUUID(), 15, TimeUnit.MINUTES);
     }
 
     private void saveCompletedTransaction(String vnpTxnRef) {

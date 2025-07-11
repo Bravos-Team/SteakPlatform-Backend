@@ -24,3 +24,8 @@ spring:
       ddl-auto: none
     show-sql: ${SHOW_SQL}
     open-in-view: false
+springdoc:
+  api-docs:
+    enabled: true
+    path: "/api/v1/docs"
+  paths-to-match: "api/v1/**"

@@ -53,8 +53,8 @@ public class PublisherPublishGameController {
     }
 
     @HasAuthority({PublisherAuthority.CREATE_GAME})
-    @PostMapping("/publish")
-    public ResponseEntity<?> publishGame(@RequestParam Long projectId) {
+    @PostMapping("/submit")
+    public ResponseEntity<?> submit(@RequestParam Long projectId) {
         if(projectId == null) {
             return ResponseEntity.badRequest().body(Map.of(
                     "error", "Invalid project ID"

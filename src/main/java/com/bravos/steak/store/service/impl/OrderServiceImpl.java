@@ -62,6 +62,7 @@ public class OrderServiceImpl implements OrderService {
 
     @EventListener
     @Transactional
+    @org.springframework.core.annotation.Order(1)
     public void onPaymentSuccess(PaymentSuccessEvent event) {
         handleSuccessfulPayment(event.getOrderId());
     }
