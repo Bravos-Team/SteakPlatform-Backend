@@ -22,7 +22,7 @@ public class GameDetails {
 
     private String[] developersTeams;
 
-    private String regions;
+    private String[] regions;
 
     private String thumbnail;
 
