@@ -37,4 +37,10 @@ public class CartController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/move-to-wishlist")
+    public ResponseEntity<?> moveToWishlist(@RequestParam Long gameId) {
+        cartService.moveToWishlist(gameId);
+        return ResponseEntity.ok().build();
+    }
+
 }

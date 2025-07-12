@@ -1,5 +1,7 @@
-h1:RRJ3jHbLrqNu/CD/6rIrOybPuDEJSJLSMJ6FMpYBz9Q=
+h1:gf8NHvzYLpDT8lxRBDyRH1oTsBhmJ2m2iTuPLOq8NXI=
 20250706170756_migrate-datetime-to-bigint.sql h1:5JrcN/MgdPa3aItd1d1933e6qfnTW8l6qRWiXP76nQQ=
 20250706170919_add-game-default-created-at.sql h1:8EqGnGq3gsxGa0YGT0c1Q9yxTXsUglQe9fSKYUP96Bo=
 20250706170931.sql h1:VdBUOWMkg+Ua82QGrSeIZ2luY6+z7Wr0LHjCTE1A5So=
 20250707115029.sql h1:Keh5uUGtNEcdfY/m5w/lctcHYzO96+fgUQj0BJnaOBM=
+20250712080150_add-wish-list.sql h1:SNdeOmc1ewqEdfMsmqM9osOrUvl9LVbwF5jHxHvR0Oo=
+20250712084301_remove-unique-account.sql h1:E4RKVKXCbY6m2fSHvW6OE0iOlOe2o7YCA0gjTfa15gE=

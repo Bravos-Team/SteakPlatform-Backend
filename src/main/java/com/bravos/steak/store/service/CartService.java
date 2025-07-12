@@ -18,4 +18,6 @@ public interface CartService {
 
     void mergeCart();
 
+    void moveToWishlist(Long gameId);
+
 }

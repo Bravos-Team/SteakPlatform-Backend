@@ -12,6 +12,8 @@ import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
+import java.io.File;
+
 @SpringBootApplication(exclude = {
         MongoAutoConfiguration.class,
         MongoDataAutoConfiguration.class,
@@ -25,7 +27,12 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 public class SteakApplication {
 
     public static void main(String[] args) {
-        Dotenv dotenv = Dotenv.configure().load();
+        Dotenv dotenv;
+        if(new File("prod.env").exists()) {
+            dotenv = Dotenv.configure().filename("prod.env").load();
+        } else {
+            dotenv = Dotenv.configure().load();
+        }
         dotenv.entries().forEach(e -> System.setProperty(e.getKey(), e.getValue()));
         SpringApplication.run(SteakApplication.class, args);
     }

@@ -5,10 +5,13 @@ import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
 import com.bravos.steak.exceptions.BadRequestException;
+import com.bravos.steak.exceptions.UnauthorizeException;
 import com.bravos.steak.store.entity.Cart;
 import com.bravos.steak.store.entity.CartItem;
 import com.bravos.steak.store.entity.Game;
 import com.bravos.steak.store.entity.OrderDetails;
+import com.bravos.steak.store.event.MoveToCartEvent;
+import com.bravos.steak.store.event.MoveToWishlistEvent;
 import com.bravos.steak.store.event.PaymentSuccessEvent;
 import com.bravos.steak.store.model.enums.GameStatus;
 import com.bravos.steak.store.model.response.CartListItem;
@@ -20,6 +23,7 @@ import com.bravos.steak.useraccount.entity.UserAccount;
 import jakarta.servlet.http.Cookie;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.ResponseCookie;
@@ -41,11 +45,12 @@ public class CartServiceImpl implements CartService {
     private final CartItemRepository cartItemRepository;
     private final OrderDetailsRepository orderDetailsRepository;
     private final GameDetailsRepository gameDetailsRepository;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     public CartServiceImpl(SessionService sessionService, SnowflakeGenerator snowflakeGenerator,
                            CartRepository cartRepository, GameRepository gameRepository,
                            CartItemRepository cartItemRepository, OrderDetailsRepository orderDetailsRepository,
-                           GameDetailsRepository gameDetailsRepository) {
+                           GameDetailsRepository gameDetailsRepository, ApplicationEventPublisher applicationEventPublisher) {
         this.sessionService = sessionService;
         this.snowflakeGenerator = snowflakeGenerator;
         this.cartRepository = cartRepository;
@@ -53,6 +58,7 @@ public class CartServiceImpl implements CartService {
         this.cartItemRepository = cartItemRepository;
         this.orderDetailsRepository = orderDetailsRepository;
         this.gameDetailsRepository = gameDetailsRepository;
+        this.applicationEventPublisher = applicationEventPublisher;
     }
 
     @Override
@@ -222,8 +228,7 @@ public class CartServiceImpl implements CartService {
     @Override
     public List<CartListItem> getMyCart() {
         Long userId = getUserId();
-        List<CartItem> cartItems;
-
+        List<GamePrice> gamePrices;
         if (userId == null) {
             Cookie cartCookie = sessionService.getCookie("cart-id");
             long cartId;
@@ -233,20 +238,11 @@ public class CartServiceImpl implements CartService {
             } catch (NumberFormatException e) {
                 return List.of();
             }
-            cartItems = cartItemRepository.findAllByCartId(cartId);
+            gamePrices = cartItemRepository.findGamePricesInCartByCartId(cartId, GameStatus.OPENING);
         } else {
-            Cart cart = cartRepository.findByUserAccountId(userId).orElse(null);
-            if (cart == null) return List.of();
-            cartItems = cartItemRepository.findAllByCartId(cart.getId());
+            gamePrices = cartItemRepository.findGamePricesInCartByUserAccountId(userId, GameStatus.OPENING);
         }
-
-        if (cartItems.isEmpty()) return List.of();
-
-        List<GamePrice> gamePrices = gameRepository.findGamePricesByIdIn(
-                cartItems.stream().map(CartItem::getGame).map(Game::getId).toList(), GameStatus.OPENING);
-
         if (gamePrices.isEmpty()) return List.of();
-
         List<CartGameInfo> cartGameInfos = gameDetailsRepository.findByIdIn(
                 gamePrices.stream().map(GamePrice::getGameId).toList());
         Map<Long, CartListItem> cartListItemMap = cartGameInfos.stream()
@@ -305,6 +301,17 @@ public class CartServiceImpl implements CartService {
         }
     }
 
+    @Override
+    @Transactional
+    public void moveToWishlist(Long gameId) {
+        Long userId = getUserId();
+        if(userId == null) {
+            throw new UnauthorizeException("You must be logged in to move items to wishlist.");
+        }
+        removeFromCart(gameId);
+        applicationEventPublisher.publishEvent(new MoveToWishlistEvent(this, gameId));
+    }
+
     @EventListener
     @Transactional
     @Order(2)
@@ -318,6 +325,12 @@ public class CartServiceImpl implements CartService {
         if (getUserId() != null) {
             removeFromCart(gameIds);
         }
+    }
+
+    @EventListener
+    @Transactional
+    public void handleMoveToCartEvent(MoveToCartEvent event) {
+        addToCart(event.getGameId());
     }
 
     private Long getUserId() {
@@ -339,7 +352,8 @@ public class CartServiceImpl implements CartService {
                 .path("/api/v1/store/public/cart")
                 .maxAge(7 * 60 * 60 * 24)
                 .httpOnly(true)
-                .domain(System.getProperty("COOKIE_DOMAIN"))
+                .secure(true)
+//                .domain(System.getProperty("COOKIE_DOMAIN"))
                 .build();
 
         sessionService.addCookie(cookie);
@@ -351,7 +365,8 @@ public class CartServiceImpl implements CartService {
                 .path("/api/v1/store/public/cart")
                 .maxAge(0)
                 .httpOnly(true)
-                .domain(System.getProperty("COOKIE_DOMAIN"))
+                .secure(true)
+//                .domain(System.getProperty("COOKIE_DOMAIN"))
                 .build();
         sessionService.addCookie(cookie);
     }

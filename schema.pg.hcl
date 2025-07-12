@@ -1202,3 +1202,45 @@ table "order_details" {
     columns = [column.order_id]
   }
 }
+table "wishlist" {
+  schema = schema.public
+  column "id" {
+    null = false
+    type = bigint
+  }
+  column "user_account_id" {
+    null = false
+    type = bigint
+  }
+  column "game_id" {
+    null = false
+    type = bigint
+  }
+  column "added_at" {
+    null    = false
+    type    = bigint
+    default = sql("(extract(epoch from (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')) * 1000)::bigint")
+  }
+  primary_key {
+    columns = [column.id]
+  }
+  foreign_key "wishlist_user_account_id_fkey" {
+    columns     = [column.user_account_id]
+    ref_columns = [table.user_account.column.id]
+    on_update   = NO_ACTION
+    on_delete   = NO_ACTION
+  }
+  foreign_key "wishlist_game_id_fkey" {
+    columns     = [column.game_id]
+    ref_columns = [table.game.column.id]
+    on_update   = NO_ACTION
+    on_delete   = NO_ACTION
+  }
+  index "idx_unique_wishlist" {
+    columns = [column.user_account_id, column.game_id]
+    unique  = true
+  }
+  index "idx_wishlist_user_account_id" {
+    columns = [column.user_account_id]
+  }
+}
