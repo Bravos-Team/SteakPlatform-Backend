@@ -204,7 +204,7 @@ public abstract class AuthService {
     private void addAccessTokenCookie(String jwt, String path) {
         ResponseCookie accessCookie = ResponseCookie.from(ACCESS_TOKEN_NAME, jwt)
                 .httpOnly(true)
-                .secure(false)
+                .secure(true)
                 .path(path)
 //                .domain(System.getProperty("COOKIE_DOMAIN"))
                 .sameSite("None")
@@ -216,7 +216,7 @@ public abstract class AuthService {
     private void addRefreshTokenCookie(RefreshToken refreshToken) {
         ResponseCookie refreshCookie = ResponseCookie.from(REFRESH_TOKEN_NAME, refreshToken.getToken())
                 .httpOnly(true)
-                .secure(false)
+                .secure(true)
                 .path(refreshPath())
 //                .domain(System.getProperty("COOKIE_DOMAIN"))
                 .sameSite("None")
