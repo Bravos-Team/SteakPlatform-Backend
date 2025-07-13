@@ -16,6 +16,11 @@
     <url/>
     <licenses>
         <license/>
+        <license>
+            <name>LICENSE</name>
+            <url>https://raw.githubusercontent.com/Bravos-Team/SteakPlatform-Backend/refs/heads/master/LICENSE</url>
+            <distribution>repo</distribution>
+        </license>
     </licenses>
     <developers>
         <developer/>
