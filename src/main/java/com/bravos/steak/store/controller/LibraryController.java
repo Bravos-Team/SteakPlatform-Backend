@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/user/library")
+@RequestMapping("/api/v1/store/private/library")
 public class LibraryController {
 
     private final LibraryService libraryService;
