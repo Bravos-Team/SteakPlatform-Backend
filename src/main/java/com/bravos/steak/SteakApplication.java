@@ -28,7 +28,7 @@ public class SteakApplication {
 
     public static void main(String[] args) {
         Dotenv dotenv;
-        if(new File("prod.env").exists()) {
+        if(!new File("prod.env").exists()) {
             dotenv = Dotenv.configure().filename("prod.env").load();
         } else {
             dotenv = Dotenv.configure().load();
