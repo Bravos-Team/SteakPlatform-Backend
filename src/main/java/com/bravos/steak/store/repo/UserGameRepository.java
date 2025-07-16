@@ -15,7 +15,7 @@ public interface UserGameRepository extends JpaRepository<UserGame, Long> {
 
     List<UserGame> findByUserId(Long userId);
 
-    @Query("SELECT new com.bravos.steak.store.repo.injection.LibraryInfo(ug.game.id,ug.ownedAt,ug.playRecentDate) " +
+    @Query("SELECT new com.bravos.steak.store.repo.injection.LibraryInfo(ug.id.gameId,ug.ownedAt,ug.playRecentDate) " +
            "FROM UserGame ug WHERE ug.user.id = :userId")
     List<LibraryInfo> findLibraryInfoByUserId(@Param("userId") Long userId, Sort sort);
 
