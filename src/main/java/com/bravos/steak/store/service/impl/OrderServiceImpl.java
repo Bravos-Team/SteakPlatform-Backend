@@ -5,10 +5,7 @@ import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
 import com.bravos.steak.exceptions.BadRequestException;
-import com.bravos.steak.store.entity.Game;
-import com.bravos.steak.store.entity.Order;
-import com.bravos.steak.store.entity.OrderDetails;
-import com.bravos.steak.store.entity.UserGame;
+import com.bravos.steak.store.entity.*;
 import com.bravos.steak.store.event.PaymentFailureEvent;
 import com.bravos.steak.store.event.PaymentSuccessEvent;
 import com.bravos.steak.store.model.enums.GameStatus;
@@ -168,7 +165,7 @@ public class OrderServiceImpl implements OrderService {
         List<UserGame> userGames = new ArrayList<>();
         for (OrderDetails orderDetails : orderDetailsList) {
             UserGame userGame = UserGame.builder()
-                    .id(orderDetails.getId())
+                    .id(new UserGameId(order.getUserAccount().getId(), orderDetails.getGame().getId()))
                     .user(order.getUserAccount())
                     .game(orderDetails.getGame())
                     .ownedAt(DateTimeHelper.currentTimeMillis())
