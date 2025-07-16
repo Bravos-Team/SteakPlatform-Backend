@@ -16,8 +16,6 @@ import static lombok.AccessLevel.PRIVATE;
 @FieldDefaults(level = PRIVATE)
 public class LibraryInfo {
 
-   Long libraryId;
-
    Long gameId;
 
    Long ownedAt;

@@ -14,14 +14,16 @@ import lombok.*;
 @Table(name = "user_game")
 public class UserGame {
 
-    @Id
-    private Long id;
+    @EmbeddedId
+    private UserGameId id;
 
     @ManyToOne
+    @MapsId("userAccountId")
     @JoinColumn(name = "user_account_id", nullable = false)
     private UserAccount user;
 
     @ManyToOne
+    @MapsId("gameId")
     @JoinColumn(name = "game_id", nullable = false)
     private Game game;
 
