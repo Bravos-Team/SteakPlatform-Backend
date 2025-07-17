@@ -1,7 +1,5 @@
 package com.bravos.steak.administration.entity;
 
-import com.bravos.steak.dev.entity.PublisherPermission;
-import com.bravos.steak.dev.entity.PublisherPermissionGroup;
 import io.hypersistence.utils.hibernate.type.json.JsonType;
 import jakarta.persistence.*;
 import lombok.*;
@@ -9,7 +7,6 @@ import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.Type;
 
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Objects;
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -35,7 +32,7 @@ public class AdminPermission {
 
     @Type(JsonType.class)
     @Column(columnDefinition = "jsonb")
-    Collection<String> authorities = new HashSet<>();
+    Collection<String> authorities;
 
     @Override
     public boolean equals(Object o) {

@@ -1,6 +1,8 @@
 package com.bravos.steak.exceptions;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Getter
 @Setter
@@ -8,7 +10,7 @@ import lombok.*;
 public class ErrorResponse {
 
     private String detail;
-
+    
     public ErrorResponse(String detail) {
         this.detail = detail;
     }

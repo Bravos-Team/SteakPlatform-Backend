@@ -1,5 +1,6 @@
 package com.bravos.steak.dev.service;
 
+import com.bravos.steak.dev.entity.gamesubmission.GameSubmission;
 import com.bravos.steak.dev.entity.gamesubmission.GameSubmissionStatus;
 import com.bravos.steak.dev.model.GameSubmissionListItem;
 import com.bravos.steak.dev.model.request.PublisherReviewReplyRequest;
@@ -14,9 +15,11 @@ public interface GameSubmissionService {
 
     void saveDraftProject(SaveProjectRequest saveProjectRequest);
 
-    void updateBuild(UpdatePreBuildRequest updatePreBuildRequest);
+    void updateBuildProject(UpdatePreBuildRequest updatePreBuildRequest);
 
     void submitGameSubmission(Long projectId);
+
+    GameSubmission detailByIdAndPublisher(Long submissionId, Long publisherId);
 
     Page<GameSubmissionListItem> getProjectListByPublisher(
             String status,

@@ -26,15 +26,16 @@ table "game" {
   }
   column "release_date" {
     null = false
-    type = timestamp
+    type = bigint
   }
   column "created_at" {
     null = false
-    type = timestamp
+    type = bigint
+    default = sql("(extract(epoch from (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')) * 1000)::bigint")
   }
   column "updated_at" {
     null = false
-    type = timestamp
+    type = bigint
   }
   primary_key {
     columns = [column.id]
@@ -151,17 +152,17 @@ table "game_version" {
   }
   column "release_date" {
     null = false
-    type = timestamp
+    type = bigint
   }
   column "created_at" {
     null    = false
-    type    = timestamp
-    default = sql("CURRENT_TIMESTAMP")
+    type    = bigint
+    default = sql("(extract(epoch from (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')) * 1000)::bigint")
   }
   column "updated_at" {
     null    = false
-    type    = timestamp
-    default = sql("CURRENT_TIMESTAMP")
+    type    = bigint
+    default = sql("(extract(epoch from (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')) * 1000)::bigint")
   }
   primary_key {
     columns = [column.id]
@@ -240,13 +241,13 @@ table "publisher" {
   }
   column "created_at" {
     null    = false
-    type    = timestamp
-    default = sql("CURRENT_TIMESTAMP")
+    type    = bigint
+    default = sql("(extract(epoch from (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')) * 1000)::bigint")
   }
   column "updated_at" {
     null    = false
-    type    = timestamp
-    default = sql("CURRENT_TIMESTAMP")
+    type    = bigint
+    default = sql("(extract(epoch from (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')) * 1000)::bigint")
   }
   primary_key {
     columns = [column.id]
@@ -296,13 +297,13 @@ table "publisher_account" {
   }
   column "created_at" {
     null    = false
-    type    = timestamp
-    default = sql("CURRENT_TIMESTAMP")
+    type    = bigint
+    default = sql("(extract(epoch from (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')) * 1000)::bigint")
   }
   column "updated_at" {
     null    = true
-    type    = timestamp
-    default = sql("CURRENT_TIMESTAMP")
+    type    = bigint
+    default = sql("(extract(epoch from (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')) * 1000)::bigint")
   }
   primary_key {
     columns = [column.id]
@@ -472,12 +473,12 @@ table "publisher_refresh_token" {
   }
   column "issues_at" {
     null    = false
-    type    = timestamp
-    default = sql("CURRENT_TIMESTAMP")
+    type    = bigint
+    default = sql("(extract(epoch from (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')) * 1000)::bigint")
   }
   column "expires_at" {
     null = false
-    type = timestamp
+    type = bigint
   }
   column "revoked" {
     null    = false
@@ -536,8 +537,8 @@ table "publisher_role" {
   }
   column "updated_at" {
     null    = false
-    type    = timestamp
-    default = sql("CURRENT_TIMESTAMP")
+    type    = bigint
+    default = sql("(extract(epoch from (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')) * 1000)::bigint")
   }
   primary_key {
     columns = [column.id]
@@ -619,13 +620,13 @@ table "user_account" {
   }
   column "created_at" {
     null    = false
-    type    = timestamp
-    default = sql("CURRENT_TIMESTAMP")
+    type    = bigint
+    default = sql("(extract(epoch from (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')) * 1000)::bigint")
   }
   column "updated_at" {
     null    = true
-    type    = timestamp
-    default = sql("CURRENT_TIMESTAMP")
+    type    = bigint
+    default = sql("(extract(epoch from (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')) * 1000)::bigint")
   }
   primary_key {
     columns = [column.id]
@@ -697,12 +698,12 @@ table "user_refresh_token" {
   }
   column "issues_at" {
     null    = false
-    type    = timestamp
-    default = sql("CURRENT_TIMESTAMP")
+    type    = bigint
+    default = sql("(extract(epoch from (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')) * 1000)::bigint")
   }
   column "expires_at" {
     null = false
-    type = timestamp
+    type = bigint
   }
   column "revoked" {
     null    = false
@@ -770,13 +771,13 @@ table "admin_account" {
   }
   column "created_at" {
     null    = false
-    type    = timestamp
-    default = sql("CURRENT_TIMESTAMP")
+    type    = bigint
+    default = sql("(extract(epoch from (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')) * 1000)::bigint")
   }
   column "updated_at" {
     null    = true
-    type    = timestamp
-    default = sql("CURRENT_TIMESTAMP")
+    type    = bigint
+    default = sql("(extract(epoch from (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')) * 1000)::bigint")
   }
   primary_key {
     columns = [column.id]
@@ -810,12 +811,12 @@ table "admin_refresh_token" {
   }
   column "issues_at" {
     null    = false
-    type    = timestamp
-    default = sql("CURRENT_TIMESTAMP")
+    type    = bigint
+    default = sql("(extract(epoch from (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')) * 1000)::bigint")
   }
   column "expires_at" {
     null = false
-    type = timestamp
+    type = bigint
   }
   column "revoked" {
     null    = false
@@ -994,8 +995,8 @@ table "admin_role" {
   }
   column "updated_at" {
     null    = false
-    type    = timestamp
-    default = sql("CURRENT_TIMESTAMP")
+    type    = bigint
+    default = sql("(extract(epoch from (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')) * 1000)::bigint")
   }
   primary_key {
     columns = [column.id]
@@ -1013,8 +1014,8 @@ table "user_game" {
   }
   column "owned_date" {
     null    = false
-    type    = timestamp
-    default = sql("CURRENT_TIMESTAMP")
+    type    = bigint
+    default = sql("(extract(epoch from (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')) * 1000)::bigint")
   }
   column "play_seconds" {
     null = false
@@ -1023,7 +1024,7 @@ table "user_game" {
   }
   column "play_recent_date" {
     null = true
-    type = timestamp
+    type = bigint
   }
   primary_key {
     columns = [column.user_account_id, column.game_id]
@@ -1059,13 +1060,13 @@ table "cart" {
   }
   column "created_at" {
     null    = false
-    type    = timestamp
-    default = sql("CURRENT_TIMESTAMP")
+    type    = bigint
+    default = sql("(extract(epoch from (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')) * 1000)::bigint")
   }
   column "updated_at" {
     null    = false
-    type    = timestamp
-    default = sql("CURRENT_TIMESTAMP")
+    type    = bigint
+    default = sql("(extract(epoch from (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')) * 1000)::bigint")
   }
   primary_key {
     columns = [column.id]
@@ -1078,7 +1079,7 @@ table "cart" {
   }
   index "idx_cart_user_account_id" {
     columns = [column.user_account_id]
-    unique = true
+    unique  = true
   }
 }
 table "cart_item" {
@@ -1097,8 +1098,8 @@ table "cart_item" {
   }
   column "added_at" {
     null    = false
-    type    = timestamp
-    default = sql("CURRENT_TIMESTAMP")
+    type    = bigint
+    default = sql("(extract(epoch from (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')) * 1000)::bigint")
   }
   primary_key {
     columns = [column.id]
@@ -1120,10 +1121,10 @@ table "cart_item" {
   }
   index "unque_cart_item_game_id" {
     columns = [column.cart_id, column.game_id]
-    unique = true
+    unique  = true
   }
 }
-table "order" {
+table "orders" {
   schema = schema.public
   column "id" {
     null = false
@@ -1137,20 +1138,24 @@ table "order" {
     null = false
     type = smallint
   }
+  column "message" {
+    null = true
+    type = character_varying(255)
+  }
   column "created_at" {
     null    = false
-    type    = timestamp
-    default = sql("CURRENT_TIMESTAMP")
+    type    = bigint
+    default = sql("(extract(epoch from (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')) * 1000)::bigint")
   }
   column "updated_at" {
     null    = false
-    type    = timestamp
-    default = sql("CURRENT_TIMESTAMP")
+    type    = bigint
+    default = sql("(extract(epoch from (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')) * 1000)::bigint")
   }
   primary_key {
     columns = [column.id]
   }
-  foreign_key "order_user_account_id_fkey" {
+  foreign_key "orders_user_account_id_fkey" {
     columns     = [column.user_account_id]
     ref_columns = [table.user_account.column.id]
     on_update   = NO_ACTION
@@ -1178,6 +1183,64 @@ table "order_details" {
     null = false
     type = numeric(13, 2)
   }
+  primary_key {
+    columns = [column.id]
+  }
+  foreign_key "order_details_order_id_fkey" {
+    columns     = [column.order_id]
+    ref_columns = [table.orders.column.id]
+    on_update   = NO_ACTION
+    on_delete   = CASCADE
+  }
+  foreign_key "order_details_game_id_fkey" {
+    columns     = [column.game_id]
+    ref_columns = [table.game.column.id]
+    on_update   = NO_ACTION
+    on_delete   = NO_ACTION
+  }
+  index "idx_order_details_order_id" {
+    columns = [column.order_id]
+  }
 }
-
-
+table "wishlist" {
+  schema = schema.public
+  column "id" {
+    null = false
+    type = bigint
+  }
+  column "user_account_id" {
+    null = false
+    type = bigint
+  }
+  column "game_id" {
+    null = false
+    type = bigint
+  }
+  column "added_at" {
+    null    = false
+    type    = bigint
+    default = sql("(extract(epoch from (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')) * 1000)::bigint")
+  }
+  primary_key {
+    columns = [column.id]
+  }
+  foreign_key "wishlist_user_account_id_fkey" {
+    columns     = [column.user_account_id]
+    ref_columns = [table.user_account.column.id]
+    on_update   = NO_ACTION
+    on_delete   = NO_ACTION
+  }
+  foreign_key "wishlist_game_id_fkey" {
+    columns     = [column.game_id]
+    ref_columns = [table.game.column.id]
+    on_update   = NO_ACTION
+    on_delete   = NO_ACTION
+  }
+  index "idx_unique_wishlist" {
+    columns = [column.user_account_id, column.game_id]
+    unique  = true
+  }
+  index "idx_wishlist_user_account_id" {
+    columns = [column.user_account_id]
+  }
+}

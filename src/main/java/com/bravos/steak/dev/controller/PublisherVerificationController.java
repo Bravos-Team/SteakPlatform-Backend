@@ -22,7 +22,7 @@ public class PublisherVerificationController {
     public String verificateRegisterRequest(@PathVariable("token") String token) {
         try {
             publisherRegistrationService.postRegisterPublisher(token);
-            return "redirect:" + System.getProperty("BASE_URL_FRONTEND") + "/register-sucess";
+            return "redirect:" + System.getProperty("BASE_URL_FRONTEND") + "/register-success";
         } catch (Exception e) {
             log.error(e.getMessage());
             return "redirect:" + System.getProperty("BASE_URL_FRONTEND") + "/register-failed";

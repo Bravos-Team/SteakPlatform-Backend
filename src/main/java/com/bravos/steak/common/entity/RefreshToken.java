@@ -1,13 +1,10 @@
 package com.bravos.steak.common.entity;
 
+import com.bravos.steak.common.service.helper.DateTimeHelper;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
-import org.hibernate.annotations.CreationTimestamp;
-
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Getter
@@ -27,10 +24,10 @@ public abstract class RefreshToken {
 
     @Column(nullable = false, updatable = false)
     @Builder.Default
-    LocalDateTime issuesAt = LocalDateTime.now();
+    Long issuesAt = DateTimeHelper.currentTimeMillis();
 
     @Column(nullable = false)
-    LocalDateTime expiresAt;
+    Long expiresAt;
 
     @Column(nullable = false)
     @Builder.Default

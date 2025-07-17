@@ -1,8 +1,8 @@
 package com.bravos.steak.common.service.storage;
 
 import com.bravos.steak.dev.model.PartInfo;
-import com.bravos.steak.dev.model.response.PartUploadPresignedResponse;
 import com.bravos.steak.dev.model.PartUploadPresignedUrl;
+import com.bravos.steak.dev.model.response.PartUploadPresignedResponse;
 import com.bravos.steak.exceptions.BadRequestException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -15,6 +15,9 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequ
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedUploadPartRequest;
 
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -35,7 +38,6 @@ public abstract class S3Service {
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .bucket(bucket)
                 .key(objectKey)
-                .metadata(metadata)
                 .build();
         PresignedPutObjectRequest presignedPutObjectRequest = presigner
                 .presignPutObject(p -> {
@@ -172,7 +174,7 @@ public abstract class S3Service {
             throw new RuntimeException("Failed to complete multipart upload: " + e.getMessage());
         }
 
-        return completeResponse.location();
+        return URLDecoder.decode(completeResponse.location(), StandardCharsets.UTF_8);
 
     }
 

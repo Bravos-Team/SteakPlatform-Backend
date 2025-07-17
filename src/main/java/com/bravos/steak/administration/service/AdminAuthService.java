@@ -9,6 +9,7 @@ import com.bravos.steak.common.entity.RefreshToken;
 import com.bravos.steak.common.service.auth.AuthService;
 import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.common.service.encryption.JwtService;
+import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.common.service.redis.RedisService;
 import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,7 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.Set;
 import java.util.UUID;
 
@@ -33,10 +33,10 @@ public class AdminAuthService extends AuthService {
 
     @Autowired
     public AdminAuthService(RedisService redisService, PasswordEncoder passwordEncoder, JwtService jwtService,
-                            HttpServletResponse httpServletResponse, HttpServletRequest httpServletRequest,
-                            AdminAccountRepository adminAccountRepository, SnowflakeGenerator snowflakeGenerator,
+                            HttpServletResponse httpServletResponse, AdminAccountRepository adminAccountRepository,
+                            SnowflakeGenerator snowflakeGenerator,
                             AdminRefreshTokenRepository adminRefreshTokenRepository, SessionService sessionService) {
-        super(redisService, passwordEncoder, jwtService, httpServletResponse, httpServletRequest);
+        super(redisService, passwordEncoder, jwtService, httpServletResponse, sessionService);
         this.adminAccountRepository = adminAccountRepository;
         this.snowflakeGenerator = snowflakeGenerator;
         this.adminRefreshTokenRepository = adminRefreshTokenRepository;
@@ -71,7 +71,7 @@ public class AdminAuthService extends AuthService {
                 .token(UUID.randomUUID().toString())
                 .deviceId(deviceId)
                 .deviceInfo(deviceInfo)
-                .expiresAt(LocalDateTime.now().plusSeconds(Long.parseLong(System.getProperty("USER_REFRESH_TOKEN_EXP"))))
+                .expiresAt(DateTimeHelper.from(DateTimeHelper.now()))
                 .revoked(false)
                 .build();
 

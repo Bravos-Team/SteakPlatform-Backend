@@ -1,10 +1,11 @@
 package com.bravos.steak.dev.model;
 
+import com.bravos.steak.dev.entity.gamesubmission.BuildInfo;
 import com.bravos.steak.dev.entity.gamesubmission.GameSubmissionStatus;
 import lombok.Value;
+import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.io.Serializable;
-import java.util.Date;
 
 /**
  * DTO for {@link com.bravos.steak.dev.entity.gamesubmission.GameSubmission}
@@ -14,7 +15,8 @@ public class GameSubmissionListItem implements Serializable {
     Long id;
     Long publisherId;
     String name;
+    String thumbnail;
+    BuildInfo buildInfo;
     GameSubmissionStatus status;
-    String versionName;
-    Date updatedAt;
+    Long updatedAt;
 }

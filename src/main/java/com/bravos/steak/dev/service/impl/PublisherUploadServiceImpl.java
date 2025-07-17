@@ -6,7 +6,7 @@ import com.bravos.steak.common.security.JwtTokenClaims;
 import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
 import com.bravos.steak.common.service.storage.impl.AwsS3Service;
 import com.bravos.steak.common.service.storage.impl.CloudflareS3Service;
-import com.bravos.steak.dev.model.*;
+import com.bravos.steak.dev.model.PartUploadPresignedUrl;
 import com.bravos.steak.dev.model.request.*;
 import com.bravos.steak.dev.model.response.CompleteUploadResponse;
 import com.bravos.steak.dev.model.response.PartUploadPresignedResponse;
@@ -71,13 +71,7 @@ public class PublisherUploadServiceImpl implements PublisherUploadService {
             String signedUrl = cloudflareS3Service.generateS3PutSignedUrl(
                     imageS3Config.getBucketName(),
                     objectName,
-                    getDurationBySize(fileSize),
-                    Map.of(
-                            "Content-Type", "image/" + extension.replace(".", ""),
-                            "Upload-File-Name", fileName,
-                            "Uploader-Id", String.valueOf(jwtTokenClaims.getId()),
-                            "Publisher-Id",String.valueOf(publisherId)
-                    ));
+                    getDurationBySize(fileSize));
             return PresignedUrlResponse.builder()
                     .fileName(fileName)
                     .signedUrl(signedUrl)
@@ -95,7 +89,6 @@ public class PublisherUploadServiceImpl implements PublisherUploadService {
         JwtTokenClaims jwtTokenClaims = (JwtTokenClaims) authentication.getDetails();
         long publisherId = (long) jwtTokenClaims.getOtherClaims().get("publisherId");
         PresignedUrlResponse[] responses = new PresignedUrlResponse[imageUploadPresignedRequests.length];
-        String uploaderId = String.valueOf(jwtTokenClaims.getId());
         String publisherIdStr = String.valueOf(publisherId);
 
         for (int i = 0; i < imageUploadPresignedRequests.length; i++) {
@@ -108,13 +101,7 @@ public class PublisherUploadServiceImpl implements PublisherUploadService {
                 String signedUrl = cloudflareS3Service.generateS3PutSignedUrl(
                         imageS3Config.getBucketName(),
                         objectName,
-                        getDurationBySize(fileSize),
-                        Map.of(
-                                "Content-Type", "image/" + extension.replace(".", ""),
-                                "Upload-File-Name", fileName,
-                                "Uploader-Id", uploaderId,
-                                "Publisher-Id", publisherIdStr
-                        ));
+                        getDurationBySize(fileSize));
                 responses[i] = PresignedUrlResponse.builder()
                         .fileName(fileName)
                         .signedUrl(signedUrl)

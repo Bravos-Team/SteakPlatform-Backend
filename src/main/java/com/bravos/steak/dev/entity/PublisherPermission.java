@@ -6,7 +6,8 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.Type;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Objects;
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Getter
@@ -31,7 +32,7 @@ public class PublisherPermission {
 
     @Type(JsonType.class)
     @Column(columnDefinition = "jsonb")
-    Collection<String> authorities = new HashSet<>();
+    Collection<String> authorities;
 
     @Override
     public boolean equals(Object o) {

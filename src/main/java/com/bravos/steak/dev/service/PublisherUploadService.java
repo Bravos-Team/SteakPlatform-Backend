@@ -1,6 +1,6 @@
 package com.bravos.steak.dev.service;
 
-import com.bravos.steak.dev.model.*;
+import com.bravos.steak.dev.model.PartUploadPresignedUrl;
 import com.bravos.steak.dev.model.request.*;
 import com.bravos.steak.dev.model.response.CompleteUploadResponse;
 import com.bravos.steak.dev.model.response.PartUploadPresignedResponse;

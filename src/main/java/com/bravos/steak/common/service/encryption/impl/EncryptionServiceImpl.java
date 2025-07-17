@@ -3,7 +3,6 @@ package com.bravos.steak.common.service.encryption.impl;
 import com.bravos.steak.common.model.SecretKeyX;
 import com.bravos.steak.common.service.encryption.AesEncryptionService;
 import com.bravos.steak.common.service.encryption.EncryptionService;
-import com.bravos.steak.common.service.encryption.KeyVaultService;
 import org.springframework.stereotype.Service;
 
 @Service

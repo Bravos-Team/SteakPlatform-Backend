@@ -16,6 +16,11 @@
     <url/>
     <licenses>
         <license/>
+        <license>
+            <name>LICENSE</name>
+            <url>https://raw.githubusercontent.com/Bravos-Team/SteakPlatform-Backend/refs/heads/master/LICENSE</url>
+            <distribution>repo</distribution>
+        </license>
     </licenses>
     <developers>
         <developer/>
@@ -116,6 +121,12 @@
             <groupId>com.azure</groupId>
             <artifactId>azure-security-keyvault-secrets</artifactId>
             <version>4.10.0</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/com.nimbusds/nimbus-jose-jwt -->
+        <dependency>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>nimbus-jose-jwt</artifactId>
+            <version>10.3.1</version>
         </dependency>
     </dependencies>
 

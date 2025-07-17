@@ -7,8 +7,6 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
-import java.util.Date;
-
 @Document("ReviewReply")
 @AllArgsConstructor
 @NoArgsConstructor
@@ -39,6 +37,7 @@ public class ReviewReply {
 
     @Field("repliedAt")
     @NonNull
-    private Date repliedAt;
+    @Indexed
+    private Long repliedAt;
 
 }

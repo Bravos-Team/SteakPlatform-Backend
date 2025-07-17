@@ -4,15 +4,13 @@ import com.bravos.steak.common.model.GeneralKeyPair;
 import com.bravos.steak.common.security.JwtTokenClaims;
 import com.bravos.steak.common.service.encryption.JwtService;
 import com.bravos.steak.common.service.encryption.RSAService;
+import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.exceptions.UnauthorizeException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.io.*;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.io.IOException;
 import java.util.Base64;
 import java.util.Map;
 
@@ -72,8 +70,7 @@ public class JwtServiceImpl implements JwtService {
             throw new UnauthorizeException("Token is invalid");
         }
 
-        if(!rSAService.verifyData(parts[0] + "." + parts[1],
-                parts[2],
+        if(!rSAService.verifyData(parts[0] + "." + parts[1], parts[2],
                 generalKeyPair.getPublicKey())) {
             throw new UnauthorizeException("Token is invalid");
         }
@@ -90,11 +87,9 @@ public class JwtServiceImpl implements JwtService {
             throw new UnauthorizeException("Token is invalid");
         }
 
-        LocalDateTime now = LocalDateTime.now();
+        long now = DateTimeHelper.currentTimeMillis();
 
-        if(payload == null ||
-                now.isBefore(LocalDateTime.ofInstant(Instant.ofEpochSecond(payload.getIat()),ZoneOffset.UTC)) ||
-                now.isAfter(LocalDateTime.ofInstant(Instant.ofEpochSecond(payload.getExp()), ZoneOffset.UTC))) {
+        if(payload == null || payload.getExp() < now || payload.getIat() > now)  {
             throw new UnauthorizeException("Token is expired or not yet valid");
         }
 

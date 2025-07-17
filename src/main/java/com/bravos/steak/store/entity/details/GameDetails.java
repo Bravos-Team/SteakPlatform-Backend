@@ -5,8 +5,6 @@ import jakarta.persistence.Id;
 import lombok.*;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.Date;
-
 @Getter
 @Setter
 @NoArgsConstructor
@@ -19,9 +17,12 @@ public class GameDetails {
     @NonNull
     private Long id;
 
-    private String[] developersTeam;
+    @NonNull
+    private String title;
 
-    private String region;
+    private String[] developersTeams;
+
+    private String[] regions;
 
     private String thumbnail;
 
@@ -35,11 +36,9 @@ public class GameDetails {
 
     private SystemRequirements systemRequirements;
 
-    private Boolean internetConnection;
-
     private String[] languageSupported;
 
     @NonNull
-    private Date updatedAt;
+    private Long updatedAt;
 
 }

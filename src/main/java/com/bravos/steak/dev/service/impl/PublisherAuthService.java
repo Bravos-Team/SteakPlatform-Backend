@@ -5,6 +5,7 @@ import com.bravos.steak.common.entity.RefreshToken;
 import com.bravos.steak.common.service.auth.AuthService;
 import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.common.service.encryption.JwtService;
+import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.common.service.redis.RedisService;
 import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
 import com.bravos.steak.dev.entity.PublisherAccount;
@@ -18,7 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -34,10 +34,10 @@ public class PublisherAuthService extends AuthService {
 
     @Autowired
     public PublisherAuthService(RedisService redisService, PasswordEncoder passwordEncoder, JwtService jwtService,
-                                HttpServletResponse httpServletResponse, HttpServletRequest httpServletRequest,
-                                PublisherAccountRepository publisherAccountRepository, SnowflakeGenerator snowflakeGenerator,
-                                PublisherRefreshTokenRepository publisherRefreshTokenRepository, SessionService sessionService) {
-        super(redisService, passwordEncoder, jwtService, httpServletResponse, httpServletRequest);
+                                HttpServletResponse httpServletResponse, PublisherAccountRepository publisherAccountRepository,
+                                SnowflakeGenerator snowflakeGenerator, PublisherRefreshTokenRepository publisherRefreshTokenRepository,
+                                SessionService sessionService) {
+        super(redisService, passwordEncoder, jwtService, httpServletResponse, sessionService);
         this.publisherAccountRepository = publisherAccountRepository;
         this.snowflakeGenerator = snowflakeGenerator;
         this.publisherRefreshTokenRepository = publisherRefreshTokenRepository;
@@ -72,7 +72,7 @@ public class PublisherAuthService extends AuthService {
                 .token(UUID.randomUUID().toString())
                 .deviceId(deviceId)
                 .deviceInfo(deviceInfo)
-                .expiresAt(LocalDateTime.now().plusSeconds(Long.parseLong(System.getProperty("USER_REFRESH_TOKEN_EXP"))))
+                .expiresAt(DateTimeHelper.from(DateTimeHelper.now().plusDays(30)))
                 .revoked(false)
                 .build();
 

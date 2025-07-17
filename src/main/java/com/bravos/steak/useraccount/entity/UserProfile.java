@@ -1,11 +1,11 @@
 package com.bravos.steak.useraccount.entity;
 
 import com.mongodb.lang.NonNull;
-import lombok.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-
-import java.util.Date;
 
 @Document("UserProfile")
 @Getter
@@ -19,7 +19,7 @@ public class UserProfile {
 
     private String displayName;
 
-    private Date birthDate;
+    private String birthDate;
 
     private Boolean sex;
 

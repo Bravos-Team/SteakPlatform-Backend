@@ -12,8 +12,6 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
-import java.util.Date;
-
 @Document("GameSubmission")
 @Getter
 @Setter
@@ -41,11 +39,11 @@ public class GameSubmission {
     @Field("price")
     private Double price;
 
-    @Field("developerTeam")
-    private String[] developerTeam;
+    @Field("developerTeams")
+    private String[] developerTeams;
 
-    @Field("region")
-    private String region;
+    @Field("regions")
+    private String[] regions;
 
     @Field("thumbnail")
     private String thumbnail;
@@ -60,19 +58,16 @@ public class GameSubmission {
     private String longDescription;
 
     @Field("platform")
-    private String[] platform;
+    private String[] platforms;
 
     @Field("systemRequirements")
     private SystemRequirements systemRequirements;
-
-    @Field("internetConnection")
-    private Boolean internetConnection;
 
     @Field("languageSupported")
     private String[] languageSupported;
 
     @Field("estimatedReleaseDate")
-    private Date estimatedReleaseDate;
+    private Long estimatedReleaseDate;
 
     @Field("buildInfo")
     private BuildInfo buildInfo;
@@ -81,7 +76,7 @@ public class GameSubmission {
     private GameSubmissionStatus status = GameSubmissionStatus.DRAFT;
 
     @Field("updatedAt")
-    private Date updatedAt;
+    private Long updatedAt;
 
     public GameSubmission(long id, long publisherId, long createdBy, @NonNull String name) {
         this.id = id;

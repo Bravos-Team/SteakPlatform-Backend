@@ -1,10 +1,10 @@
 package com.bravos.steak.store.entity;
 
+import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.useraccount.entity.UserAccount;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Getter
@@ -12,7 +12,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Entity(name = "cart")
+@Entity
+@Table(name = "cart")
 public class Cart {
 
     @Id
@@ -29,8 +30,10 @@ public class Cart {
     )
     private List<CartItem> cartItems;
 
-    private LocalDateTime createdAt;
+    @Builder.Default
+    private Long createdAt = DateTimeHelper.currentTimeMillis();
 
-    private LocalDateTime updatedAt;
+    @Builder.Default
+    private Long updatedAt = DateTimeHelper.currentTimeMillis();
 
 }

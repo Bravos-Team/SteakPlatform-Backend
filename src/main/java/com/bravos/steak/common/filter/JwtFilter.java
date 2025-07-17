@@ -1,7 +1,7 @@
 package com.bravos.steak.common.filter;
 
-import com.bravos.steak.common.security.JwtTokenClaims;
 import com.bravos.steak.common.security.JwtAuthentication;
+import com.bravos.steak.common.security.JwtTokenClaims;
 import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.common.service.encryption.JwtService;
 import jakarta.servlet.FilterChain;
@@ -24,6 +24,7 @@ import java.util.List;
 public class JwtFilter extends OncePerRequestFilter {
 
     private final List<String> whiteList = List.of(
+            "/ipn",
             "/verificate",
             "/api/v1/user/auth",
             "/api/v1/dev/auth",
