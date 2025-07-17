@@ -27,8 +27,9 @@ import java.io.File;
 public class SteakApplication {
 
     public static void main(String[] args) {
+        String profile = System.getProperty("spring.profiles.active");
         Dotenv dotenv;
-        if(new File("prod.env").exists()) {
+        if("prod".equals(profile)) {
             dotenv = Dotenv.configure().filename("prod.env").load();
         } else {
             dotenv = Dotenv.configure().load();

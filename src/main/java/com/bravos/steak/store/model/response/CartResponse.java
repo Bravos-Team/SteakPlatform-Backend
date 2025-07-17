@@ -8,20 +8,20 @@ import lombok.experimental.FieldDefaults;
 import static lombok.AccessLevel.PRIVATE;
 
 @Setter
-@Builder
 @FieldDefaults(level = PRIVATE)
 public class CartResponse {
 
     public CartResponse(List<CartListItem> items) {
         this.items = items;
+        this.totalPrice = calcTotalPrice();
     }
 
     @Getter
-    List<CartListItem> items;
+    final List<CartListItem> items;
 
-    Double totalPrice;
+    final Double totalPrice;
 
-    public Double getTotalPrice() {
+    private Double calcTotalPrice() {
         if(items == null || items.isEmpty()) {
             return 0.0;
         }
