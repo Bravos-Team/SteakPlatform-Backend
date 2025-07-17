@@ -15,6 +15,7 @@ import com.bravos.steak.store.event.MoveToWishlistEvent;
 import com.bravos.steak.store.event.PaymentSuccessEvent;
 import com.bravos.steak.store.model.enums.GameStatus;
 import com.bravos.steak.store.model.response.CartListItem;
+import com.bravos.steak.store.model.response.CartResponse;
 import com.bravos.steak.store.repo.*;
 import com.bravos.steak.store.repo.injection.CartGameInfo;
 import com.bravos.steak.store.repo.injection.GamePrice;
@@ -50,7 +51,8 @@ public class CartServiceImpl implements CartService {
     public CartServiceImpl(SessionService sessionService, SnowflakeGenerator snowflakeGenerator,
                            CartRepository cartRepository, GameRepository gameRepository,
                            CartItemRepository cartItemRepository, OrderDetailsRepository orderDetailsRepository,
-                           GameDetailsRepository gameDetailsRepository, ApplicationEventPublisher applicationEventPublisher) {
+                           GameDetailsRepository gameDetailsRepository,
+                           ApplicationEventPublisher applicationEventPublisher) {
         this.sessionService = sessionService;
         this.snowflakeGenerator = snowflakeGenerator;
         this.cartRepository = cartRepository;
@@ -226,23 +228,23 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
-    public List<CartListItem> getMyCart() {
+    public CartResponse getMyCart() {
         Long userId = getUserId();
         List<GamePrice> gamePrices;
         if (userId == null) {
             Cookie cartCookie = sessionService.getCookie("cart-id");
             long cartId;
-            if (cartCookie == null || cartCookie.getValue() == null) return List.of();
+            if (cartCookie == null || cartCookie.getValue() == null) return new CartResponse(List.of());
             try {
                 cartId = Long.parseLong(cartCookie.getValue());
             } catch (NumberFormatException e) {
-                return List.of();
+                return new CartResponse(List.of());
             }
             gamePrices = cartItemRepository.findGamePricesInCartByCartId(cartId, GameStatus.OPENING);
         } else {
             gamePrices = cartItemRepository.findGamePricesInCartByUserAccountId(userId, GameStatus.OPENING);
         }
-        if (gamePrices.isEmpty()) return List.of();
+        if (gamePrices.isEmpty()) return new CartResponse(List.of());
         List<CartGameInfo> cartGameInfos = gameDetailsRepository.findByIdIn(
                 gamePrices.stream().map(GamePrice::getGameId).toList());
         Map<Long, CartListItem> cartListItemMap = cartGameInfos.stream()
@@ -251,7 +253,7 @@ public class CartServiceImpl implements CartService {
             CartListItem cartListItem = cartListItemMap.get(gamePrice.getGameId());
             cartListItem.setPrice(gamePrice.getPrice().doubleValue());
         }
-        return cartListItemMap.values().stream().toList();
+        return new CartResponse(cartListItemMap.values().stream().toList());
     }
 
     @Override
@@ -274,7 +276,8 @@ public class CartServiceImpl implements CartService {
 
         Cart userCart = cartRepository.findByUserAccountId(userId).orElse(null);
         if (userCart == null) {
-            userCart = cartRepository.findById(guestCartId).orElseThrow(() -> new BadRequestException("Guest cart not found"));
+            userCart = cartRepository.findById(guestCartId).orElseThrow(() ->
+                    new BadRequestException("Guest cart not found"));
             userCart.setUserAccount(UserAccount.builder().id(userId).build());
             try {
                 cartRepository.save(userCart);
