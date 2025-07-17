@@ -14,6 +14,11 @@ public class WishlistController {
         this.wishlistService = wishlistService;
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<?> getWishlist() {
+        return ResponseEntity.ok(wishlistService.getWishlistItems());
+    }
+
     @PostMapping("/add")
     public ResponseEntity<?> addToWishlist(@RequestParam Long gameId) {
         wishlistService.addToWishlist(gameId);

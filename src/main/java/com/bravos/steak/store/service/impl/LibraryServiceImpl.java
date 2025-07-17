@@ -45,8 +45,9 @@ public class LibraryServiceImpl implements LibraryService {
         Map<Long,GameLibraryItem> libraryMap = new HashMap<>(libraryInfos.size());
         libraryInfos.forEach(l -> libraryMap.put(l.getGameId(),
                 GameLibraryItem.builder()
-                        .libraryId(l.getLibraryId())
                         .gameId(l.getGameId())
+                        .ownedAt(l.getOwnedAt())
+                        .lastPlayedAt(l.getLastPlayedAt())
                         .build()));
         gameDetailsList.forEach(detail -> {
             GameLibraryItem item = libraryMap.get(detail.getId());

@@ -9,12 +9,16 @@ import lombok.*;
 @Builder
 public class GameLibraryItem {
 
-    private Long libraryId;
-
     private Long gameId;
 
     private String title;
 
     private String thumbnailUrl;
+
+    private Long ownedAt;
+
+    private Long lastPlayedAt;
+
+
 
 }
