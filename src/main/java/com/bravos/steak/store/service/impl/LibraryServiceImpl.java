@@ -54,7 +54,7 @@ public class LibraryServiceImpl implements LibraryService {
             item.setTitle(detail.getTitle());
             item.setThumbnailUrl(detail.getThumbnail());
         });
-        return new ArrayList<>(libraryMap.values());
+        return libraryMap.values().stream().toList();
     }
 
 }
