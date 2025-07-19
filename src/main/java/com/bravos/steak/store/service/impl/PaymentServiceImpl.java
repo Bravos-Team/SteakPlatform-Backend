@@ -101,7 +101,8 @@ public class PaymentServiceImpl implements PaymentService {
         String vnpTxnRef = params.get("vnp_TxnRef")[0];
 
         if (secureHash == null || secureHash.isBlank()) {
-            return "/payment/error?message=" + URLEncoder.encode("Missing secure hash in IPN request", StandardCharsets.UTF_8);
+            return "/payment/error?message=" +
+                    URLEncoder.encode("Missing secure hash in IPN request", StandardCharsets.UTF_8);
         }
 
         LocalDateTime completedDate = LocalDateTime.parse(params.get("vnp_PayDate")[0], formatter);
@@ -119,19 +120,22 @@ public class PaymentServiceImpl implements PaymentService {
         });
         if (hmac512Service.verifyData(hashData.toString(), paymentInfo.getSecretKey(), secureHash)) {
             if (isLockTransaction(vnpTxnRef)) {
-                return "/payment/error?message=" + URLEncoder.encode("Transaction is being processed, please wait", StandardCharsets.UTF_8);
+                return "/payment/error?message=" +
+                        URLEncoder.encode("Transaction is being processed, please wait", StandardCharsets.UTF_8);
+            }
+            if (isTransactionCompleted(vnpTxnRef)) {
+                return "/payment/error?message=" +
+                        URLEncoder.encode("Transaction has already been processed", StandardCharsets.UTF_8);
             }
             try {
                 String vnpResponseCode = params.get("vnp_ResponseCode")[0];
-                if (isTransactionCompleted(vnpTxnRef)) {
-                    return "/payment/error?message=" + URLEncoder.encode("Transaction has already been processed", StandardCharsets.UTF_8);
-                }
                 if ("00".equals(vnpResponseCode)) {
                     applicationEventPublisher.publishEvent(new PaymentSuccessEvent(this, Long.parseLong(vnpTxnRef)));
                     return "/payment/success?orderId=" + vnpTxnRef;
                 } else {
                     String message = vnpayStatusMessages.getOrDefault(vnpResponseCode, "Unknown error");
-                    applicationEventPublisher.publishEvent(new PaymentFailureEvent(this, Long.parseLong(vnpTxnRef), message));
+                    applicationEventPublisher.publishEvent(new PaymentFailureEvent(
+                            this, Long.parseLong(vnpTxnRef), message));
                     return "/payment/error?message=" + URLEncoder.encode(message, StandardCharsets.UTF_8);
                 }
             } finally {
@@ -139,7 +143,8 @@ public class PaymentServiceImpl implements PaymentService {
                 redisService.delete("lock:" + vnpTxnRef);
             }
         }
-        return "/payment/error?message=" + URLEncoder.encode("IPN request signature verification failed", StandardCharsets.UTF_8);
+        return "/payment/error?message=" +
+                URLEncoder.encode("IPN request signature verification failed", StandardCharsets.UTF_8);
     }
 
     private String generateSecureHash(String hashData) {

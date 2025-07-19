@@ -103,6 +103,10 @@ public class CartServiceImpl implements CartService {
             }
         }
 
+        if(cartItemRepository.existsByCartIdAndGameId(cart.getId(), gameId)) {
+            throw new BadRequestException("Game is already in the cart.");
+        }
+
         CartItem cartItem = CartItem.builder()
                 .id(snowflakeGenerator.generateId())
                 .game(Game.builder()
@@ -356,6 +360,7 @@ public class CartServiceImpl implements CartService {
                 .maxAge(7 * 60 * 60 * 24)
                 .httpOnly(true)
                 .secure(true)
+                .sameSite("None")
 //                .domain(System.getProperty("COOKIE_DOMAIN"))
                 .build();
 
