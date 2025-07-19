@@ -10,6 +10,9 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 public class GameListResponse {
+
     List<GameListItem> items;
+
     Long nextCursor;
+
 }

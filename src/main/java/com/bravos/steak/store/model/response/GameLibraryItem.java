@@ -15,7 +15,7 @@ public class GameLibraryItem {
 
     private String thumbnailUrl;
 
-    private Long ownedAt;
+    private Long ownedDate;
 
     private Long lastPlayedAt;
 

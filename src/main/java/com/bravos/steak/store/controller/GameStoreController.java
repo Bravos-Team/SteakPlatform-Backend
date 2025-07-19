@@ -1,39 +1,31 @@
 package com.bravos.steak.store.controller;
 
-import com.bravos.steak.store.model.enums.GameStatus;
-import com.bravos.steak.store.service.impl.GameServiceImpl;
+import com.bravos.steak.store.service.GameService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.math.BigDecimal;
-import java.util.List;
+import java.util.Optional;
 
 @RestController
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/store/public")
+@RequestMapping("/api/v1/store/public/games")
 public class GameStoreController {
 
-    GameServiceImpl gameService;
+    GameService gameService;
 
-    @GetMapping("games")
+    @GetMapping("/list")
     public ResponseEntity<?> getGameListStore(
-            @RequestParam(defaultValue = "0", required = false) Long cursor,
-            @RequestParam(defaultValue = "0", required = false) BigDecimal minPrice,
-            @RequestParam(defaultValue = "100000", required = false) BigDecimal maxPrice,
-            @RequestParam(defaultValue = "OPENING", required = false) GameStatus status,
-            @RequestParam(defaultValue = "10", required = false) int pageSize,
-            @RequestParam(defaultValue = "", required = false) List<String> platforms
+            Optional<Long> cursor,
+            @RequestParam(defaultValue = "10", required = false) int pageSize
     ) {
-        return ResponseEntity.status(HttpStatus.OK).body(
-                gameService.getFilteredGames(cursor, minPrice, maxPrice, status, platforms, pageSize)
-        );
+        return ResponseEntity.ok(gameService.getGameStoreList(cursor.orElse(null),pageSize));
     }
+
 }

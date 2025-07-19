@@ -28,7 +28,7 @@ public class UserGame {
     private Game game;
 
     @Builder.Default
-    private Long ownedAt = DateTimeHelper.currentTimeMillis();
+    private Long ownedDate = DateTimeHelper.currentTimeMillis();
 
     @Builder.Default
     private Long playSeconds = 0L;

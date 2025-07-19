@@ -168,7 +168,7 @@ public class OrderServiceImpl implements OrderService {
                     .id(new UserGameId(order.getUserAccount().getId(), orderDetails.getGame().getId()))
                     .user(order.getUserAccount())
                     .game(orderDetails.getGame())
-                    .ownedAt(DateTimeHelper.currentTimeMillis())
+                    .ownedDate(DateTimeHelper.currentTimeMillis())
                     .build();
             userGames.add(userGame);
         }

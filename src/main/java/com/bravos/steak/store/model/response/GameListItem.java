@@ -3,8 +3,6 @@ package com.bravos.steak.store.model.response;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.math.BigDecimal;
-
 import static lombok.AccessLevel.PRIVATE;
 
 @Getter
@@ -18,8 +16,7 @@ public class GameListItem {
     Long id;
     String name;
     String thumbnail;
-    BigDecimal price;
-    Long createAt;
-    Long updatedAt;
+    Double price;
     Long releaseDate;
+
 }

@@ -4,6 +4,7 @@ import com.bravos.steak.store.entity.Game;
 import com.bravos.steak.store.model.enums.GameStatus;
 import com.bravos.steak.store.repo.injection.GameIdStatusPrice;
 import com.bravos.steak.store.repo.injection.GamePrice;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -24,5 +25,8 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
     List<GamePrice> findGamePricesByIdIn(@Param("gameIds") List<Long> gameIds, @Param("status") GameStatus status);
 
     List<Game> findByStatusAndCreatedAtLessThanOrderByCreatedAtDesc(GameStatus status, Long cursor);
+
+    @Query("SELECT MAX(g.releaseDate) FROM Game g WHERE g.status = :status")
+    Long getMaxCursorByStatus(GameStatus status);
 
 }
