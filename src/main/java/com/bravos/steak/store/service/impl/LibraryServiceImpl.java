@@ -10,7 +10,6 @@ import com.bravos.steak.store.service.LibraryService;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,7 +32,7 @@ public class LibraryServiceImpl implements LibraryService {
     public List<GameLibraryItem> getMyLibrary(Sort sort) {
         Long userId = (Long) sessionService.getAuthentication().getPrincipal();
         if(sort == null) {
-            sort = Sort.by(Sort.Direction.DESC, "ownedAt");
+            sort = Sort.by(Sort.Direction.DESC, "ownedDate");
         }
         List<LibraryInfo> libraryInfos = userGameRepository.findLibraryInfoByUserId(userId,sort);
         if(libraryInfos.isEmpty()) {
@@ -46,7 +45,7 @@ public class LibraryServiceImpl implements LibraryService {
         libraryInfos.forEach(l -> libraryMap.put(l.getGameId(),
                 GameLibraryItem.builder()
                         .gameId(l.getGameId())
-                        .ownedAt(l.getOwnedAt())
+                        .ownedDate(l.getOwnedDate())
                         .lastPlayedAt(l.getLastPlayedAt())
                         .build()));
         gameDetailsList.forEach(detail -> {
@@ -54,7 +53,7 @@ public class LibraryServiceImpl implements LibraryService {
             item.setTitle(detail.getTitle());
             item.setThumbnailUrl(detail.getThumbnail());
         });
-        return new ArrayList<>(libraryMap.values());
+        return libraryMap.values().stream().toList();
     }
 
 }

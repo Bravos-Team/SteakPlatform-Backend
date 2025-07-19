@@ -20,7 +20,7 @@ public class LibraryController {
 
     @GetMapping("/my-games")
     public ResponseEntity<?> getLibrary(@SortDefault.SortDefaults({
-            @SortDefault(sort = "ownedAt", direction = Sort.Direction.DESC),
+            @SortDefault(sort = "ownedDate", direction = Sort.Direction.DESC),
             @SortDefault(sort = "playRecentDate", direction = Sort.Direction.DESC)})Sort sort) {
         return ResponseEntity.ok(libraryService.getMyLibrary(sort));
     }

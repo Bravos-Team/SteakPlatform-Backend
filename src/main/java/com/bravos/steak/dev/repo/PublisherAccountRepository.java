@@ -13,4 +13,5 @@ public interface PublisherAccountRepository extends JpaRepository<PublisherAccou
 
     PublisherAccount findByEmail(String email);
 
+
 }

@@ -1,84 +1,104 @@
 package com.bravos.steak.store.service.impl;
 
+import com.bravos.steak.common.service.redis.RedisService;
 import com.bravos.steak.store.entity.Game;
-import com.bravos.steak.store.entity.details.GameDetails;
 import com.bravos.steak.store.model.enums.GameStatus;
+import com.bravos.steak.store.model.response.CursorResponse;
 import com.bravos.steak.store.model.response.GameListItem;
-import com.bravos.steak.store.model.response.GameListResponse;
 import com.bravos.steak.store.repo.GameDetailsRepository;
 import com.bravos.steak.store.repo.GameRepository;
+import com.bravos.steak.store.repo.injection.CartGameInfo;
 import com.bravos.steak.store.service.GameService;
 import com.bravos.steak.store.specifications.GameSpecification;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
 public class GameServiceImpl implements GameService {
+
     GameRepository gameRepository;
-    GameDetailsRepository detailsRepository;
     private final GameDetailsRepository gameDetailsRepository;
+    private final RedisService redisService;
 
     @Override
-    public GameListResponse getGameStoreList(Long cursor, int pageSize) {
+    public CursorResponse<GameListItem> getGameStoreList(Long cursor, int pageSize) {
+        Specification<Game> spec = GameSpecification.withoutFilters(cursor);
+        List<Game> games = gameRepository.findAll(spec, PageRequest.of(0, pageSize)).getContent();
+        if (games.isEmpty()) return CursorResponse.empty();
+        List<CartGameInfo> gameDetails = gameDetailsRepository.findByIdIn(games.stream().map(Game::getId).toList());
+        Map<Long,GameListItem> gameListItemMap = new LinkedHashMap<>(games.size());
+        games.forEach(game -> gameListItemMap.put(game.getId(),
+                GameListItem.builder()
+                        .id(game.getId())
+                        .name(game.getName())
+                        .price(game.getPrice().doubleValue())
+                        .releaseDate(game.getReleaseDate())
+                        .build()));
+        gameDetails.forEach(detail -> {
+            GameListItem item = gameListItemMap.get(detail.getId());
+            item.setThumbnail(detail.getThumbnail());
+        });
 
-        if (pageSize == 0) pageSize = 10;
+        Long maxCursor = getMaxCursorWithoutFilters();
+        Long currentCursor = games.getLast().getReleaseDate();
 
-        if (cursor == null) return GameListResponse.builder().build();
-        List<Game> games = gameRepository.findAll();
-        if (games.isEmpty()) return GameListResponse.builder().build();
-        List<GameDetails> details = detailsRepository.findAll();
-        if (details.isEmpty()) return GameListResponse.builder().build();
-        return null;
+        if(maxCursor < currentCursor) {
+            redisService.delete("cursor:non-filter");
+            maxCursor = getMaxCursorWithoutFilters();
+        }
+
+        boolean hasNextCursor = maxCursor != null && maxCursor > currentCursor;
+        return CursorResponse.<GameListItem>builder()
+                .items(gameListItemMap.values().stream().toList())
+                .maxCursor(maxCursor)
+                .hasNextCursor(hasNextCursor)
+                .build();
     }
 
-    public GameListResponse getFilteredGames(
+    @Override
+    public CursorResponse<GameListItem> getFilteredGames(
             Long cursor,
-            BigDecimal minPrice,
-            BigDecimal maxPrice,
-            GameStatus status,
-            List<String> platforms, // dùng sau nếu mày join
+            Long minPrice,
+            Long maxPrice,
             int pageSize
     ) {
         if (pageSize == 0) pageSize = 10;
-        Specification<Game> spec = GameSpecification.withFilters(status, minPrice, maxPrice, platforms, cursor);
 
-        Sort sort = Sort.by(Sort.Direction.DESC, "createdAt");
-        List<Game> games = gameRepository.findAll(spec, sort);
+        Specification<Game> spec = GameSpecification.withFilters(minPrice, maxPrice, cursor);
+        List<Game> games = gameRepository.findAll(spec,PageRequest.of(0,pageSize)).getContent();
+        if (games.isEmpty()) return CursorResponse.empty();
 
-        if (games.isEmpty()) return GameListResponse.builder().build();
+        long maxCursor = gameRepository.getMaxCursorByStatus(GameStatus.OPENING);
 
-        List<Long> gameIds = games.stream().map(Game::getId).toList();
-        List<GameDetails> details = gameDetailsRepository.findForLibraryByIdIn(gameIds);
-
-        List<GameListItem> items = games.stream().map(g -> {
-            GameDetails detail = details.stream().filter(d -> d.getId().equals(g.getId())).findFirst().orElse(null);
-            if (detail == null) return null;
-            return GameListItem.builder()
-                    .id(g.getId())
-                    .name(detail.getTitle())
-                    .thumbnail(detail.getThumbnail())
-                    .price(g.getPrice())
-                    .createAt(g.getCreatedAt())
-                    .updatedAt(g.getUpdatedAt())
-                    .releaseDate(g.getReleaseDate())
-                    .build();
-        }).filter(Objects::nonNull).toList();
-
-        Long nextCursor = items.isEmpty() ? null : items.getLast().getCreateAt();
-
-        return GameListResponse.builder()
-                .items(items)
-                .nextCursor(nextCursor)
-                .build();
+        return null;
     }
+
+    private Long getMaxCursorWithoutFilters() {
+        String key = "cursor:non-filter";
+        Long maxCursor = redisService.get(key, Long.class);
+        if (maxCursor != null) return maxCursor;
+        maxCursor = gameRepository.getMaxCursorByStatus(GameStatus.OPENING);
+        redisService.save(key,maxCursor,10, TimeUnit.MINUTES);
+        return maxCursor;
+    }
+
+    private Long getMaxCursorWithFilters(Long minPrice, Long maxPrice) {
+        int hashCode = Objects.hash(minPrice, maxPrice);
+        String key = "cursor:filter:" + hashCode;
+        Long maxCursor = redisService.get(key, Long.class);
+        if (maxCursor != null) return maxCursor;
+
+        redisService.save(key,maxCursor,10, TimeUnit.MINUTES);
+        return maxCursor;
+    }
+
 }

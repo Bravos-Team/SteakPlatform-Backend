@@ -18,7 +18,7 @@ public class LibraryInfo {
 
    Long gameId;
 
-   Long ownedAt;
+   Long ownedDate;
 
    Long lastPlayedAt;
 
