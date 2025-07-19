@@ -22,4 +22,8 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
     @Query("SELECT new com.bravos.steak.store.repo.injection.GamePrice(c.game.id, c.game.price) " +
            "FROM CartItem c WHERE c.cart.id = :cartId AND c.game.status = :status")
     List<GamePrice> findGamePricesInCartByCartId(Long cartId, GameStatus status);
+
+    boolean existsByGameId(Long gameId);
+
+    boolean existsByCartIdAndGameId(Long cartId, Long gameId);
 }
