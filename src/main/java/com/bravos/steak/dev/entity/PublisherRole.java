@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -40,6 +41,14 @@ public class PublisherRole {
             inverseJoinColumns = @JoinColumn(name = "publisher_permission_id")
     )
     Set<PublisherPermission> publisherPermissions;
+
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "publisher_account_role",
+            joinColumns = @JoinColumn(name = "publisher_role_id"),
+            inverseJoinColumns = @JoinColumn(name = "publisher_account_id")
+    )
+    List<PublisherAccount> assignedAccounts;
 
     public PublisherRole(Long id) {
         this.id = id;
