@@ -202,6 +202,7 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    @Transactional
     public void clearCart() {
         Long userId = getUserId();
         if (userId == null) {

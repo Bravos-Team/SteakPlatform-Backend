@@ -24,6 +24,7 @@ import com.bravos.steak.exceptions.ConflictDataException;
 import com.bravos.steak.exceptions.ForbiddenException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -334,6 +335,7 @@ public class GameSubmissionServiceImpl implements GameSubmissionService {
     }
 
     @Override
+    @Transactional
     public void reSubmitGameSubmission(PublisherReviewReplyRequest publisherReviewReplyRequest) {
         JwtTokenClaims tokenClaims = (JwtTokenClaims) sessionService.getAuthentication().getDetails();
         var publisherIdAndStatus = checkProjectOwnership(publisherReviewReplyRequest.getSubmissionId());
