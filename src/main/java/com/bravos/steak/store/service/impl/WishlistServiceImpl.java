@@ -1,4 +1,4 @@
-package com.bravos.steak.store.service;
+package com.bravos.steak.store.service.impl;
 
 import com.bravos.steak.common.security.JwtAuthentication;
 import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
@@ -13,7 +13,9 @@ import com.bravos.steak.store.repo.GameDetailsRepository;
 import com.bravos.steak.store.repo.WishlistRepository;
 import com.bravos.steak.store.repo.injection.CartGameInfo;
 import com.bravos.steak.store.repo.injection.GamePrice;
+import com.bravos.steak.store.service.WishlistService;
 import com.bravos.steak.useraccount.entity.UserAccount;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
@@ -66,6 +68,7 @@ public class WishlistServiceImpl implements WishlistService {
     }
 
     @Override
+    @Transactional
     public void removeFromWishlist(Long gameId) {
         Long userId = getUserId();
         try {
@@ -77,6 +80,7 @@ public class WishlistServiceImpl implements WishlistService {
     }
 
     @Override
+    @Transactional
     public void clearWishlist() {
         Long userId = getUserId();
         try {
@@ -104,6 +108,7 @@ public class WishlistServiceImpl implements WishlistService {
     }
 
     @Override
+    @Transactional
     public void moveToCart(Long gameId) {
         removeFromWishlist(gameId);
         applicationEventPublisher.publishEvent(new MoveToCartEvent(this, gameId));

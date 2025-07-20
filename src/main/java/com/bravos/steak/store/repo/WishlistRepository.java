@@ -4,6 +4,7 @@ import com.bravos.steak.store.entity.Wishlist;
 import com.bravos.steak.store.model.enums.GameStatus;
 import com.bravos.steak.store.repo.injection.GamePrice;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -12,8 +13,6 @@ import java.util.List;
 
 @Repository
 public interface WishlistRepository extends JpaRepository<Wishlist, Long> {
-
-    void deleteByGameIdAndUserAccountId(Long gameId, Long userAccountId);
 
     void deleteAllByUserAccountId(Long userAccountId);
 
@@ -26,4 +25,5 @@ public interface WishlistRepository extends JpaRepository<Wishlist, Long> {
 
     boolean existsByGameIdAndUserAccountId(Long gameId, Long userAccountId);
 
+    void deleteByGameIdAndUserAccountId(Long gameId, Long userAccountId);
 }
