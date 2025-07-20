@@ -19,6 +19,7 @@ public final class PublisherAuthority {
     public static final String READ_MY_LOGS = "PUBLISHER_READ_MY_LOGS";
     public static final String READ_ALL_LOGS = "PUBLISHER_READ_ALL_LOGS";
 
+    public static final String READ_INFO = "PUBLISHER_READ_INFO";
     public static final String WRITE_INFO = "PUBLISHER_WRITE_INFO";
     public static final String READ_SENSITIVE_INFO = "PUBLISHER_READ_SENSITIVE_INFO";
     public static final String WRITE_SENSITIVE_INFO = "PUBLISHER_WRITE_SENSITIVE_INFO";
@@ -27,7 +28,7 @@ public final class PublisherAuthority {
         return switch (value) {
             case MASTER, READ_REVENUE_STATISTIC, READ_MEMBERS, WRITE_MEMBERS, DELETE_MEMBERS, READ_GAMES,
                  READ_GAME_STATISTIC, WRITE_GAME_INFO, WRITE_GAME_PRICE, CREATE_GAME, MANAGE_GAMES, READ_HUB, WRITE_HUB,
-                 DELETE_HUB, READ_MY_LOGS, READ_ALL_LOGS, WRITE_INFO, WRITE_SENSITIVE_INFO, READ_SENSITIVE_INFO -> true;
+                 DELETE_HUB, READ_MY_LOGS, READ_ALL_LOGS, READ_INFO, WRITE_INFO, WRITE_SENSITIVE_INFO, READ_SENSITIVE_INFO -> true;
             default -> false;
         };
     }

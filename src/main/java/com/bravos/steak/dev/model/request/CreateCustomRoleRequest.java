@@ -7,8 +7,6 @@ import static lombok.AccessLevel.PRIVATE;
 
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
 @Builder
 @FieldDefaults(level = PRIVATE)
 public class CreateCustomRoleRequest {

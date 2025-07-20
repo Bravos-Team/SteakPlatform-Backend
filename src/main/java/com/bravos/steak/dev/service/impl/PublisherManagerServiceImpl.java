@@ -2,6 +2,8 @@ package com.bravos.steak.dev.service.impl;
 
 import com.bravos.steak.common.security.JwtTokenClaims;
 import com.bravos.steak.common.service.auth.SessionService;
+import com.bravos.steak.common.service.helper.DateTimeHelper;
+import com.bravos.steak.common.service.redis.RedisService;
 import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
 import com.bravos.steak.dev.entity.Publisher;
 import com.bravos.steak.dev.entity.PublisherAccount;
@@ -26,6 +28,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -36,16 +41,22 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
     private final SnowflakeGenerator snowflakeGenerator;
     private final PasswordEncoder passwordEncoder;
     private final PublisherRoleRepository publisherRoleRepository;
+    private final RedisService redisService;
+    private final PublisherRole masterRole;
 
     public PublisherManagerServiceImpl(PublisherAccountRepository publisherAccountRepository,
                                        SessionService sessionService, SnowflakeGenerator snowflakeGenerator,
                                        PasswordEncoder passwordEncoder,
-                                       PublisherRoleRepository publisherRoleRepository) {
+                                       PublisherRoleRepository publisherRoleRepository,
+                                       RedisService redisService) {
         this.publisherAccountRepository = publisherAccountRepository;
         this.sessionService = sessionService;
         this.snowflakeGenerator = snowflakeGenerator;
         this.passwordEncoder = passwordEncoder;
         this.publisherRoleRepository = publisherRoleRepository;
+        this.redisService = redisService;
+        this.masterRole = publisherRoleRepository.getMasterRole().orElseThrow(() ->
+                new RuntimeException("Master role not found. Please create a master role first."));
     }
 
     @Override
@@ -191,18 +202,112 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
     }
 
     @Override
+    @Transactional
     public void changeRoleStatus(Long roleId, Boolean isActive) {
-
+        PublisherRole role = publisherRoleRepository.findById(roleId)
+                .orElseThrow(() -> new BadRequestException("Role not found for ID: " + roleId));
+        JwtTokenClaims claims = (JwtTokenClaims) sessionService.getAuthentication().getDetails();
+        long publisherId = (long) claims.getOtherClaims().get("publisherId");
+        if(role.getPublisher().getId() == null) {
+            throw new BadRequestException("You cannot change status default roles.");
+        }
+        if(!role.getPublisher().getId().equals(publisherId)) {
+            throw new BadRequestException("You cannot change status of roles that are not created by you.");
+        }
+        if (isActive == null || isActive.equals(role.getActive())) {
+            try {
+                invalidatePublisherAccountToken(role.getAssignedAccounts().stream()
+                        .map(PublisherAccount::getId)
+                        .collect(Collectors.toList()));
+            } catch (Exception e) {
+                log.error("Failed to invalidate account tokens: {}", e.getMessage(), e);
+                throw new RuntimeException("Failed to invalidate account tokens: " + e.getMessage(), e);
+            }
+            role.setActive(isActive);
+            try {
+                publisherRoleRepository.saveAndFlush(role);
+            } catch (Exception e) {
+                log.error("Failed to change role status: {}", e.getMessage(), e);
+                throw new RuntimeException("Failed to change role status: " + e.getMessage(), e);
+            }
+        }
     }
 
     @Override
     public void removeAccountFromRole(Long roleId, Long accountId) {
+        PublisherAccount account = publisherAccountRepository.findById(accountId)
+                .orElseThrow(() -> new BadRequestException("Publisher account not found for ID: " + accountId));
+        PublisherRole removeRole = account.getRoles().stream()
+                .filter(role -> role.getId().equals(roleId))
+                .findFirst()
+                .orElseThrow(() -> new BadRequestException("Role not found for ID: " + roleId));
+        if(removeRole.getId().equals(masterRole.getId())) {
+            throw new BadRequestException("You cannot remove account from master role.");
+        }
 
+        account.getRoles().remove(removeRole);
+
+        try {
+            invalidatePublisherAccountToken(accountId);
+        } catch (Exception e) {
+            log.error("Failed to invalidate account token: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to invalidate account token: " + e.getMessage(), e);
+        }
+        try {
+            publisherAccountRepository.saveAndFlush(account);
+        } catch (Exception e) {
+            log.error("Failed to remove account from role: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to remove account from role: " + e.getMessage(), e);
+        }
     }
 
     @Override
     public void assignAccountToRole(Long roleId, Long accountId) {
+        if(roleId.equals(masterRole.getId())) {
+            JwtTokenClaims claims = (JwtTokenClaims) sessionService.getAuthentication().getDetails();
+            if(!claims.getAuthorities().contains("PUBLISHER_MASTER")) {
+                throw new BadRequestException("You do not have permission to assign accounts to the master role.");
+            }
+        }
 
+        PublisherAccount account = publisherAccountRepository.findById(accountId)
+                .orElseThrow(() -> new BadRequestException("Publisher account not found for ID: " + accountId));
+        PublisherRole role = publisherRoleRepository
+                .findAvailableRoleByIdAndPublisherId(roleId, account.getPublisher().getId());
+        if (role == null) {
+            throw new BadRequestException("Role not found or not available for this publisher.");
+        }
+
+        account.getRoles().add(role);
+
+        try {
+            invalidatePublisherAccountToken(accountId);
+        } catch (Exception e) {
+            log.error("Failed to invalidate account token: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to invalidate account token: " + e.getMessage(), e);
+        }
+        try {
+            publisherAccountRepository.saveAndFlush(account);
+        } catch (Exception e) {
+            log.error("Failed to assign account to role: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to assign account to role: " + e.getMessage(), e);
+        }
+    }
+
+    private void invalidatePublisherAccountToken(List<Long> accountIds) {
+        Map<String,Long> invalidatedKeys = accountIds.stream()
+                .collect(Collectors.toMap(
+                        id -> "lock_by_change_role:" + id,
+                        id -> DateTimeHelper.currentTimeMillis()
+                ));
+        invalidatedKeys.forEach((key, value) ->
+                redisService.save(key, value, 30, TimeUnit.MINUTES));
+    }
+
+    private void invalidatePublisherAccountToken(Long accountId) {
+        String key = "lock_by_change_role:" + accountId;
+        Long lockTime = DateTimeHelper.currentTimeMillis();
+        redisService.save(key, lockTime, 30, TimeUnit.MINUTES);
     }
 
 }

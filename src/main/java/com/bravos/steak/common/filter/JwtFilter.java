@@ -4,6 +4,8 @@ import com.bravos.steak.common.security.JwtAuthentication;
 import com.bravos.steak.common.security.JwtTokenClaims;
 import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.common.service.encryption.JwtService;
+import com.bravos.steak.common.service.helper.DateTimeHelper;
+import com.bravos.steak.common.service.redis.RedisService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -33,6 +35,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
     private final SessionService sessionService;
     private final JwtService jwtService;
+    private final RedisService redisService;
 
     @Override
     protected void doFilterInternal(
@@ -61,7 +64,9 @@ public class JwtFilter extends OncePerRequestFilter {
             logger.warn(e.getMessage());
         }
 
-        if(tokenClaims == null || sessionService.isTokenBlacklisted(tokenClaims.getJti())) {
+        if(tokenClaims == null ||
+                sessionService.isTokenBlacklisted(tokenClaims.getJti()) ||
+                isLockByChangeRole(tokenClaims)) {
             filterChain.doFilter(request,response);
             return;
         }
@@ -83,5 +88,12 @@ public class JwtFilter extends OncePerRequestFilter {
         }
         return null;
     }
+
+    private boolean isLockByChangeRole(JwtTokenClaims claims) {
+        String key = "lock_by_change_role:" + claims.getId();
+        Long lockTime = redisService.get(key, Long.class);
+        return lockTime != null && claims.getIat() <= lockTime;
+    }
+
 
 }
