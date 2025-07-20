@@ -32,4 +32,6 @@ public interface PublisherManagerService {
 
     void assignAccountToRole(Long roleId, Long accountId);
 
+    void deleteAccount(Long accountId);
+
 }

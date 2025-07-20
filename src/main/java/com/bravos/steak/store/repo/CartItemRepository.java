@@ -9,9 +9,10 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.List;
 
 public interface CartItemRepository extends JpaRepository<CartItem, Long> {
-    void removeCartItemByGameIdAndCartId(Long gameId, Long cartId);
 
-    void removeCartItemByCartIdAndGameIdIn(Long cartId, List<Long> gameIds);
+    void deleteCartItemByGameIdAndCartId(Long gameId, Long cartId);
+
+    void deleteCartItemByCartIdAndGameIdIn(Long cartId, List<Long> gameIds);
 
     List<CartItem> findAllByCartId(Long cartId);
 
@@ -26,4 +27,5 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
     boolean existsByGameId(Long gameId);
 
     boolean existsByCartIdAndGameId(Long cartId, Long gameId);
+
 }

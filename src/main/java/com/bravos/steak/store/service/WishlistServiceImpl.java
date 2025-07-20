@@ -35,7 +35,8 @@ public class WishlistServiceImpl implements WishlistService {
     private final GameDetailsRepository gameDetailsRepository;
 
     public WishlistServiceImpl(WishlistRepository wishlistRepository, SnowflakeGenerator snowflakeGenerator,
-                               ApplicationEventPublisher applicationEventPublisher, GameDetailsRepository gameDetailsRepository) {
+                               ApplicationEventPublisher applicationEventPublisher,
+                               GameDetailsRepository gameDetailsRepository) {
         this.wishlistRepository = wishlistRepository;
         this.snowflakeGenerator = snowflakeGenerator;
         this.applicationEventPublisher = applicationEventPublisher;
@@ -46,6 +47,10 @@ public class WishlistServiceImpl implements WishlistService {
     public void addToWishlist(Long gameId) {
         Long userId = getUserId();
 
+        if(wishlistRepository.existsByGameIdAndUserAccountId(gameId,userId)) {
+            throw new BadRequestException("Game with ID " + gameId + " is already in the wishlist for user ID " + userId);
+        }
+
         Wishlist wishlist = Wishlist.builder()
                 .id(snowflakeGenerator.generateId())
                 .userAccount(UserAccount.builder().id(userId).build())
@@ -55,9 +60,6 @@ public class WishlistServiceImpl implements WishlistService {
         try {
             wishlistRepository.save(wishlist);
         } catch (Exception e) {
-            if(e.getMessage().contains("duplicate")) {
-                throw new BadRequestException("Game with ID " + gameId + " is already in the wishlist for user ID " + userId);
-            }
             log.error("Failed to add game with ID {} to wishlist for user ID {}: {}", gameId, userId, e.getMessage());
             throw new RuntimeException("Failed to add game to wishlist: " + e.getMessage(), e);
         }
@@ -67,7 +69,7 @@ public class WishlistServiceImpl implements WishlistService {
     public void removeFromWishlist(Long gameId) {
         Long userId = getUserId();
         try {
-            wishlistRepository.removeByGameIdAndUserAccountId(gameId, userId);
+            wishlistRepository.deleteByGameIdAndUserAccountId(gameId, userId);
         } catch (Exception e) {
             log.error("Failed to remove game with ID {} from wishlist for user ID {}: {}", gameId, userId, e.getMessage());
             throw new RuntimeException("Failed to remove game from wishlist: " + e.getMessage(), e);
@@ -78,7 +80,7 @@ public class WishlistServiceImpl implements WishlistService {
     public void clearWishlist() {
         Long userId = getUserId();
         try {
-            wishlistRepository.removeAllByUserAccountId(userId);
+            wishlistRepository.deleteAllByUserAccountId(userId);
         } catch (Exception e) {
             log.error("Failed to clear wishlist for user ID {}: {}", userId, e.getMessage());
             throw new RuntimeException("Failed to clear wishlist: " + e.getMessage(), e);

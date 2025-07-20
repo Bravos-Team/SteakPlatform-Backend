@@ -235,15 +235,27 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
 
     @Override
     public void removeAccountFromRole(Long roleId, Long accountId) {
+        if(roleId.equals(masterRole.getId())) {
+            throw new BadRequestException("You cannot remove account from master role.");
+        }
+        JwtTokenClaims claims = (JwtTokenClaims) sessionService.getAuthentication().getDetails();
+        long publisherId = (long) claims.getOtherClaims().get("publisherId");
+        long userId = claims.getId();
         PublisherAccount account = publisherAccountRepository.findById(accountId)
                 .orElseThrow(() -> new BadRequestException("Publisher account not found for ID: " + accountId));
+
+        if (!account.getPublisher().getId().equals(publisherId)) {
+            throw new BadRequestException("You cannot remove roles from accounts that are not created by you.");
+        }
+        if (account.getId().equals(userId)) {
+            throw new BadRequestException("You cannot remove roles from your own account. " +
+                    "Please contact support for assistance.");
+        }
+
         PublisherRole removeRole = account.getRoles().stream()
                 .filter(role -> role.getId().equals(roleId))
                 .findFirst()
                 .orElseThrow(() -> new BadRequestException("Role not found for ID: " + roleId));
-        if(removeRole.getId().equals(masterRole.getId())) {
-            throw new BadRequestException("You cannot remove account from master role.");
-        }
 
         account.getRoles().remove(removeRole);
 
@@ -269,9 +281,13 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
                 throw new BadRequestException("You do not have permission to assign accounts to the master role.");
             }
         }
-
+        JwtTokenClaims claims = (JwtTokenClaims) sessionService.getAuthentication().getDetails();
+        long publisherId = (long) claims.getOtherClaims().get("publisherId");
         PublisherAccount account = publisherAccountRepository.findById(accountId)
                 .orElseThrow(() -> new BadRequestException("Publisher account not found for ID: " + accountId));
+        if (!account.getPublisher().getId().equals(publisherId)) {
+            throw new BadRequestException("You cannot assign roles to accounts that are not created by you.");
+        }
         PublisherRole role = publisherRoleRepository
                 .findAvailableRoleByIdAndPublisherId(roleId, account.getPublisher().getId());
         if (role == null) {
@@ -291,6 +307,46 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
         } catch (Exception e) {
             log.error("Failed to assign account to role: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to assign account to role: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void deleteAccount(Long accountId) {
+        PublisherAccount account = publisherAccountRepository.findById(accountId)
+                .orElseThrow(() -> new BadRequestException("Publisher account not found for ID: " + accountId));
+        if (account.getRoles().stream().anyMatch(role -> role.getId().equals(masterRole.getId()))) {
+            throw new BadRequestException("You cannot delete an account that has the master role assigned.");
+        }
+
+        JwtTokenClaims claims = (JwtTokenClaims) sessionService.getAuthentication().getDetails();
+        long publisherId = (long) claims.getOtherClaims().get("publisherId");
+        long userId = claims.getId();
+        if (!account.getPublisher().getId().equals(publisherId)) {
+            throw new BadRequestException("You cannot delete an account that is not created by you.");
+        }
+        if (account.getStatus() == AccountStatus.DELETED) {
+            throw new BadRequestException("Account is already deleted.");
+        }
+        if (account.getId().equals(userId)) {
+            throw new BadRequestException("You cannot delete your own account. Please contact support for assistance.");
+        }
+
+        try {
+            invalidatePublisherAccountToken(accountId);
+        } catch (Exception e) {
+            log.error("Failed to invalidate account token: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to invalidate account token: " + e.getMessage(), e);
+        }
+
+        account.setStatus(AccountStatus.DELETED);
+        account.getRoles().clear();
+
+        try {
+            publisherAccountRepository.saveAndFlush(account);
+        } catch (Exception e) {
+            log.error("Failed to delete account: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to delete account: " + e.getMessage(), e);
         }
     }
 

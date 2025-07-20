@@ -3,12 +3,12 @@ package com.bravos.steak.dev.controller;
 import com.bravos.steak.common.annotation.HasAuthority;
 import com.bravos.steak.common.annotation.PublisherController;
 import com.bravos.steak.dev.model.PublisherAuthority;
+import com.bravos.steak.dev.model.request.CreateCustomRoleRequest;
+import com.bravos.steak.dev.model.request.CreatePublisherAccountRequest;
 import com.bravos.steak.dev.service.PublisherManagerService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/dev/manager")
@@ -34,6 +34,64 @@ public class PublisherManagerController {
     @HasAuthority({PublisherAuthority.WRITE_MEMBERS})
     public ResponseEntity<?> getCustomRoleList() {
         return ResponseEntity.ok(publisherManagerService.getCustomRoleList());
+    }
+
+    @GetMapping("/me")
+    @HasAuthority({PublisherAuthority.READ_MEMBERS})
+    public ResponseEntity<?> myAccountDetail() {
+        return ResponseEntity.ok(publisherManagerService.myAccountDetail());
+    }
+
+    @GetMapping("/account")
+    @HasAuthority({PublisherAuthority.READ_MEMBERS})
+    public ResponseEntity<?> getAccountDetail(@RequestParam Long accountId) {
+        return ResponseEntity.ok(publisherManagerService.getAccountDetail(accountId));
+    }
+
+    @GetMapping("/role")
+    @HasAuthority({PublisherAuthority.WRITE_MEMBERS})
+    public ResponseEntity<?> getRoleDetail(@RequestParam Long roleId) {
+        return ResponseEntity.ok(publisherManagerService.getRoleDetail(roleId));
+    }
+
+    @GetMapping("/create-account")
+    @HasAuthority({PublisherAuthority.WRITE_MEMBERS})
+    public ResponseEntity<?> createAccount(@RequestBody @Valid CreatePublisherAccountRequest request) {
+        return ResponseEntity.ok(publisherManagerService.createAccount(request));
+    }
+
+    @PostMapping("/delete-account")
+    @HasAuthority({PublisherAuthority.WRITE_MEMBERS})
+    public ResponseEntity<?> deleteAccount(@RequestParam Long accountId) {
+        publisherManagerService.deleteAccount(accountId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/create-role")
+    @HasAuthority({PublisherAuthority.WRITE_MEMBERS})
+    public ResponseEntity<?> createNewCustomRole(@RequestBody @Valid CreateCustomRoleRequest request) {
+        return ResponseEntity.ok(publisherManagerService.createNewCustomRole(request));
+    }
+
+    @PostMapping("/role/change-status")
+    @HasAuthority({PublisherAuthority.WRITE_MEMBERS})
+    public ResponseEntity<?> changeRoleStatus(@RequestParam Long roleId, @RequestParam Boolean isActive) {
+        publisherManagerService.changeRoleStatus(roleId, isActive);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/role/detach-role")
+    @HasAuthority({PublisherAuthority.WRITE_MEMBERS})
+    public ResponseEntity<?> removeAccountFromRole(@RequestParam Long roleId, @RequestParam Long accountId) {
+        publisherManagerService.removeAccountFromRole(roleId, accountId);
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/role/assign-role")
+    @HasAuthority({PublisherAuthority.WRITE_MEMBERS})
+    public ResponseEntity<?> assignAccountToRole(@RequestParam Long roleId, @RequestParam Long accountId) {
+        publisherManagerService.assignAccountToRole(roleId, accountId);
+        return ResponseEntity.ok().build();
     }
 
 }
