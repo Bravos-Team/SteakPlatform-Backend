@@ -43,4 +43,10 @@ public class CartController {
         return ResponseEntity.ok().build();
     }
 
+    @PostMapping("/merge")
+    public ResponseEntity<?> mergeCart() {
+        cartService.mergeCart();
+        return ResponseEntity.ok().build();
+    }
+
 }

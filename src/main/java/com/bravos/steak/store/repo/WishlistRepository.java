@@ -12,9 +12,10 @@ import java.util.List;
 
 @Repository
 public interface WishlistRepository extends JpaRepository<Wishlist, Long> {
-    void removeByGameIdAndUserAccountId(Long gameId, Long userAccountId);
 
-    void removeAllByUserAccountId(Long userAccountId);
+    void deleteByGameIdAndUserAccountId(Long gameId, Long userAccountId);
+
+    void deleteAllByUserAccountId(Long userAccountId);
 
     List<Wishlist> findAllByUserAccountId(Long userAccountId);
 
@@ -22,4 +23,7 @@ public interface WishlistRepository extends JpaRepository<Wishlist, Long> {
             " FROM Wishlist w JOIN w.game g WHERE w.userAccount.id = :userAccountId AND g.status = :status")
     List<GamePrice> findGamePricesInWishlistByUserAccountId(@Param("userAccountId") Long userAccountId,
                                                             @Param("status") GameStatus status);
+
+    boolean existsByGameIdAndUserAccountId(Long gameId, Long userAccountId);
+
 }

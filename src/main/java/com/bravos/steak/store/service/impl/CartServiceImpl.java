@@ -133,7 +133,7 @@ public class CartServiceImpl implements CartService {
             Cart cart = cartRepository.findByUserAccountId(userId).orElse(null);
             if (cart != null) {
                 try {
-                    cartItemRepository.removeCartItemByGameIdAndCartId(gameId, cart.getId());
+                    cartItemRepository.deleteCartItemByGameIdAndCartId(gameId, cart.getId());
                 } catch (Exception e) {
                     log.error("Failed to remove item from cart: {}", e.getMessage(), e);
                     throw new RuntimeException("Failed to remove item from cart");
@@ -156,7 +156,7 @@ public class CartServiceImpl implements CartService {
                     return;
                 }
                 try {
-                    cartItemRepository.removeCartItemByGameIdAndCartId(gameId, cartId);
+                    cartItemRepository.deleteCartItemByGameIdAndCartId(gameId, cartId);
                     cartRepository.updateUpdatedAtById(DateTimeHelper.currentTimeMillis(), cartId);
                 } catch (Exception e) {
                     log.error("Failed to update cart after removing item: {}", e.getMessage(), e);
@@ -174,7 +174,7 @@ public class CartServiceImpl implements CartService {
             Cart cart = cartRepository.findByUserAccountId(userId).orElse(null);
             if (cart != null) {
                 try {
-                    cartItemRepository.removeCartItemByCartIdAndGameIdIn(cart.getId(), gameIds);
+                    cartItemRepository.deleteCartItemByCartIdAndGameIdIn(cart.getId(), gameIds);
                 } catch (Exception e) {
                     log.error("Failed to remove items from cart: {}", e.getMessage(), e);
                     throw new RuntimeException("Failed to remove items from cart");
@@ -191,7 +191,7 @@ public class CartServiceImpl implements CartService {
                     return;
                 }
                 try {
-                    cartItemRepository.removeCartItemByCartIdAndGameIdIn(cartId, gameIds);
+                    cartItemRepository.deleteCartItemByCartIdAndGameIdIn(cartId, gameIds);
                     cartRepository.updateUpdatedAtById(DateTimeHelper.currentTimeMillis(), cartId);
                 } catch (Exception e) {
                     log.error("Failed to remove items from cart: {}", e.getMessage(), e);
@@ -214,7 +214,7 @@ public class CartServiceImpl implements CartService {
                     return;
                 }
                 try {
-                    cartRepository.removeById(cartId);
+                    cartRepository.deleteById(cartId);
                     removeGuestCookie();
                 } catch (Exception e) {
                     log.error("Failed to clear cart for guest user: {}", e.getMessage(), e);
@@ -223,7 +223,7 @@ public class CartServiceImpl implements CartService {
             }
         } else {
             try {
-                cartRepository.removeByUserAccountId(userId);
+                cartRepository.deleteByUserAccountId(userId);
             } catch (Exception e) {
                 log.error("Failed to clear cart for user {}: {}", userId, e.getMessage(), e);
                 throw new RuntimeException("Failed to clear cart for user: " + userId);
@@ -304,7 +304,7 @@ public class CartServiceImpl implements CartService {
                 log.error("Failed to merge cart items: {}", e.getMessage(), e);
                 throw new RuntimeException("Failed to merge cart items: " + e.getMessage(), e);
             }
-            Thread.startVirtualThread(() -> cartRepository.removeById(guestCartId));
+            Thread.startVirtualThread(() -> cartRepository.deleteById(guestCartId));
         }
     }
 

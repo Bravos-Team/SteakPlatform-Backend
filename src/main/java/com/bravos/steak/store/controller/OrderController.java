@@ -2,7 +2,6 @@ package com.bravos.steak.store.controller;
 
 import com.bravos.steak.store.model.request.CreateOrderRequest;
 import com.bravos.steak.store.service.OrderService;
-import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,7 +18,7 @@ public class OrderController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<?> createOrder(@Valid CreateOrderRequest createOrderRequest) {
+    public ResponseEntity<?> createOrder(CreateOrderRequest createOrderRequest) {
         return ResponseEntity.ok(orderService.createOrder(createOrderRequest));
     }
 

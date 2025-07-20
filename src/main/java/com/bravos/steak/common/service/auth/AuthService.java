@@ -87,7 +87,12 @@ public abstract class AuthService {
     }
 
     private void validateAccount(Account accountInfo, String rawPassword, String deviceId) {
-        if(accountInfo == null || !passwordEncoder.matches(rawPassword, accountInfo.getPassword())) {
+        if(accountInfo == null || accountInfo.getStatus() == AccountStatus.DELETED) {
+            this.recordFailedLoginAttempt(deviceId);
+            throw new UnauthorizeException("Username or password is invalid");
+        }
+
+        if(!passwordEncoder.matches(rawPassword, accountInfo.getPassword())) {
             this.recordFailedLoginAttempt(deviceId);
             throw new UnauthorizeException("Username or password is invalid");
         }

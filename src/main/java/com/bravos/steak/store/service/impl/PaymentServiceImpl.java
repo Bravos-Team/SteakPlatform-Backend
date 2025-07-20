@@ -4,6 +4,7 @@ import com.bravos.steak.common.model.PaymentInfo;
 import com.bravos.steak.common.service.encryption.Hmac512Service;
 import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.common.service.redis.RedisService;
+import com.bravos.steak.exceptions.BadRequestException;
 import com.bravos.steak.store.event.PaymentFailureEvent;
 import com.bravos.steak.store.event.PaymentSuccessEvent;
 import com.bravos.steak.store.model.request.CreatePaymentRequest;
@@ -96,9 +97,20 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Override
     public String handleVnpIpn(HttpServletRequest httpServletRequest) {
+        if(httpServletRequest.getParameterMap().isEmpty()) {
+            throw new BadRequestException("IPN request is empty");
+        }
+
         Map<String, String[]> params = new TreeMap<>(httpServletRequest.getParameterMap());
-        String secureHash = params.remove("vnp_SecureHash")[0];
-        String vnpTxnRef = params.get("vnp_TxnRef")[0];
+
+        String secureHash;
+        String vnpTxnRef;
+        try {
+            secureHash = params.remove("vnp_SecureHash")[0];
+            vnpTxnRef = params.get("vnp_TxnRef")[0];
+        } catch (Exception e) {
+            throw new BadRequestException("Invalid IPN request parameters");
+        }
 
         if (secureHash == null || secureHash.isBlank()) {
             return "/payment/error?message=" +
