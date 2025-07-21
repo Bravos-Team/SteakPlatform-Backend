@@ -4,13 +4,14 @@ import com.bravos.steak.store.entity.Game;
 import com.bravos.steak.store.model.enums.GameStatus;
 import com.bravos.steak.store.repo.injection.GameIdStatusPrice;
 import com.bravos.steak.store.repo.injection.GamePrice;
-import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificationExecutor<Game> {
 
@@ -28,5 +29,10 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
 
     @Query("SELECT MAX(g.releaseDate) FROM Game g WHERE g.status = :status")
     Long getMaxCursorByStatus(GameStatus status);
+
+    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH,
+            attributePaths = {"genres", "tags", "publisher"})
+    @Query("SELECT g FROM Game g WHERE g.id = :id AND g.status = 0 AND g.releaseDate <= :currentTime")
+    Optional<Game> findAvailableGameById(@Param("id") Long id, @Param("currentTime") Long currentTime);
 
 }

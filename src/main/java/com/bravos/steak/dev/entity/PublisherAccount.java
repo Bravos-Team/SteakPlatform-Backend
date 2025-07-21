@@ -43,8 +43,10 @@ public class PublisherAccount extends Account {
     public Collection<String> getPermissions() {
         Set<String> permissions = new HashSet<>();
         roles.forEach(role -> {
-            Set<PublisherPermission> publisherPermissions = role.getPublisherPermissions();
-            publisherPermissions.forEach(pr -> permissions.addAll(pr.getAuthorities()));
+            if(Boolean.TRUE.equals(role.getActive())) {
+                Set<PublisherPermission> publisherPermissions = role.getPublisherPermissions();
+                publisherPermissions.forEach(pr -> permissions.addAll(pr.getAuthorities()));
+            }
         });
         return permissions;
     }

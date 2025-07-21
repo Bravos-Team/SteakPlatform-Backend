@@ -1,13 +1,17 @@
 package com.bravos.steak.common.service.redis.impl;
 
+import com.bravos.steak.common.model.RedisCacheEntry;
 import com.bravos.steak.common.service.redis.RedisService;
+import com.bravos.steak.common.service.webhook.DiscordWebhookService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.support.NullValue;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -90,7 +94,8 @@ public class RedisServiceImpl implements RedisService {
         List<Object> values = redisTemplate.opsForValue().multiGet(key);
         if(values == null || values.isEmpty()) return List.of();
         try {
-            return objectMapper.convertValue(values,objectMapper.getTypeFactory().constructCollectionLikeType(List.class,clazz));
+            return objectMapper.convertValue(values,
+                    objectMapper.getTypeFactory().constructCollectionLikeType(List.class,clazz));
         } catch (IllegalArgumentException | ClassCastException e) {
             log.error("Error when converting data: {}", e.getMessage(), e);
             throw new RuntimeException("Error when converting data");
@@ -123,6 +128,41 @@ public class RedisServiceImpl implements RedisService {
         } catch (Exception e) {
             log.error("Error when getting data: {}", e.getMessage(), e);
             throw new RuntimeException("Error when getting data");
+        }
+    }
+
+    @Override
+    public <T> T getWithLock(RedisCacheEntry<T> cacheEntry, Class<T> clazz) {
+        final String key = cacheEntry.getKey();
+        final String lockKey = "get-lock:" + key;
+        T value = this.get(key, clazz);
+        if(value != null) return value;
+
+        boolean isLockAcquired = this.saveIfAbsent(lockKey,1,
+                cacheEntry.getLockTimeout(), cacheEntry.getLockTimeUnit());
+
+        if(!isLockAcquired) {
+            try {
+                for(int i = 0; i < cacheEntry.getRetryTime(); i++) {
+                    Thread.sleep(Duration.ofMillis(cacheEntry.getRetryWait()));
+                    value = this.get(key, clazz);
+                    if(value != null) {
+                        return value;
+                    }
+                }
+            } catch (InterruptedException e) {
+                log.error("Error when waiting get cache");
+            }
+        }
+
+        try {
+            value = cacheEntry.getFallBackFunction().get();
+            this.save(key,value,cacheEntry.getKeyTimeout(),cacheEntry.getKeyTimeUnit());
+            return value;
+        } finally {
+            if (isLockAcquired) {
+                this.delete(lockKey);
+            }
         }
     }
 

@@ -16,7 +16,7 @@ import static lombok.AccessLevel.PRIVATE;
 @Builder
 @FieldDefaults(level = PRIVATE)
 @Entity
-public class Tag {
+public class Genre {
 
     @Id
     Integer id;
@@ -30,8 +30,8 @@ public class Tag {
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
-        Tag tag = (Tag) o;
-        return Objects.equals(id, tag.id);
+        Genre genre = (Genre) o;
+        return Objects.equals(id, genre.id);
     }
 
     @Override

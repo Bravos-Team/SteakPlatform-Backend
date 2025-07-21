@@ -28,4 +28,11 @@ public class GameStoreController {
         return ResponseEntity.ok(gameService.getGameStoreList(cursor.orElse(null),pageSize));
     }
 
+    @GetMapping("/details")
+    public ResponseEntity<?> getGameDetailsStore(
+            @RequestParam Long gameId
+    ) {
+        return ResponseEntity.ok(gameService.getGameStoreDetails(gameId));
+    }
+
 }

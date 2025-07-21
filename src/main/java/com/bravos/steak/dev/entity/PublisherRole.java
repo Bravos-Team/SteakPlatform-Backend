@@ -1,5 +1,6 @@
 package com.bravos.steak.dev.entity;
 
+import com.bravos.steak.common.service.helper.DateTimeHelper;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -32,7 +33,8 @@ public class PublisherRole {
 
     String description;
 
-    Long updatedAt;
+    @Builder.Default
+    Long updatedAt = DateTimeHelper.currentTimeMillis();
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(

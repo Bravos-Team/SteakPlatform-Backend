@@ -1,5 +1,7 @@
 package com.bravos.steak.common.service.redis;
 
+import com.bravos.steak.common.model.RedisCacheEntry;
+
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -23,6 +25,8 @@ public interface RedisService {
     <T> T getAndSet(String key, Object value, Class<T> clazz);
 
     <T> T getAndDelete(String key, Class<T> clazz);
+
+    <T> T getWithLock(RedisCacheEntry<T> cacheEntry, Class<T> clazz);
 
     Long increment(String key, long delta);
 

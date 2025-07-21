@@ -1,12 +1,19 @@
 package com.bravos.steak.store.service.impl;
 
+import com.bravos.steak.common.model.RedisCacheEntry;
+import com.bravos.steak.common.service.auth.SessionService;
+import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.common.service.redis.RedisService;
+import com.bravos.steak.exceptions.ResourceNotFoundException;
 import com.bravos.steak.store.entity.Game;
+import com.bravos.steak.store.entity.details.GameDetails;
 import com.bravos.steak.store.model.enums.GameStatus;
 import com.bravos.steak.store.model.response.CursorResponse;
 import com.bravos.steak.store.model.response.GameListItem;
+import com.bravos.steak.store.model.response.GameStoreDetail;
 import com.bravos.steak.store.repo.GameDetailsRepository;
 import com.bravos.steak.store.repo.GameRepository;
+import com.bravos.steak.store.repo.UserGameRepository;
 import com.bravos.steak.store.repo.injection.CartGameInfo;
 import com.bravos.steak.store.service.GameService;
 import com.bravos.steak.store.specifications.GameSpecification;
@@ -28,6 +35,8 @@ public class GameServiceImpl implements GameService {
     GameRepository gameRepository;
     private final GameDetailsRepository gameDetailsRepository;
     private final RedisService redisService;
+    private final UserGameRepository userGameRepository;
+    private final SessionService sessionService;
 
     @Override
     public CursorResponse<GameListItem> getGameStoreList(Long cursor, int pageSize) {
@@ -80,6 +89,56 @@ public class GameServiceImpl implements GameService {
         long maxCursor = gameRepository.getMaxCursorByStatus(GameStatus.OPENING);
 
         return null;
+    }
+
+    @Override
+    public GameStoreDetail getGameStoreDetails(Long gameId) {
+        String key = "game:store:detail:" + gameId;
+        GameStoreDetail cachedDetail = redisService.get(key, GameStoreDetail.class);
+        if(cachedDetail != null) {
+            return getGameStoreDetailWithOwnedStatus(gameId, cachedDetail);
+        }
+        RedisCacheEntry<GameStoreDetail> cacheEntry = RedisCacheEntry.<GameStoreDetail>builder()
+                .key(key)
+                .fallBackFunction(() -> getGameStoreDetailFromDb(gameId))
+                .keyTimeout(10)
+                .keyTimeUnit(TimeUnit.MINUTES)
+                .lockTimeout(100)
+                .lockTimeUnit(TimeUnit.MILLISECONDS)
+                .retryTime(3)
+                .build();
+        GameStoreDetail gameStoreDetail = redisService.getWithLock(cacheEntry, GameStoreDetail.class);
+        return getGameStoreDetailWithOwnedStatus(gameId, gameStoreDetail);
+    }
+
+    private GameStoreDetail getGameStoreDetailWithOwnedStatus(Long gameId, GameStoreDetail cachedDetail) {
+        if(cachedDetail.getDetails() == null) {
+            throw new ResourceNotFoundException("Game not found or not available");
+        }
+        Long userId = sessionService.getCurrentUserId();
+        boolean isGameOwned = userId != null && userGameRepository.existsByGameIdAndUserId(gameId, userId);
+        cachedDetail.setIsOwned(isGameOwned);
+        return cachedDetail;
+    }
+
+    private GameStoreDetail getGameStoreDetailFromDb(Long gameId) {
+        Game game = gameRepository.findAvailableGameById(gameId,
+                DateTimeHelper.currentTimeMillis()).orElse(null);
+
+        if(game == null) {
+            return GameStoreDetail.builder().build();
+        }
+
+        GameDetails gameDetails = gameDetailsRepository.findById(gameId)
+                .orElseThrow(() -> new ResourceNotFoundException("Game details not found"));
+
+        return GameStoreDetail.builder()
+                .details(gameDetails)
+                .price(game.getPrice().doubleValue())
+                .publisherName(game.getPublisher().getName())
+                .tags(game.getTags().stream().toList())
+                .genres(game.getGenres().stream().toList())
+                .build();
     }
 
     private Long getMaxCursorWithoutFilters() {

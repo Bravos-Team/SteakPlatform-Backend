@@ -10,6 +10,8 @@ public interface SessionService {
 
     JwtAuthentication getAuthentication();
 
+    Long getCurrentUserId();
+
     void killRefreshToken(long jti, String role);
 
     void addBlacklistJti(long jti, long expireTime, TimeUnit timeUnit);

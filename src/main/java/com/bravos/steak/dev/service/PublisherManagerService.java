@@ -26,6 +26,8 @@ public interface PublisherManagerService {
 
     RoleDetail createNewCustomRole(CreateCustomRoleRequest request);
 
+    RoleDetail updateRole(Long roleId, CreateCustomRoleRequest request);
+
     void changeRoleStatus(Long roleId, Boolean isActive);
 
     void removeAccountFromRole(Long roleId, Long accountId);
@@ -33,5 +35,4 @@ public interface PublisherManagerService {
     void assignAccountToRole(Long roleId, Long accountId);
 
     void deleteAccount(Long accountId);
-
 }
