@@ -4,6 +4,7 @@ import com.bravos.steak.store.model.request.CreateOrderRequest;
 import com.bravos.steak.store.service.OrderService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -18,7 +19,7 @@ public class OrderController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<?> createOrder(CreateOrderRequest createOrderRequest) {
+    public ResponseEntity<?> createOrder(@RequestBody CreateOrderRequest createOrderRequest) {
         return ResponseEntity.ok(orderService.createOrder(createOrderRequest));
     }
 
