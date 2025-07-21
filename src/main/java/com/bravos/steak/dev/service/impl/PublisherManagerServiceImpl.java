@@ -7,6 +7,7 @@ import com.bravos.steak.common.service.redis.RedisService;
 import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
 import com.bravos.steak.dev.entity.Publisher;
 import com.bravos.steak.dev.entity.PublisherAccount;
+import com.bravos.steak.dev.entity.PublisherPermission;
 import com.bravos.steak.dev.entity.PublisherRole;
 import com.bravos.steak.dev.model.request.CreateCustomRoleRequest;
 import com.bravos.steak.dev.model.request.CreatePublisherAccountRequest;
@@ -15,6 +16,7 @@ import com.bravos.steak.dev.model.response.PublisherAccountListItem;
 import com.bravos.steak.dev.model.response.RoleDetail;
 import com.bravos.steak.dev.model.response.RoleListItem;
 import com.bravos.steak.dev.repo.PublisherAccountRepository;
+import com.bravos.steak.dev.repo.PublisherPermissionRepository;
 import com.bravos.steak.dev.repo.PublisherRoleRepository;
 import com.bravos.steak.dev.service.PublisherManagerService;
 import com.bravos.steak.exceptions.BadRequestException;
@@ -29,6 +31,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -43,12 +46,15 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
     private final PublisherRoleRepository publisherRoleRepository;
     private final RedisService redisService;
     private final PublisherRole masterRole;
+    private final PublisherPermissionRepository publisherPermissionRepository;
+    private final PublisherPermission masterPermission;
 
     public PublisherManagerServiceImpl(PublisherAccountRepository publisherAccountRepository,
                                        SessionService sessionService, SnowflakeGenerator snowflakeGenerator,
                                        PasswordEncoder passwordEncoder,
                                        PublisherRoleRepository publisherRoleRepository,
-                                       RedisService redisService) {
+                                       RedisService redisService,
+                                       PublisherPermissionRepository publisherPermissionRepository) {
         this.publisherAccountRepository = publisherAccountRepository;
         this.sessionService = sessionService;
         this.snowflakeGenerator = snowflakeGenerator;
@@ -57,6 +63,9 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
         this.redisService = redisService;
         this.masterRole = publisherRoleRepository.getMasterRole().orElseThrow(() ->
                 new RuntimeException("Master role not found. Please create a master role first."));
+        this.publisherPermissionRepository = publisherPermissionRepository;
+        this.masterPermission = publisherPermissionRepository.findByName("Master").orElseThrow(() ->
+                new RuntimeException("Master permission not found. Please create a master permission first."));
     }
 
     @Override
@@ -197,8 +206,124 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
     }
 
     @Override
+    @Transactional
     public RoleDetail createNewCustomRole(CreateCustomRoleRequest request) {
-        return null;
+        Long[] permissionIds = request.getPermissionIds();
+        if (permissionIds == null || permissionIds.length == 0) {
+            throw new BadRequestException("At least one permission must be selected for the role.");
+        }
+        Set<PublisherPermission> permissions = publisherPermissionRepository.findAllByIdIn(List.of(permissionIds));
+        if(permissions.contains(masterPermission)) {
+            throw new BadRequestException("You cannot assign master permission to a custom role.");
+        }
+        if(permissions.size() != permissionIds.length) {
+            throw new BadRequestException("Some permissions are not valid or do not exist.");
+        }
+        Set<Long> duplicateGroupCheck = new HashSet<>();
+        permissions.forEach(permission -> {
+            if (!duplicateGroupCheck.add(permission.getPermissionGroup().getId())) {
+                throw new BadRequestException("Cannot assign multiple permissions from the same group to a role.");
+            }
+        });
+        duplicateGroupCheck.clear();
+        JwtTokenClaims claims = (JwtTokenClaims) sessionService.getAuthentication().getDetails();
+        long publisherId = (long) claims.getOtherClaims().get("publisherId");
+
+        if(publisherRoleRepository.existsByNameAndPublisherId(request.getName(), publisherId)){
+            throw new BadRequestException("Role with this name already exists.");
+        }
+
+        PublisherRole newRole = PublisherRole.builder()
+                .id(snowflakeGenerator.generateId())
+                .name(request.getName())
+                .description(request.getDescription())
+                .active(true)
+                .publisher(Publisher.builder().id(publisherId).build())
+                .publisherPermissions(permissions)
+                .build();
+
+        try {
+            newRole = publisherRoleRepository.save(newRole);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create new custom role: " + e.getMessage(), e);
+        }
+
+        return RoleDetail.builder()
+                .id(newRole.getId())
+                .name(newRole.getName())
+                .description(newRole.getDescription())
+                .isActive(newRole.getActive())
+                .assignedAccounts(List.of())
+                .build();
+    }
+
+    @Override
+    @Transactional
+    public RoleDetail updateRole(Long roleId, CreateCustomRoleRequest request) {
+        JwtTokenClaims claims = (JwtTokenClaims) sessionService.getAuthentication().getDetails();
+        long publisherId = (long) claims.getOtherClaims().get("publisherId");
+        PublisherRole role = publisherRoleRepository.findByIdAndPublisherId(roleId, publisherId);
+        if (role == null) {
+            throw new BadRequestException("Role not found or not available for this publisher.");
+        }
+        if(role.getId().equals(masterRole.getId())) {
+            throw new BadRequestException("You cannot update master role.");
+        }
+        if (publisherRoleRepository.existsByNameAndPublisherId(request.getName(), publisherId)) {
+            throw new BadRequestException("Role with this name already exists.");
+        }
+        Set<PublisherPermission> permissions = publisherPermissionRepository.findAllByIdIn(
+                List.of(request.getPermissionIds()));
+        if(permissions.contains(masterPermission)) {
+            throw new BadRequestException("You cannot assign master permission to a custom role.");
+        }
+        if(permissions.size() != request.getPermissionIds().length) {
+            throw new BadRequestException("Some permissions are not valid or do not exist.");
+        }
+
+        Set<Long> duplicateGroupCheck = new HashSet<>();
+        permissions.forEach(permission -> {
+            if (!duplicateGroupCheck.add(permission.getPermissionGroup().getId())) {
+                throw new BadRequestException("Cannot assign multiple permissions from the same group to a role.");
+            }
+        });
+
+        duplicateGroupCheck.clear();
+
+        if(!role.getAssignedAccounts().isEmpty()) {
+            List<Long> assignedAccountIds = role.getAssignedAccounts().stream()
+                    .map(PublisherAccount::getId)
+                    .collect(Collectors.toList());
+            try {
+                invalidatePublisherAccountToken(assignedAccountIds);
+            } catch (Exception e) {
+                log.error("Failed to invalidate account tokens: {}", e.getMessage(), e);
+                throw new RuntimeException("Failed to invalidate account tokens: " + e.getMessage(), e);
+            }
+        }
+
+        role.setName(request.getName());
+        role.setDescription(request.getDescription());
+        role.setPublisherPermissions(permissions);
+
+        try {
+            role = publisherRoleRepository.saveAndFlush(role);
+        } catch (Exception e) {
+            log.error("Failed to update role: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to update role: " + e.getMessage(), e);
+        }
+
+        return RoleDetail.builder()
+                .id(role.getId())
+                .name(role.getName())
+                .description(role.getDescription())
+                .isActive(role.getActive())
+                .assignedAccounts(role.getAssignedAccounts().stream()
+                        .map(account ->
+                                new PublisherAccountListItem(account.getId(),
+                                        account.getUsername(), account.getEmail()))
+                        .toList())
+                .build();
     }
 
     @Override
@@ -234,6 +359,7 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
     }
 
     @Override
+    @Transactional
     public void removeAccountFromRole(Long roleId, Long accountId) {
         if(roleId.equals(masterRole.getId())) {
             throw new BadRequestException("You cannot remove account from master role.");
@@ -274,6 +400,7 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
     }
 
     @Override
+    @Transactional
     public void assignAccountToRole(Long roleId, Long accountId) {
         if(roleId.equals(masterRole.getId())) {
             JwtTokenClaims claims = (JwtTokenClaims) sessionService.getAuthentication().getDetails();
@@ -329,7 +456,8 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
             throw new BadRequestException("Account is already deleted.");
         }
         if (account.getId().equals(userId)) {
-            throw new BadRequestException("You cannot delete your own account. Please contact support for assistance.");
+            throw new BadRequestException("You cannot delete your own account." +
+                    " Please contact support for assistance.");
         }
 
         try {
@@ -361,6 +489,9 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
     }
 
     private void invalidatePublisherAccountToken(Long accountId) {
+        if (accountId == null) {
+            throw new BadRequestException("Account ID cannot be null.");
+        }
         String key = "lock_by_change_role:" + accountId;
         Long lockTime = DateTimeHelper.currentTimeMillis();
         redisService.save(key, lockTime, 30, TimeUnit.MINUTES);

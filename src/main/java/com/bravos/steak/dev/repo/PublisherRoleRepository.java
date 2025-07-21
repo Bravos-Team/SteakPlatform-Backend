@@ -42,4 +42,8 @@ public interface PublisherRoleRepository extends JpaRepository<PublisherRole, Lo
     @Query("SELECT pr FROM PublisherRole pr WHERE pr.name = 'Master' " +
             "AND (pr.publisher.id IS NULL)")
     Optional<PublisherRole> getMasterRole();
+
+    boolean existsByNameAndPublisherId(String name, Long publisherId);
+
+    PublisherRole findByIdAndPublisherId(Long id, Long publisherId);
 }

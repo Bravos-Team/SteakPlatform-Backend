@@ -67,10 +67,17 @@ public class PublisherManagerController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/create-role")
+    @PostMapping("/role/create-role")
     @HasAuthority({PublisherAuthority.WRITE_MEMBERS})
     public ResponseEntity<?> createNewCustomRole(@RequestBody @Valid CreateCustomRoleRequest request) {
         return ResponseEntity.ok(publisherManagerService.createNewCustomRole(request));
+    }
+
+    @PostMapping("/role/update-role/{roleId}")
+    @HasAuthority({PublisherAuthority.WRITE_MEMBERS})
+    public ResponseEntity<?> updateCustomRole(@RequestBody @Valid CreateCustomRoleRequest request,
+                                              @PathVariable Long roleId) {
+        return ResponseEntity.ok(publisherManagerService.updateRole(roleId, request));
     }
 
     @PostMapping("/role/change-status")
