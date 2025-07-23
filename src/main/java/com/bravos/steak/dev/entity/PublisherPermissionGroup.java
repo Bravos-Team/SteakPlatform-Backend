@@ -22,7 +22,7 @@ public class PublisherPermissionGroup {
 
     String description;
 
-    @OneToMany(mappedBy = "permissionGroup", cascade = CascadeType.DETACH, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "permissionGroup", cascade = CascadeType.DETACH, fetch = FetchType.LAZY)
     List<PublisherPermission> publisherPermissionList;
 
 }

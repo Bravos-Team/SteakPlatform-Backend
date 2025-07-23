@@ -5,22 +5,18 @@ import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.common.service.redis.RedisService;
 import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
-import com.bravos.steak.dev.entity.Publisher;
-import com.bravos.steak.dev.entity.PublisherAccount;
-import com.bravos.steak.dev.entity.PublisherPermission;
-import com.bravos.steak.dev.entity.PublisherRole;
+import com.bravos.steak.dev.entity.*;
 import com.bravos.steak.dev.model.request.CreateCustomRoleRequest;
 import com.bravos.steak.dev.model.request.CreatePublisherAccountRequest;
-import com.bravos.steak.dev.model.response.PublisherAccountDetail;
-import com.bravos.steak.dev.model.response.PublisherAccountListItem;
-import com.bravos.steak.dev.model.response.RoleDetail;
-import com.bravos.steak.dev.model.response.RoleListItem;
+import com.bravos.steak.dev.model.response.*;
 import com.bravos.steak.dev.repo.PublisherAccountRepository;
+import com.bravos.steak.dev.repo.PublisherPermissionGroupRepository;
 import com.bravos.steak.dev.repo.PublisherPermissionRepository;
 import com.bravos.steak.dev.repo.PublisherRoleRepository;
 import com.bravos.steak.dev.service.PublisherManagerService;
 import com.bravos.steak.exceptions.BadRequestException;
 import com.bravos.steak.useraccount.model.enums.AccountStatus;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -28,10 +24,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -48,13 +41,17 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
     private final PublisherRole masterRole;
     private final PublisherPermissionRepository publisherPermissionRepository;
     private final PublisherPermission masterPermission;
+    private final ObjectMapper objectMapper;
+    private final PublisherPermissionGroupRepository publisherPermissionGroupRepository;
 
     public PublisherManagerServiceImpl(PublisherAccountRepository publisherAccountRepository,
                                        SessionService sessionService, SnowflakeGenerator snowflakeGenerator,
                                        PasswordEncoder passwordEncoder,
                                        PublisherRoleRepository publisherRoleRepository,
                                        RedisService redisService,
-                                       PublisherPermissionRepository publisherPermissionRepository) {
+                                       PublisherPermissionRepository publisherPermissionRepository,
+                                       ObjectMapper objectMapper,
+                                       PublisherPermissionGroupRepository publisherPermissionGroupRepository) {
         this.publisherAccountRepository = publisherAccountRepository;
         this.sessionService = sessionService;
         this.snowflakeGenerator = snowflakeGenerator;
@@ -66,20 +63,82 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
         this.publisherPermissionRepository = publisherPermissionRepository;
         this.masterPermission = publisherPermissionRepository.findByName("Master").orElseThrow(() ->
                 new RuntimeException("Master permission not found. Please create a master permission first."));
+        this.objectMapper = objectMapper;
+        this.publisherPermissionGroupRepository = publisherPermissionGroupRepository;
     }
 
     @Override
     public Page<PublisherAccountListItem> getPublisherAccounts(int page, int size, String status) {
+        long publisherId = (long) ((JwtTokenClaims) sessionService.getAuthentication().getDetails())
+                .getOtherClaims().get("publisherId");
         if ("all".equalsIgnoreCase(status)) {
-            return publisherAccountRepository.findAllz(PageRequest.of(page - 1, size));
+            return publisherAccountRepository.findAllz(publisherId, PageRequest.of(page - 1, size));
         } else {
             try {
-                return publisherAccountRepository.findAllByStatus(AccountStatus.valueOf(status),
+                return publisherAccountRepository.findAllByStatus(
+                        AccountStatus.valueOf(status.toUpperCase()), publisherId,
                         PageRequest.of(page - 1, size));
             } catch (IllegalArgumentException e) {
                 throw new BadRequestException("Invalid account status: " + status);
             }
         }
+    }
+
+    @Override
+    public Page<PublisherAccountListItem> searchPublisherAccounts(String keyword, String status,
+                                                                  int page, int size) {
+        if(keyword == null || keyword.isBlank()) {
+            return getPublisherAccounts(page, size, status);
+        }
+        long publisherId = (long) ((JwtTokenClaims) sessionService.getAuthentication().getDetails())
+                .getOtherClaims().get("publisherId");
+        try {
+            if ("all".equalsIgnoreCase(status)) {
+                return publisherAccountRepository.searchByUsername(keyword, publisherId,
+                        PageRequest.of(page - 1, size));
+            } else {
+                return publisherAccountRepository.searchByUsername(keyword,
+                        AccountStatus.valueOf(status.toUpperCase()), publisherId,
+                        PageRequest.of(page - 1, size));
+            }
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("Invalid account status: " + status);
+        }
+    }
+
+    @Override
+    public List<GroupPermissionItem> getPublisherPermissions() {
+        String key = "publisher_permissions";
+        List<GroupPermissionItem> items;
+        Object cacheItem = redisService.get(key, List.class);
+        if (cacheItem != null) {
+            items = objectMapper.convertValue(cacheItem,
+                    objectMapper.getTypeFactory()
+                            .constructCollectionLikeType(List.class, GroupPermissionItem.class));
+        } else {
+            List<PublisherPermissionGroup> groups = publisherPermissionGroupRepository.findAllAndDetails();
+            items = groups.stream()
+                    .map(group -> GroupPermissionItem.builder()
+                            .id(group.getId())
+                            .name(group.getName())
+                            .description(group.getDescription())
+                            .permissions(group.getPublisherPermissionList().stream()
+                                    .map(permission -> PublisherPermissionListItem.builder()
+                                            .id(permission.getId())
+                                            .name(permission.getName())
+                                            .description(permission.getDescription())
+                                            .build())
+                                    .toList())
+                            .build())
+                    .toList();
+
+            redisService.save(key, items, 2, TimeUnit.HOURS);
+        }
+        JwtTokenClaims claims = (JwtTokenClaims) sessionService.getAuthentication().getDetails();
+        if(!claims.getAuthorities().contains("PUBLISHER_MASTER") && !items.isEmpty()) {
+            items.removeFirst();
+        }
+        return items;
     }
 
     @Override
@@ -259,8 +318,9 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
 
     @Override
     @Transactional
-    public RoleDetail updateRole(Long roleId, CreateCustomRoleRequest request) {
+    public RoleDetail updateRole(CreateCustomRoleRequest request) {
         JwtTokenClaims claims = (JwtTokenClaims) sessionService.getAuthentication().getDetails();
+        long roleId = request.getRoleId();
         long publisherId = (long) claims.getOtherClaims().get("publisherId");
         PublisherRole role = publisherRoleRepository.findByIdAndPublisherId(roleId, publisherId);
         if (role == null) {

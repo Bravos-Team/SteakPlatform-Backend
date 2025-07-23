@@ -30,4 +30,7 @@ public class UpdatePreBuildRequest {
     @NotBlank
     private String checksum;
 
+    @NotNull
+    private Long fileSize;
+
 }

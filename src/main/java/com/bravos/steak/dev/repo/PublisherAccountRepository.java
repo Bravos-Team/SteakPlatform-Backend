@@ -22,12 +22,32 @@ public interface PublisherAccountRepository extends JpaRepository<PublisherAccou
     @Query("SELECT new com.bravos.steak.dev.model.response.PublisherAccountListItem(" +
             "p.id, p.username, p.email) " +
             "FROM PublisherAccount p " +
-            "WHERE p.status = :status")
-    Page<PublisherAccountListItem> findAllByStatus(@Param("status") AccountStatus status, Pageable pageable);
+            "WHERE p.status = :status and p.publisher.id = :publisherId")
+    Page<PublisherAccountListItem> findAllByStatus(@Param("status") AccountStatus status,
+                                                   @Param("publisherId") Long publisherId,
+                                                   Pageable pageable);
 
     @Query("SELECT new com.bravos.steak.dev.model.response.PublisherAccountListItem(" +
             "p.id, p.username, p.email) " +
-            "FROM PublisherAccount p")
-    Page<PublisherAccountListItem> findAllz(Pageable pageable);
+            "FROM PublisherAccount p " +
+            "WHERE p.publisher.id = :publisherId")
+    Page<PublisherAccountListItem> findAllz(@Param("publisherId") Long publisherId, Pageable pageable);
+
+    @Query("SELECT new com.bravos.steak.dev.model.response.PublisherAccountListItem(" +
+            "p.id, p.username, p.email) " +
+            "FROM PublisherAccount p " +
+            "WHERE p.username LIKE %:keyword% and p.status = :status and p.publisher.id = :publisherId")
+    Page<PublisherAccountListItem> searchByUsername(@Param("keyword") String keyword,
+                                                    @Param("status") AccountStatus status,
+                                                    @Param("publisherId") Long publisherId,
+                                                    Pageable pageable);
+
+    @Query("SELECT new com.bravos.steak.dev.model.response.PublisherAccountListItem(" +
+            "p.id, p.username, p.email) " +
+            "FROM PublisherAccount p " +
+            "WHERE p.username LIKE %:keyword% and p.publisher.id = :publisherId")
+    Page<PublisherAccountListItem> searchByUsername(@Param("keyword") String keyword,
+                                                    @Param("publisherId") Long publisherId,
+                                                    Pageable pageable);
 
 }

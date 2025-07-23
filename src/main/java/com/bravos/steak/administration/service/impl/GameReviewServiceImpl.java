@@ -50,10 +50,15 @@ public class GameReviewServiceImpl implements GameReviewService {
     private final GameDetailsRepository gameDetailsRepository;
     private final GameSubmissionService gameSubmissionService;
 
-    public GameReviewServiceImpl(GameSubmissionRepository gameSubmissionRepository, ReviewReplyRepository reviewReplyRepository,
-                                 SessionService sessionService, PublisherRepository publisherRepository, GameRepository gameRepository,
-                                 SnowflakeGenerator snowflakeGenerator, GameVersionRepository gameVersionRepository,
-                                 GameDetailsRepository gameDetailsRepository, GameSubmissionService gameSubmissionService) {
+    public GameReviewServiceImpl(GameSubmissionRepository gameSubmissionRepository,
+                                 ReviewReplyRepository reviewReplyRepository,
+                                 SessionService sessionService,
+                                 PublisherRepository publisherRepository,
+                                 GameRepository gameRepository,
+                                 SnowflakeGenerator snowflakeGenerator,
+                                 GameVersionRepository gameVersionRepository,
+                                 GameDetailsRepository gameDetailsRepository,
+                                 GameSubmissionService gameSubmissionService) {
         this.gameSubmissionRepository = gameSubmissionRepository;
         this.reviewReplyRepository = reviewReplyRepository;
         this.sessionService = sessionService;
@@ -83,7 +88,8 @@ public class GameReviewServiceImpl implements GameReviewService {
     @Transactional
     public void approveGameSubmission(Long submissionId) {
         GameSubmission submission = gameSubmissionRepository.findById(submissionId)
-                .orElseThrow(() -> new ResourceNotFoundException("Game submission not found with ID: " + submissionId));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Game submission not found with ID: " + submissionId));
 
         if(submission.getStatus() != GameSubmissionStatus.PENDING_REVIEW) {
             throw new BadRequestException("Game submission is not in pending review status");
@@ -122,6 +128,8 @@ public class GameReviewServiceImpl implements GameReviewService {
                 .name(submission.getBuildInfo().getVersionName())
                 .execPath(submission.getBuildInfo().getExecPath())
                 .downloadUrl(submission.getBuildInfo().getDownloadUrl())
+                .fileSize(submission.getBuildInfo().getFileSize())
+                .checksum(submission.getBuildInfo().getChecksum())
                 .createdAt(DateTimeHelper.currentTimeMillis())
                 .releaseDate(game.getReleaseDate())
                 .status(VersionStatus.STABLE)
