@@ -150,6 +150,10 @@ table "game_version" {
     null = false
     type = integer
   }
+  column "file_size" {
+    null = true
+    type = bigint
+  }
   column "release_date" {
     null = false
     type = bigint

@@ -36,6 +36,10 @@ public class GameVersion {
 
     Long releaseDate;
 
+    Long fileSize;
+
+    String checksum;
+
     @Builder.Default
     Long createdAt = DateTimeHelper.currentTimeMillis();
 

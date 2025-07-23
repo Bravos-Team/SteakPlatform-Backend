@@ -4,15 +4,20 @@ import com.bravos.steak.common.model.RedisCacheEntry;
 import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.common.service.redis.RedisService;
+import com.bravos.steak.exceptions.ForbiddenException;
 import com.bravos.steak.exceptions.ResourceNotFoundException;
+import com.bravos.steak.exceptions.UnauthorizeException;
 import com.bravos.steak.store.entity.Game;
+import com.bravos.steak.store.entity.GameVersion;
 import com.bravos.steak.store.entity.details.GameDetails;
 import com.bravos.steak.store.model.enums.GameStatus;
 import com.bravos.steak.store.model.response.CursorResponse;
+import com.bravos.steak.store.model.response.DownloadResponse;
 import com.bravos.steak.store.model.response.GameListItem;
 import com.bravos.steak.store.model.response.GameStoreDetail;
 import com.bravos.steak.store.repo.GameDetailsRepository;
 import com.bravos.steak.store.repo.GameRepository;
+import com.bravos.steak.store.repo.GameVersionRepository;
 import com.bravos.steak.store.repo.UserGameRepository;
 import com.bravos.steak.store.repo.injection.CartGameInfo;
 import com.bravos.steak.store.service.GameService;
@@ -37,6 +42,7 @@ public class GameServiceImpl implements GameService {
     private final RedisService redisService;
     private final UserGameRepository userGameRepository;
     private final SessionService sessionService;
+    private final GameVersionRepository gameVersionRepository;
 
     @Override
     public CursorResponse<GameListItem> getGameStoreList(Long cursor, int pageSize) {
@@ -109,6 +115,34 @@ public class GameServiceImpl implements GameService {
                 .build();
         GameStoreDetail gameStoreDetail = redisService.getWithLock(cacheEntry, GameStoreDetail.class);
         return getGameStoreDetailWithOwnedStatus(gameId, gameStoreDetail);
+    }
+
+    @Override
+    public DownloadResponse getGameDownloadUrl(Long gameId) {
+        Long userId = sessionService.getCurrentUserId();
+        if(userId == null) {
+            throw new UnauthorizeException("You must be logged in to download games");
+        }
+        if(!userGameRepository.existsByGameIdAndUserId(gameId,userId)) {
+            throw new ForbiddenException("You do not own this game, cannot download");
+        }
+        GameVersion gameVersion = gameVersionRepository
+                .findLatestGameVersionByGameId(gameId,DateTimeHelper.currentTimeMillis());
+
+        if(gameVersion == null) {
+            throw new ResourceNotFoundException("Game version not found or not available");
+        }
+        String downloadUrl = gameVersion.getDownloadUrl();
+        if(downloadUrl == null || downloadUrl.isEmpty()) {
+            throw new ResourceNotFoundException("Download URL not available for this game version");
+        }
+        return DownloadResponse.builder()
+                .fileName(gameId + "-" + gameVersion.getName() + ".tar.zst")
+                .downloadUrl(downloadUrl)
+                .fileSize(gameVersion.getFileSize())
+                .execPath(gameVersion.getExecPath())
+                .checksum(gameVersion.getChecksum())
+                .build();
     }
 
     private GameStoreDetail getGameStoreDetailWithOwnedStatus(Long gameId, GameStoreDetail cachedDetail) {

@@ -166,6 +166,7 @@ public class GameSubmissionServiceImpl implements GameSubmissionService {
         buildInfo.setVersionName(updatePreBuildRequest.getVersionName());
         buildInfo.setExecPath(updatePreBuildRequest.getExecPath());
         buildInfo.setDownloadUrl(updatePreBuildRequest.getDownloadUrl());
+        buildInfo.setFileSize(updatePreBuildRequest.getFileSize());
         buildInfo.setChecksum(updatePreBuildRequest.getChecksum());
 
         gameSubmission.setBuildInfo(buildInfo);

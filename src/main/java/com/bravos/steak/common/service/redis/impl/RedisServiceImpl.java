@@ -4,6 +4,7 @@ import com.bravos.steak.common.model.RedisCacheEntry;
 import com.bravos.steak.common.service.redis.RedisService;
 import com.bravos.steak.common.service.webhook.DiscordWebhookService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.CollectionLikeType;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.support.NullValue;
@@ -86,6 +87,18 @@ public class RedisServiceImpl implements RedisService {
         } catch (Exception e) {
             log.error("Error when getting data: {}", e.getMessage(), e);
             throw new RuntimeException("Error when getting data");
+        }
+    }
+
+    @Override
+    public <T> Collection<T> get(String key, CollectionLikeType type, Class<T> clazz) {
+        Object value = redisTemplate.opsForValue().get(key);
+        if(value == null) return List.of();
+        try {
+            return objectMapper.convertValue(value, type);
+        } catch (IllegalArgumentException e) {
+            log.error("Error when converting data: {}", e.getMessage(), e);
+            throw new RuntimeException("Error when converting data: " + e.getMessage(), e);
         }
     }
 

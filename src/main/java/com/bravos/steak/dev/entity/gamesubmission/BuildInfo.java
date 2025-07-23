@@ -24,4 +24,7 @@ public class BuildInfo {
     @Field("checksum")
     private String checksum;
 
+    @Field("fileSize")
+    private Long fileSize;
+
 }

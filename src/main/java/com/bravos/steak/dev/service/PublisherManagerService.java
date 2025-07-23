@@ -2,10 +2,7 @@ package com.bravos.steak.dev.service;
 
 import com.bravos.steak.dev.model.request.CreateCustomRoleRequest;
 import com.bravos.steak.dev.model.request.CreatePublisherAccountRequest;
-import com.bravos.steak.dev.model.response.PublisherAccountDetail;
-import com.bravos.steak.dev.model.response.PublisherAccountListItem;
-import com.bravos.steak.dev.model.response.RoleDetail;
-import com.bravos.steak.dev.model.response.RoleListItem;
+import com.bravos.steak.dev.model.response.*;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
@@ -13,6 +10,11 @@ import java.util.List;
 public interface PublisherManagerService {
 
     Page<PublisherAccountListItem> getPublisherAccounts(int page, int size, String status);
+
+    Page<PublisherAccountListItem> searchPublisherAccounts(String keyword, String status,
+                                                           int page, int size);
+
+    List<GroupPermissionItem> getPublisherPermissions();
 
     List<RoleListItem> getCustomRoleList();
 
@@ -26,7 +28,7 @@ public interface PublisherManagerService {
 
     RoleDetail createNewCustomRole(CreateCustomRoleRequest request);
 
-    RoleDetail updateRole(Long roleId, CreateCustomRoleRequest request);
+    RoleDetail updateRole(CreateCustomRoleRequest request);
 
     void changeRoleStatus(Long roleId, Boolean isActive);
 

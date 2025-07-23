@@ -30,6 +30,22 @@ public class PublisherManagerController {
         return ResponseEntity.ok(publisherManagerService.getPublisherAccounts(page, size, status));
     }
 
+    @GetMapping("/accounts/search")
+    @HasAuthority({PublisherAuthority.READ_MEMBERS})
+    public ResponseEntity<?> searchPublisherAccounts(
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "all") String status,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "15") int size) {
+        return ResponseEntity.ok(publisherManagerService.searchPublisherAccounts(keyword, status, page, size));
+    }
+
+    @GetMapping("/permissions")
+    @HasAuthority({PublisherAuthority.READ_MEMBERS})
+    public ResponseEntity<?> getPublisherPermissions() {
+        return ResponseEntity.ok(publisherManagerService.getPublisherPermissions());
+    }
+
     @GetMapping("/custom-roles")
     @HasAuthority({PublisherAuthority.WRITE_MEMBERS})
     public ResponseEntity<?> getCustomRoleList() {
@@ -49,7 +65,7 @@ public class PublisherManagerController {
     }
 
     @GetMapping("/role")
-    @HasAuthority({PublisherAuthority.WRITE_MEMBERS})
+    @HasAuthority({PublisherAuthority.READ_MEMBERS})
     public ResponseEntity<?> getRoleDetail(@RequestParam Long roleId) {
         return ResponseEntity.ok(publisherManagerService.getRoleDetail(roleId));
     }
@@ -60,7 +76,7 @@ public class PublisherManagerController {
         return ResponseEntity.ok(publisherManagerService.createAccount(request));
     }
 
-    @PostMapping("/delete-account")
+    @DeleteMapping("/delete-account")
     @HasAuthority({PublisherAuthority.WRITE_MEMBERS})
     public ResponseEntity<?> deleteAccount(@RequestParam Long accountId) {
         publisherManagerService.deleteAccount(accountId);
@@ -73,11 +89,10 @@ public class PublisherManagerController {
         return ResponseEntity.ok(publisherManagerService.createNewCustomRole(request));
     }
 
-    @PostMapping("/role/update-role/{roleId}")
+    @PostMapping("/role/update-role")
     @HasAuthority({PublisherAuthority.WRITE_MEMBERS})
-    public ResponseEntity<?> updateCustomRole(@RequestBody @Valid CreateCustomRoleRequest request,
-                                              @PathVariable Long roleId) {
-        return ResponseEntity.ok(publisherManagerService.updateRole(roleId, request));
+    public ResponseEntity<?> updateCustomRole(@RequestBody @Valid CreateCustomRoleRequest request) {
+        return ResponseEntity.ok(publisherManagerService.updateRole(request));
     }
 
     @PostMapping("/role/change-status")

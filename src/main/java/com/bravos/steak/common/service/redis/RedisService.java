@@ -1,6 +1,7 @@
 package com.bravos.steak.common.service.redis;
 
 import com.bravos.steak.common.model.RedisCacheEntry;
+import com.fasterxml.jackson.databind.type.CollectionLikeType;
 
 import java.util.Collection;
 import java.util.List;
@@ -19,6 +20,8 @@ public interface RedisService {
     boolean hasKey(String key);
 
     <T> T get(String key, Class<T> clazz);
+
+    <T> Collection<T> get(String key, CollectionLikeType type, Class<T> clazz);
 
     <T> List<T> multiGet(Collection<String> key, Class<T> clazz);
 
