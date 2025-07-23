@@ -5,10 +5,7 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.Optional;
 
@@ -25,7 +22,7 @@ public class GameStoreController {
             Optional<Long> cursor,
             @RequestParam(defaultValue = "10", required = false) int pageSize
     ) {
-        return ResponseEntity.ok(gameService.getGameStoreList(cursor.orElse(null),pageSize));
+        return ResponseEntity.ok(gameService.getGameStoreList(cursor.orElse(null), pageSize));
     }
 
     @GetMapping("/details")
@@ -33,6 +30,11 @@ public class GameStoreController {
             @RequestParam Long gameId
     ) {
         return ResponseEntity.ok(gameService.getGameStoreDetails(gameId));
+    }
+
+    @GetMapping("/download/{gameId}")
+    public ResponseEntity<?> getGameDownloadUrl(@PathVariable Long gameId) {
+        return ResponseEntity.ok(gameService.getGameDownloadUrl(gameId));
     }
 
 }

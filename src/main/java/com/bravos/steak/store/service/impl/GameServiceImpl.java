@@ -4,6 +4,7 @@ import com.bravos.steak.common.model.RedisCacheEntry;
 import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.common.service.redis.RedisService;
+import com.bravos.steak.common.service.storage.impl.AwsS3Service;
 import com.bravos.steak.exceptions.ForbiddenException;
 import com.bravos.steak.exceptions.ResourceNotFoundException;
 import com.bravos.steak.exceptions.UnauthorizeException;
@@ -20,6 +21,7 @@ import com.bravos.steak.store.repo.GameRepository;
 import com.bravos.steak.store.repo.GameVersionRepository;
 import com.bravos.steak.store.repo.UserGameRepository;
 import com.bravos.steak.store.repo.injection.CartGameInfo;
+import com.bravos.steak.store.service.DownloadGameService;
 import com.bravos.steak.store.service.GameService;
 import com.bravos.steak.store.specifications.GameSpecification;
 import lombok.AccessLevel;
@@ -43,6 +45,8 @@ public class GameServiceImpl implements GameService {
     private final UserGameRepository userGameRepository;
     private final SessionService sessionService;
     private final GameVersionRepository gameVersionRepository;
+    private final AwsS3Service awsS3Service;
+    private final DownloadGameService downloadGameService;
 
     @Override
     public CursorResponse<GameListItem> getGameStoreList(Long cursor, int pageSize) {
@@ -136,6 +140,7 @@ public class GameServiceImpl implements GameService {
         if(downloadUrl == null || downloadUrl.isEmpty()) {
             throw new ResourceNotFoundException("Download URL not available for this game version");
         }
+        downloadUrl = downloadGameService.getGameDownloadUrl(downloadUrl,sessionService.getUserIpAddress());
         return DownloadResponse.builder()
                 .fileName(gameId + "-" + gameVersion.getName() + ".tar.zst")
                 .downloadUrl(downloadUrl)

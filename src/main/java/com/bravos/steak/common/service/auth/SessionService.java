@@ -12,6 +12,8 @@ public interface SessionService {
 
     Long getCurrentUserId();
 
+    String getUserIpAddress();
+
     void killRefreshToken(long jti, String role);
 
     void addBlacklistJti(long jti, long expireTime, TimeUnit timeUnit);
