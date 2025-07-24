@@ -1,4 +1,4 @@
-h1:6FCih9pTznstqinTuallj32HHY4gHNFGf4rwrW1la/Q=
+h1:hRkUlyJuR/emqwcR9v29CERdYcvAo3GUbzXUI79cAn0=
 20250706170756_migrate-datetime-to-bigint.sql h1:5JrcN/MgdPa3aItd1d1933e6qfnTW8l6qRWiXP76nQQ=
 20250706170919_add-game-default-created-at.sql h1:8EqGnGq3gsxGa0YGT0c1Q9yxTXsUglQe9fSKYUP96Bo=
 20250706170931.sql h1:VdBUOWMkg+Ua82QGrSeIZ2luY6+z7Wr0LHjCTE1A5So=
@@ -8,3 +8,4 @@ h1:6FCih9pTznstqinTuallj32HHY4gHNFGf4rwrW1la/Q=
 20250720090202.sql h1:S09Q1sGMsdS8qIzYJzaPD3d+oj5MWrrSHja0WYLzzX8=
 20250723093841.sql h1:lO2YsSr/5e0FngyC/KsjV72bazJoOr+yS+bi0x8+Cdc=
 20250723160127_add-file-size-to-game-version.sql h1:0UA4S6FDbZW1s4F19k2tGi9Js9/R7SOHPg1sRuQeiGI=
+20250724144412_add-checksum-column-to-gversion.sql h1:MegKrQs6ipVXt10cuf0KcSv7wfWi/nmJmaBtH3JXjnA=
