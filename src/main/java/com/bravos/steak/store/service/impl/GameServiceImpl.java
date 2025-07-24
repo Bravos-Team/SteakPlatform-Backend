@@ -4,7 +4,6 @@ import com.bravos.steak.common.model.RedisCacheEntry;
 import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.common.service.redis.RedisService;
-import com.bravos.steak.common.service.storage.impl.AwsS3Service;
 import com.bravos.steak.exceptions.ForbiddenException;
 import com.bravos.steak.exceptions.ResourceNotFoundException;
 import com.bravos.steak.exceptions.UnauthorizeException;
@@ -45,7 +44,6 @@ public class GameServiceImpl implements GameService {
     private final UserGameRepository userGameRepository;
     private final SessionService sessionService;
     private final GameVersionRepository gameVersionRepository;
-    private final AwsS3Service awsS3Service;
     private final DownloadGameService downloadGameService;
 
     @Override
@@ -145,6 +143,7 @@ public class GameServiceImpl implements GameService {
                 .fileName(gameId + "-" + gameVersion.getName() + ".tar.zst")
                 .downloadUrl(downloadUrl)
                 .fileSize(gameVersion.getFileSize())
+                .installSize(gameVersion.getInstallSize())
                 .execPath(gameVersion.getExecPath())
                 .checksum(gameVersion.getChecksum())
                 .build();

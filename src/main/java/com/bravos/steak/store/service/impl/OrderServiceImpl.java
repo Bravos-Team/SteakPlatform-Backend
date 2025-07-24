@@ -81,6 +81,12 @@ public class OrderServiceImpl implements OrderService {
         JwtAuthentication authentication = sessionService.getAuthentication();
         Long userId = (Long) authentication.getPrincipal();
 
+        Long countOwnedGames = userGameRepository.countUserGamesByUserIdAndGameIdIn(userId, listGameId);
+
+        if(countOwnedGames != null && countOwnedGames > 0) {
+            throw new BadRequestException("You already own some of the games in this order");
+        }
+
         Order order = Order.builder()
                 .id(snowflakeGenerator.generateId())
                 .status(OrderStatus.UNPAID)

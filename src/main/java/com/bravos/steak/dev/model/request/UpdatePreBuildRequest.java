@@ -33,4 +33,7 @@ public class UpdatePreBuildRequest {
     @NotNull
     private Long fileSize;
 
+    @NotNull
+    private Long installSize;
+
 }

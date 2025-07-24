@@ -20,4 +20,8 @@ public interface UserGameRepository extends JpaRepository<UserGame, Long> {
     List<LibraryInfo> findLibraryInfoByUserId(@Param("userId") Long userId, Sort sort);
 
     boolean existsByGameIdAndUserId(Long gameId, Long userId);
+
+    @Query("SELECT COUNT(ug) FROM UserGame ug WHERE ug.user.id = :userId AND ug.game.id IN :gameIds")
+    Long countUserGamesByUserIdAndGameIdIn(Long userId, Long[] gameIds);
+
 }

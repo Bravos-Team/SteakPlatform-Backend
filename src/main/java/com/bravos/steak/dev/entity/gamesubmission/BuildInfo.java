@@ -27,4 +27,6 @@ public class BuildInfo {
     @Field("fileSize")
     private Long fileSize;
 
+    private Long installSize;
+
 }

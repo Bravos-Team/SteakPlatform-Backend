@@ -129,6 +129,7 @@ public class GameReviewServiceImpl implements GameReviewService {
                 .execPath(submission.getBuildInfo().getExecPath())
                 .downloadUrl(submission.getBuildInfo().getDownloadUrl())
                 .fileSize(submission.getBuildInfo().getFileSize())
+                .installSize(submission.getBuildInfo().getInstallSize())
                 .checksum(submission.getBuildInfo().getChecksum())
                 .createdAt(DateTimeHelper.currentTimeMillis())
                 .releaseDate(game.getReleaseDate())
