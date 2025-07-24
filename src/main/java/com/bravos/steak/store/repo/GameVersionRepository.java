@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 public interface GameVersionRepository extends JpaRepository<GameVersion, Long> {
 
     @Query("SELECT gv FROM GameVersion gv " +
-            "WHERE gv.game.id = :gameId and gv.releaseDate <= :current and gv.status = 1 " +
+            "WHERE gv.game.id = :gameId and gv.releaseDate <= :current and gv.status = 0 " +
             "ORDER BY gv.releaseDate DESC " +
             "LIMIT 1")
     GameVersion findLatestGameVersionByGameId(@Param("gameId") Long gameId,

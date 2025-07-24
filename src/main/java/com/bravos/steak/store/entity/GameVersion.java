@@ -38,6 +38,8 @@ public class GameVersion {
 
     Long fileSize;
 
+    Long installSize;
+
     String checksum;
 
     @Builder.Default

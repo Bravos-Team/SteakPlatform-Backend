@@ -23,4 +23,6 @@ public class DownloadResponse {
 
     Long fileSize;
 
+    Long installSize;
+
 }

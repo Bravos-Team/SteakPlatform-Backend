@@ -45,7 +45,6 @@ public class GameServiceImpl implements GameService {
     private final UserGameRepository userGameRepository;
     private final SessionService sessionService;
     private final GameVersionRepository gameVersionRepository;
-    private final AwsS3Service awsS3Service;
     private final DownloadGameService downloadGameService;
 
     @Override
@@ -145,6 +144,7 @@ public class GameServiceImpl implements GameService {
                 .fileName(gameId + "-" + gameVersion.getName() + ".tar.zst")
                 .downloadUrl(downloadUrl)
                 .fileSize(gameVersion.getFileSize())
+                .installSize(gameVersion.getInstallSize())
                 .execPath(gameVersion.getExecPath())
                 .checksum(gameVersion.getChecksum())
                 .build();

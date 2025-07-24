@@ -154,6 +154,10 @@ table "game_version" {
     null = true
     type = bigint
   }
+  column "install_size" {
+    null = true
+    type = bigint
+  }
   column "checksum" {
     null = true
     type = character_varying(64)
