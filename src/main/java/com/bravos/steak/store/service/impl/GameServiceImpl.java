@@ -4,7 +4,6 @@ import com.bravos.steak.common.model.RedisCacheEntry;
 import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.common.service.redis.RedisService;
-import com.bravos.steak.common.service.storage.impl.AwsS3Service;
 import com.bravos.steak.exceptions.ForbiddenException;
 import com.bravos.steak.exceptions.ResourceNotFoundException;
 import com.bravos.steak.exceptions.UnauthorizeException;
