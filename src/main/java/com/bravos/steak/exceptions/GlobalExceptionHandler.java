@@ -9,6 +9,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.Map;
 import java.util.Objects;
@@ -22,6 +23,16 @@ public class GlobalExceptionHandler {
 
     public GlobalExceptionHandler(DiscordWebhookService discordWebhookService) {
         this.discordWebhookService = discordWebhookService;
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        String requiredType = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "unknown type";
+        String errorMessage = String.format("Invalid value '%s' for parameter '%s'. Expected type: %s",
+                ex.getValue(), ex.getName(), requiredType);
+        ErrorResponse errorResponse = new ErrorResponse(errorMessage);
+        return ResponseEntity.badRequest().body(errorResponse);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
