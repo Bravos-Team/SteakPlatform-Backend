@@ -50,7 +50,7 @@ public class UserAuthService extends AuthService {
 
     @Override
     protected String refreshPath() {
-        return "/api/v1/auth/user/refresh";
+        return "/api/v1/user/auth/refresh";
     }
 
     @Override
