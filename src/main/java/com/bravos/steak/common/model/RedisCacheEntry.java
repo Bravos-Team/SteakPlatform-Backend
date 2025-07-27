@@ -16,9 +16,11 @@ public class RedisCacheEntry<T> {
 
     Supplier<T> fallBackFunction;
 
-    long keyTimeout;
+    @Builder.Default
+    long keyTimeout = 60;
 
-    TimeUnit keyTimeUnit;
+    @Builder.Default
+    TimeUnit keyTimeUnit = TimeUnit.SECONDS;
 
     @Builder.Default
     long lockTimeout = 100;

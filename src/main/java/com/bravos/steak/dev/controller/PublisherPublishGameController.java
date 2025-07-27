@@ -6,6 +6,7 @@ import com.bravos.steak.common.security.JwtAuthentication;
 import com.bravos.steak.common.security.JwtTokenClaims;
 import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.dev.model.PublisherAuthority;
+import com.bravos.steak.dev.model.request.PublisherReviewReplyRequest;
 import com.bravos.steak.dev.model.request.SaveProjectRequest;
 import com.bravos.steak.dev.model.request.UpdatePreBuildRequest;
 import com.bravos.steak.dev.service.GameSubmissionService;
@@ -55,15 +56,17 @@ public class PublisherPublishGameController {
     @HasAuthority({PublisherAuthority.CREATE_GAME})
     @PostMapping("/submit")
     public ResponseEntity<?> submit(@RequestParam Long projectId) {
-        if(projectId == null) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "error", "Invalid project ID"
-            ));
-        }
         gameSubmissionService.submitGameSubmission(projectId);
         return ResponseEntity.ok().body(Map.of(
                 "message", "Game published successfully"
         ));
+    }
+
+    @HasAuthority({PublisherAuthority.CREATE_GAME})
+    @PostMapping("/re-submit")
+    public ResponseEntity<?> reSubmit(@RequestBody @Valid PublisherReviewReplyRequest publisherReviewReplyRequest) {
+        gameSubmissionService.reSubmitGameSubmission(publisherReviewReplyRequest);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/list")
