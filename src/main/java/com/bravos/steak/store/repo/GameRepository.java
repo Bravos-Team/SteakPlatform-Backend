@@ -4,6 +4,7 @@ import com.bravos.steak.store.entity.Game;
 import com.bravos.steak.store.model.enums.GameStatus;
 import com.bravos.steak.store.repo.injection.GameIdStatusPrice;
 import com.bravos.steak.store.repo.injection.GamePrice;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,4 +51,8 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
     int updatePriceAndUpdatedAtById(BigDecimal price, Long updatedAt, Long id);
 
     boolean existsByIdAndPublisherId(Long id, Long publisherId);
+
+    List<Game> findAllByPublisherId(Long publisherId, Pageable pageable);
+
+    List<Game> findAllByPublisherIdAndStatus(Long publisherId, GameStatus status, Pageable pageable);
 }

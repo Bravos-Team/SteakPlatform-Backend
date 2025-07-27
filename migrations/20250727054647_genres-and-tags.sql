@@ -61,7 +61,6 @@ VALUES
     ('Fantasy Setting', 'Games set in a magical or fantastical world with mythical creatures, magic, and epic quests.', 'fantasy-setting'),
     ('Sci-Fi', 'Games set in futuristic or science fiction-themed settings, involving advanced technology, space travel, or alien species.', 'sci-fi'),
     ('Post-apocalyptic', 'Games that take place after a catastrophic event, often in a world where survival is the key objective.', 'post-apocalyptic'),
-    ('Open World', 'Games with large, open environments that players can explore freely, often with no set path or restrictions.', 'open-world'),
     ('Casual', 'Games that are easy to pick up and play, with simple mechanics and less time investment needed.', 'casual'),
     ('Hardcore', 'Games that require high skill levels and time commitment, often designed for experienced or dedicated players.', 'hardcore'),
     ('Indie', 'Games developed by smaller studios or individual developers, often with unique gameplay mechanics or artistic styles.', 'indie'),

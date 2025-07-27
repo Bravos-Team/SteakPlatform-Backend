@@ -1,25 +1,28 @@
 package com.bravos.steak.dev.service.impl;
 
-import com.bravos.steak.common.model.RedisCacheEntry;
 import com.bravos.steak.common.security.JwtTokenClaims;
 import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.common.service.helper.DateTimeHelper;
-import com.bravos.steak.common.service.redis.RedisService;
+import com.bravos.steak.dev.model.GameThumbnail;
 import com.bravos.steak.dev.model.request.UpdateGameDetailsRequest;
+import com.bravos.steak.dev.model.response.PublisherGameListItem;
 import com.bravos.steak.dev.service.GameManagerService;
 import com.bravos.steak.exceptions.BadRequestException;
 import com.bravos.steak.store.entity.Game;
 import com.bravos.steak.store.entity.Genre;
 import com.bravos.steak.store.entity.Tag;
 import com.bravos.steak.store.model.enums.GameStatus;
+import com.bravos.steak.store.model.response.GameStoreDetail;
+import com.bravos.steak.store.repo.GameDetailsRepository;
 import com.bravos.steak.store.repo.GameRepository;
 import com.bravos.steak.store.repo.GenreRepository;
 import com.bravos.steak.store.repo.TagRepository;
+import com.bravos.steak.store.service.GameService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.CollectionLikeType;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -28,7 +31,6 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -40,26 +42,30 @@ public class GameManagerServiceImpl implements GameManagerService {
     private final GenreRepository genreRepository;
     private final TagRepository tagRepository;
     private final SessionService sessionService;
-    private final RedisService redisService;
+    private final GameService gameService;
+    private final GameDetailsRepository gameDetailsRepository;
 
     public GameManagerServiceImpl(ObjectMapper objectMapper, MongoTemplate mongoTemplate, GameRepository gameRepository,
-                                  GenreRepository genreRepository, TagRepository tagRepository, SessionService sessionService, RedisService redisService) {
+                                  GenreRepository genreRepository, TagRepository tagRepository, SessionService sessionService,
+                                  GameService gameService, GameDetailsRepository gameDetailsRepository) {
         this.objectMapper = objectMapper;
         this.mongoTemplate = mongoTemplate;
         this.gameRepository = gameRepository;
         this.genreRepository = genreRepository;
         this.tagRepository = tagRepository;
         this.sessionService = sessionService;
-        this.redisService = redisService;
+        this.gameService = gameService;
+        this.gameDetailsRepository = gameDetailsRepository;
     }
 
     @Override
     @Transactional
-    public void updateGameDetails(UpdateGameDetailsRequest request) {
-        Map<String,Object> changedData = objectMapper.convertValue(request, new TypeReference<>() {});
+    public GameStoreDetail updateGameDetails(UpdateGameDetailsRequest request) {
+        Map<String, Object> changedData = objectMapper.convertValue(request, new TypeReference<>() {
+        });
         Long gameId = (Long) changedData.remove("gameId");
 
-        if(isGameOwnedByPublisher(gameId)) {
+        if (isGameOwnedByPublisher(gameId)) {
             throw new BadRequestException("Game with ID " + request.getGameId() + " does not exist or is not owned by the publisher.");
         }
 
@@ -84,12 +90,12 @@ public class GameManagerServiceImpl implements GameManagerService {
 
         Game game = null;
         if (genreIds != null && !genreIds.isEmpty()) {
-             game = gameRepository.findById(gameId)
+            game = gameRepository.findById(gameId)
                     .orElseThrow(() -> new BadRequestException("Game with ID " + gameId + " does not exist."));
             Set<Genre> genres = new HashSet<>(genreRepository.findAllById(genreIds));
             game.setGenres(genres);
         }
-        if(tagIds != null && !tagIds.isEmpty()) {
+        if (tagIds != null && !tagIds.isEmpty()) {
             if (game == null) {
                 game = gameRepository.findById(gameId)
                         .orElseThrow(() -> new BadRequestException("Game with ID " + gameId + " does not exist."));
@@ -97,12 +103,12 @@ public class GameManagerServiceImpl implements GameManagerService {
             Set<Tag> tags = new HashSet<>(tagRepository.findAllById(tagIds));
             game.setTags(tags);
         }
-        if(request.getTitle() != null && !request.getTitle().isEmpty()) {
-            if(game == null) {
+        if (request.getTitle() != null && !request.getTitle().isEmpty()) {
+            if (game == null) {
 
                 try {
                     gameRepository.updateNameAndUpdatedAtById(
-                        request.getTitle(), DateTimeHelper.currentTimeMillis(), gameId
+                            request.getTitle(), DateTimeHelper.currentTimeMillis(), gameId
                     );
                 } catch (Exception e) {
                     throw new RuntimeException("Failed to update game name for game ID " + gameId, e);
@@ -123,6 +129,7 @@ public class GameManagerServiceImpl implements GameManagerService {
             }
 
         }
+        return gameService.invalidateAndGetGameStoreDetails(gameId);
     }
 
     @Override
@@ -150,7 +157,7 @@ public class GameManagerServiceImpl implements GameManagerService {
         if (isGameOwnedByPublisher(gameId)) {
             throw new BadRequestException("Game with ID " + gameId + " does not exist or is not owned by the publisher.");
         }
-        if(price == null || price < 0 || price.isNaN() || price.isInfinite()) {
+        if (price == null || price < 0 || price.isNaN() || price.isInfinite()) {
             throw new BadRequestException("Price must be a positive number.");
         }
         try {
@@ -161,40 +168,44 @@ public class GameManagerServiceImpl implements GameManagerService {
     }
 
     @Override
-    public List<Genre> getAllGenres() {
-        RedisCacheEntry<Collection<Genre>> cacheEntry = RedisCacheEntry.<Collection<Genre>>builder()
-                .key("allGenres")
-                .fallBackFunction(this::getAllGenresFromDatabase)
-                .keyTimeout(15)
-                .keyTimeUnit(TimeUnit.MINUTES)
-                .build();
-        CollectionLikeType type = objectMapper.getTypeFactory().constructCollectionLikeType(Set.class, Genre.class);
-        redisService.getWithLock(cacheEntry,type, Genre.class);
-
-        return List.of();
-    }
-
-    @Override
-    public List<Tag> getAllTags() {
-        return List.of();
-    }
-
-    private List<Genre> getAllGenresFromDatabase() {
-        try {
-            return genreRepository.findAll();
-        } catch (Exception e) {
-            log.error("Failed to fetch genres from database: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to fetch genres from database", e);
+    public List<PublisherGameListItem> listAllGames(int page, int size, String status) {
+        if (page < 0 || size <= 0) {
+            throw new BadRequestException("Page must be >= 0 and size must be > 0.");
         }
+        long publisherId = getPublisherIdFromClaims();
+        List<Game> games;
+        if (status == null || status.isBlank() || status.equalsIgnoreCase("all")) {
+            games = gameRepository.findAllByPublisherId(publisherId, PageRequest.of(page, size));
+        } else {
+            GameStatus gameStatus;
+            try {
+                gameStatus = GameStatus.valueOf(status.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new BadRequestException("Invalid game status: " + status);
+            }
+            games = gameRepository.findAllByPublisherIdAndStatus(publisherId, gameStatus, PageRequest.of(page, size));
+        }
+
+        if (games.isEmpty()) return List.of();
+
+        List<GameThumbnail> gameThumbnails = gameDetailsRepository.findThumbnailsByIdIn(games.stream().map(Game::getId).toList());
+        Map<Long, PublisherGameListItem> gameMap = new HashMap<>(games.size());
+        games.forEach(game -> gameMap.put(game.getId(), PublisherGameListItem.builder()
+                .gameId(game.getId())
+                .title(game.getName())
+                .status(game.getStatus())
+                .build()));
+        gameThumbnails.forEach(thumbnail -> {
+            PublisherGameListItem item = gameMap.get(thumbnail.getId());
+            item.setThumbnail(thumbnail.getThumbnail());
+        });
+
+        return gameMap.values().stream().toList();
     }
 
-    private List<Tag> getAllTagsFromDatabase() {
-        try {
-            return tagRepository.findAll();
-        } catch (Exception e) {
-            log.error("Failed to fetch tags from database: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to fetch tags from database", e);
-        }
+    private long getPublisherIdFromClaims() {
+        JwtTokenClaims claims = (JwtTokenClaims) sessionService.getAuthentication().getDetails();
+        return (long) claims.getOtherClaims().get("publisherId");
     }
 
     private boolean isGameOwnedByPublisher(Long gameId) {
