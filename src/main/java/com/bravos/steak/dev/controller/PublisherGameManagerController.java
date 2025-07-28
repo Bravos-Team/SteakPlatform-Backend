@@ -12,11 +12,11 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @PublisherController
 @RequestMapping("/api/v1/dev/game-management")
-public class PublisherGamaManagerController {
+public class PublisherGameManagerController {
 
     private final GameManagerService gameManagerService;
 
-    public PublisherGamaManagerController(GameManagerService gameManagerService) {
+    public PublisherGameManagerController(GameManagerService gameManagerService) {
         this.gameManagerService = gameManagerService;
     }
 
@@ -51,6 +51,7 @@ public class PublisherGamaManagerController {
     @PostMapping("/create-new-version")
     @HasAuthority({PublisherAuthority.WRITE_GAME_INFO})
     public ResponseEntity<?> createNewVersion(@RequestBody @Valid CreateNewVersionRequest request) {
+        gameManagerService.createNewVersion(request);
         return ResponseEntity.ok().build();
     }
 

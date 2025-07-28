@@ -12,6 +12,7 @@ import com.bravos.steak.dev.model.response.GameVersionListItem;
 import com.bravos.steak.dev.model.response.PublisherGameListItem;
 import com.bravos.steak.dev.service.GameManagerService;
 import com.bravos.steak.exceptions.BadRequestException;
+import com.bravos.steak.exceptions.ForbiddenException;
 import com.bravos.steak.store.entity.Game;
 import com.bravos.steak.store.entity.GameVersion;
 import com.bravos.steak.store.entity.Genre;
@@ -143,17 +144,27 @@ public class GameManagerServiceImpl implements GameManagerService {
     @Override
     @Transactional
     public void updateGameStatus(Long gameId, String status) {
-        GameStatus gameStatus;
+        Game game = gameRepository.findById(gameId)
+                .orElseThrow(() -> new BadRequestException("Game with ID " + gameId + " does not exist."));
+        long publisherId = getPublisherIdFromClaims();
+        if(game.getPublisher().getId() != publisherId) {
+            throw new BadRequestException("Game with ID " + gameId + " is not owned by the publisher.");
+        }
         try {
-            gameStatus = GameStatus.valueOf(status);
+            if(game.getStatus() == GameStatus.valueOf(status)) return;
         } catch (IllegalArgumentException e) {
             throw new BadRequestException("Invalid game status: " + status);
         }
-        if (isGameOwnedByPublisher(gameId)) {
-            throw new BadRequestException("Game with ID " + gameId + " does not exist or is not owned by the publisher.");
+        if(game.getStatus() == GameStatus.DELETED) {
+            throw new BadRequestException("Game with ID " + gameId + " is deleted and cannot be updated.");
         }
+        if(game.getStatus() == GameStatus.BANNED) {
+            throw new ForbiddenException("Game with ID " + gameId + " is banned and cannot be updated.");
+        }
+        game.setStatus(GameStatus.valueOf(status));
+        game.setUpdatedAt(DateTimeHelper.currentTimeMillis());
         try {
-            gameRepository.updateStatusAndUpdatedAtById(gameStatus, DateTimeHelper.currentTimeMillis(), gameId);
+            gameRepository.saveAndFlush(game);
         } catch (Exception e) {
             throw new RuntimeException("Failed to update game status for game ID " + gameId, e);
         }
@@ -162,11 +173,11 @@ public class GameManagerServiceImpl implements GameManagerService {
     @Override
     @Transactional
     public void updateGamePrice(Long gameId, Double price) {
-        if (isGameOwnedByPublisher(gameId)) {
-            throw new BadRequestException("Game with ID " + gameId + " does not exist or is not owned by the publisher.");
-        }
         if (price == null || price < 0 || price.isNaN() || price.isInfinite()) {
             throw new BadRequestException("Price must be a positive number.");
+        }
+        if (isGameOwnedByPublisher(gameId)) {
+            throw new BadRequestException("Game with ID " + gameId + " does not exist or is not owned by the publisher.");
         }
         try {
             gameRepository.updatePriceAndUpdatedAtById(BigDecimal.valueOf(price), DateTimeHelper.currentTimeMillis(), gameId);

@@ -1,6 +1,9 @@
 package com.bravos.steak.administration.controller;
 
+import com.bravos.steak.administration.model.AdminAuthority;
+import com.bravos.steak.administration.service.AdminUploadService;
 import com.bravos.steak.common.annotation.AdminController;
+import com.bravos.steak.common.annotation.HasAuthority;
 import com.bravos.steak.dev.model.request.DeleteImageRequest;
 import com.bravos.steak.dev.model.request.ImageUploadPresignedRequest;
 import jakarta.validation.Valid;
@@ -12,42 +15,55 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/admin/upload")
 public class AdminUploadController {
 
-    @PostMapping("/presigned-image-url")
-    public ResponseEntity<?> getUploadPresignUrl(@RequestBody @Valid ImageUploadPresignedRequest request) {
-        // This method is intentionally left blank for future implementation.
-        // It should return a presigned URL for image uploads.
-        return ResponseEntity.ok("Presigned URL for image upload will be implemented here.");
+    private final AdminUploadService adminUploadService;
+
+    public AdminUploadController(AdminUploadService adminUploadService) {
+        this.adminUploadService = adminUploadService;
     }
 
-    @PostMapping("/presigned-image-urls")
+    @PostMapping("/presigned-upload-url")
+    @HasAuthority({
+            AdminAuthority.REVIEW_GAME,
+            AdminAuthority.MANAGE_GAMES,
+            AdminAuthority.MANAGE_ADMIN_ACCOUNTS
+    })
+    public ResponseEntity<?> getUploadPresignUrl(@RequestBody @Valid ImageUploadPresignedRequest request) {
+        return ResponseEntity.ok(adminUploadService.createAdminPresignedUploadUrl(request));
+    }
+
+    @PostMapping("/presigned-upload-urls")
+    @HasAuthority({
+            AdminAuthority.REVIEW_GAME,
+            AdminAuthority.MANAGE_GAMES,
+            AdminAuthority.MANAGE_ADMIN_ACCOUNTS
+    })
     public ResponseEntity<?> getUploadPresignUrls(@RequestBody @Valid ImageUploadPresignedRequest[] request) {
-        // This method is intentionally left blank for future implementation.
-        // It should return presigned URLs for multiple image uploads.
         if (request == null || request.length == 0) {
             return ResponseEntity.badRequest().body("Request body cannot be null or empty");
         }
-        return ResponseEntity.ok("Presigned URLs for image uploads will be implemented here.");
+        return ResponseEntity.ok(adminUploadService.createAdminPresignedUploadUrls(request));
     }
 
-    @DeleteMapping("/delete-image")
+    @DeleteMapping("/delete-file")
+    @HasAuthority({
+            AdminAuthority.REVIEW_GAME,
+            AdminAuthority.MANAGE_GAMES,
+            AdminAuthority.MANAGE_ADMIN_ACCOUNTS
+    })
     public ResponseEntity<?> deleteImage(@RequestBody @Valid DeleteImageRequest deleteImageRequest) {
-        // This method is intentionally left blank for future implementation.
-        // It should handle the deletion of a single image based on the provided request.
-        if (deleteImageRequest == null) {
-            return ResponseEntity.badRequest().body("Request body cannot be null");
-        }
-        return ResponseEntity.ok("Deletion of single image will be implemented here.");
-
+        adminUploadService.deleteAdminFile(deleteImageRequest);
+        return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/delete-images")
+    @DeleteMapping("/delete-files")
+    @HasAuthority({
+            AdminAuthority.REVIEW_GAME,
+            AdminAuthority.MANAGE_GAMES,
+            AdminAuthority.MANAGE_ADMIN_ACCOUNTS
+    })
     public ResponseEntity<?> deleteImages(@RequestBody @Valid DeleteImageRequest[] deleteImageRequests) {
-        // This method is intentionally left blank for future implementation.
-        // It should handle the deletion of multiple images based on the provided requests.
-        if (deleteImageRequests == null || deleteImageRequests.length == 0) {
-            return ResponseEntity.badRequest().body("Request body cannot be null or empty");
-        }
-        return ResponseEntity.ok("Deletion of multiple images will be implemented here.");
+        adminUploadService.deleteAdminFile(deleteImageRequests);
+        return ResponseEntity.ok().build();
     }
 
 }
