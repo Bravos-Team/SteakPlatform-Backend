@@ -6,6 +6,6 @@ public enum VersionStatus {
     DOWNLOADABLE, // Phiên bản có thể tải về
     DRAFT, // Phiên bản đang trong quá trình phát triển, chưa phát hành
     DELETED, // Phiên bản đã bị xoá, không còn khả dụng
-    BANNED, // Phiên bản bị cấm, không thể sử dụng
+    BANNED, ARCHIVED, // Phiên bản bị cấm, không thể sử dụng
 
 }

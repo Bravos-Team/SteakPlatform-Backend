@@ -3,20 +3,23 @@ package com.bravos.steak.dev.service.impl;
 import com.bravos.steak.common.security.JwtTokenClaims;
 import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.common.service.helper.DateTimeHelper;
+import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
 import com.bravos.steak.dev.model.GameThumbnail;
+import com.bravos.steak.dev.model.request.CreateNewVersionRequest;
 import com.bravos.steak.dev.model.request.UpdateGameDetailsRequest;
+import com.bravos.steak.dev.model.request.UpdateVersionRequest;
+import com.bravos.steak.dev.model.response.GameVersionListItem;
 import com.bravos.steak.dev.model.response.PublisherGameListItem;
 import com.bravos.steak.dev.service.GameManagerService;
 import com.bravos.steak.exceptions.BadRequestException;
 import com.bravos.steak.store.entity.Game;
+import com.bravos.steak.store.entity.GameVersion;
 import com.bravos.steak.store.entity.Genre;
 import com.bravos.steak.store.entity.Tag;
 import com.bravos.steak.store.model.enums.GameStatus;
+import com.bravos.steak.store.model.enums.VersionStatus;
 import com.bravos.steak.store.model.response.GameStoreDetail;
-import com.bravos.steak.store.repo.GameDetailsRepository;
-import com.bravos.steak.store.repo.GameRepository;
-import com.bravos.steak.store.repo.GenreRepository;
-import com.bravos.steak.store.repo.TagRepository;
+import com.bravos.steak.store.repo.*;
 import com.bravos.steak.store.service.GameService;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,10 +47,13 @@ public class GameManagerServiceImpl implements GameManagerService {
     private final SessionService sessionService;
     private final GameService gameService;
     private final GameDetailsRepository gameDetailsRepository;
+    private final SnowflakeGenerator snowflakeGenerator;
+    private final GameVersionRepository gameVersionRepository;
 
     public GameManagerServiceImpl(ObjectMapper objectMapper, MongoTemplate mongoTemplate, GameRepository gameRepository,
                                   GenreRepository genreRepository, TagRepository tagRepository, SessionService sessionService,
-                                  GameService gameService, GameDetailsRepository gameDetailsRepository) {
+                                  GameService gameService, GameDetailsRepository gameDetailsRepository, SnowflakeGenerator snowflakeGenerator,
+                                  GameVersionRepository gameVersionRepository) {
         this.objectMapper = objectMapper;
         this.mongoTemplate = mongoTemplate;
         this.gameRepository = gameRepository;
@@ -56,6 +62,8 @@ public class GameManagerServiceImpl implements GameManagerService {
         this.sessionService = sessionService;
         this.gameService = gameService;
         this.gameDetailsRepository = gameDetailsRepository;
+        this.snowflakeGenerator = snowflakeGenerator;
+        this.gameVersionRepository = gameVersionRepository;
     }
 
     @Override
@@ -201,6 +209,137 @@ public class GameManagerServiceImpl implements GameManagerService {
         });
 
         return gameMap.values().stream().toList();
+    }
+
+    @Override
+    @Transactional
+    public void createNewVersion(CreateNewVersionRequest request) {
+        if(!isGameOwnedByPublisher(request.getGameId())) {
+            throw new BadRequestException("Game with ID " + request.getGameId() + " does not exist or is not owned by the publisher.");
+        }
+        if(gameVersionRepository.existsByGameIdAndName(request.getGameId(), request.getVersionName())) {
+            throw new BadRequestException("Version with name " + request.getVersionName() + " already exists for game ID " + request.getGameId());
+        }
+        GameVersion gameVersion = GameVersion.builder()
+                .id(snowflakeGenerator.generateId())
+                .game(Game.builder().id(request.getGameId()).build())
+                .name(request.getVersionName())
+                .changeLog(request.getChangeLog())
+                .execPath(request.getExecPath())
+                .downloadUrl(request.getDownloadUrl())
+                .status(request.getIsReady() ? VersionStatus.STABLE : VersionStatus.DRAFT)
+                .releaseDate(request.getReleaseDate())
+                .fileSize(request.getFileSize())
+                .installSize(request.getInstallSize())
+                .checksum(request.getChecksum())
+                .createdAt(DateTimeHelper.currentTimeMillis())
+                .updatedAt(DateTimeHelper.currentTimeMillis())
+                .build();
+
+        try {
+            gameVersionRepository.saveAndFlush(gameVersion);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create new version for game ID " + request.getGameId(), e);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void updateDraftVersion(UpdateVersionRequest request) {
+        if (!isGameOwnedByPublisher(request.getGameId())) {
+            throw new BadRequestException("Game with ID " + request.getGameId() + " does not exist or is not owned by the publisher.");
+        }
+        GameVersion gameVersion = gameVersionRepository.findById(request.getVersionId())
+                .orElseThrow(() -> new BadRequestException("Version with ID " + request.getVersionId() + " does not exist."));
+
+        if(!Objects.equals(gameVersion.getGame().getId(), request.getGameId())) {
+            throw new BadRequestException("Version with ID " + request.getVersionId() + " does not belong to game ID " + request.getGameId());
+        }
+
+        if (gameVersion.getStatus() != VersionStatus.DRAFT) {
+            throw new BadRequestException("Version with ID " + request.getVersionId() + " is not a draft version.");
+        }
+
+        if(request.getReleaseDate() != null && request.getReleaseDate() < DateTimeHelper.currentTimeMillis()) {
+            throw new BadRequestException("Release date cannot be in the past.");
+        }
+
+        gameVersion.setName(request.getVersionName());
+        gameVersion.setChangeLog(request.getChangeLog());
+        gameVersion.setExecPath(request.getExecPath());
+        gameVersion.setDownloadUrl(request.getDownloadUrl());
+        gameVersion.setReleaseDate(request.getReleaseDate());
+        gameVersion.setFileSize(request.getFileSize());
+        gameVersion.setInstallSize(request.getInstallSize());
+        gameVersion.setChecksum(request.getChecksum());
+        gameVersion.setUpdatedAt(DateTimeHelper.currentTimeMillis());
+        gameVersion.setStatus(request.getIsReady() ? VersionStatus.STABLE : VersionStatus.DRAFT);
+
+        try {
+            gameVersionRepository.saveAndFlush(gameVersion);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to update draft version for game ID " + request.getGameId(), e);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void deleteDraftVersion(Long gameId, Long versionId) {
+        if (!isGameOwnedByPublisher(gameId)) {
+            throw new BadRequestException("Game with ID " + gameId + " does not exist or is not owned by the publisher.");
+        }
+        GameVersion gameVersion = gameVersionRepository.findById(versionId)
+                .orElseThrow(() -> new BadRequestException("Version with ID " + versionId + " does not exist."));
+        if (!Objects.equals(gameVersion.getGame().getId(), gameId)) {
+            throw new BadRequestException("Version with ID " + versionId + " does not belong to game ID " + gameId);
+        }
+        if (gameVersion.getStatus() != VersionStatus.DRAFT) {
+            throw new BadRequestException("Version with ID " + versionId + " is not a draft version.");
+        }
+        try {
+            gameVersionRepository.deleteById(versionId);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to delete draft version with ID " + versionId + " for game ID " + gameId, e);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void markAsLatestStableNow(Long gameId, Long versionId) {
+        if (!isGameOwnedByPublisher(gameId)) {
+            throw new BadRequestException("Game with ID " + gameId + " does not exist or is not owned by the publisher.");
+        }
+
+        GameVersion gameVersion = gameVersionRepository.findById(versionId)
+                .orElseThrow(() -> new BadRequestException("Version with ID " + versionId + " does not exist."));
+
+        long now = DateTimeHelper.currentTimeMillis();
+
+        if (now < gameVersion.getReleaseDate()) {
+            try {
+                gameVersionRepository.updateStatusByGameAndStatus(VersionStatus.ARCHIVED,
+                        Game.builder().id(gameId).build(), VersionStatus.STABLE, now);
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to update previous stable version for game ID " + gameId, e);
+            }
+        }
+
+        gameVersion.setStatus(VersionStatus.STABLE);
+        gameVersion.setReleaseDate(gameVersion.getReleaseDate() > now ? now : gameVersion.getReleaseDate());
+
+        try {
+            gameVersionRepository.save(gameVersion);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to mark version with ID " + versionId + " as stable for game ID " + gameId, e);
+        }
+    }
+
+    @Override
+    public List<GameVersionListItem> getGameVersions(Long gameId) {
+        if (!isGameOwnedByPublisher(gameId)) {
+            throw new BadRequestException("Game with ID " + gameId + " does not exist or is not owned by the publisher.");
+        }
+        return gameVersionRepository.findGameVersionItemsByGameId(gameId);
     }
 
     private long getPublisherIdFromClaims() {
