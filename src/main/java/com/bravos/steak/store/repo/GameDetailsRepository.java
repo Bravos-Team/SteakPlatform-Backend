@@ -1,5 +1,6 @@
 package com.bravos.steak.store.repo;
 
+import com.bravos.steak.dev.model.GameThumbnail;
 import com.bravos.steak.store.entity.details.GameDetails;
 import com.bravos.steak.store.repo.injection.CartGameInfo;
 import org.springframework.data.mongodb.repository.MongoRepository;
@@ -14,6 +15,9 @@ public interface GameDetailsRepository extends MongoRepository<GameDetails,Long>
 
     @Query(value = "{ 'id' : {$in: ?0} }", fields = "{ 'id' : 1, 'title' : 1, 'thumbnail' : 1}")
     List<GameDetails> findForLibraryByIdIn(List<Long> gameIds);
+
+    @Query(value = "{ 'id' : {$in: ?0} }", fields = "{ 'id' : 1, 'thumbnail' : 1}")
+    List<GameThumbnail> findThumbnailsByIdIn(List<Long> gameIds);
 
     List<CartGameInfo> findByIdIn(Collection<Long> ids);
 

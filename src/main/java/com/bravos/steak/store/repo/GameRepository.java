@@ -4,12 +4,12 @@ import com.bravos.steak.store.entity.Game;
 import com.bravos.steak.store.model.enums.GameStatus;
 import com.bravos.steak.store.repo.injection.GameIdStatusPrice;
 import com.bravos.steak.store.repo.injection.GamePrice;
-import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,4 +35,24 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
     @Query("SELECT g FROM Game g WHERE g.id = :id AND g.status = 0 AND g.releaseDate <= :currentTime")
     Optional<Game> findAvailableGameById(@Param("id") Long id, @Param("currentTime") Long currentTime);
 
+    @Transactional
+    @Modifying
+    @Query("update Game g set g.name = ?1, g.updatedAt = ?2 where g.id = ?3")
+    int updateNameAndUpdatedAtById(String name, Long updatedAt, Long id);
+
+    @Transactional
+    @Modifying
+    @Query("update Game g set g.status = ?1, g.updatedAt = ?2 where g.id = ?3")
+    int updateStatusAndUpdatedAtById(GameStatus status, Long updatedAt, Long id);
+
+    @Transactional
+    @Modifying
+    @Query("update Game g set g.price = ?1, g.updatedAt = ?2 where g.id = ?3")
+    int updatePriceAndUpdatedAtById(BigDecimal price, Long updatedAt, Long id);
+
+    boolean existsByIdAndPublisherId(Long id, Long publisherId);
+
+    List<Game> findAllByPublisherId(Long publisherId, Pageable pageable);
+
+    List<Game> findAllByPublisherIdAndStatus(Long publisherId, GameStatus status, Pageable pageable);
 }

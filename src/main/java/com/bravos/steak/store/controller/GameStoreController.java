@@ -37,4 +37,14 @@ public class GameStoreController {
         return ResponseEntity.ok(gameService.getGameDownloadUrl(gameId));
     }
 
+    @GetMapping("/genres")
+    public ResponseEntity<?> getGameGenres() {
+        return ResponseEntity.ok(gameService.getAllGenres());
+    }
+
+    @GetMapping("/tags")
+    public ResponseEntity<?> getGameTags() {
+        return ResponseEntity.ok(gameService.getAllTags());
+    }
+
 }

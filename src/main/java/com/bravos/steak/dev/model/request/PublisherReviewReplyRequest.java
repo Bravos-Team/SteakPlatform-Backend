@@ -1,5 +1,6 @@
 package com.bravos.steak.dev.model.request;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 @Getter
@@ -9,6 +10,7 @@ import lombok.*;
 @Builder
 public class PublisherReviewReplyRequest {
 
+    @NotNull
     Long submissionId;
 
     String content;

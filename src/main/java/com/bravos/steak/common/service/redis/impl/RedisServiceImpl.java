@@ -2,12 +2,10 @@ package com.bravos.steak.common.service.redis.impl;
 
 import com.bravos.steak.common.model.RedisCacheEntry;
 import com.bravos.steak.common.service.redis.RedisService;
-import com.bravos.steak.common.service.webhook.DiscordWebhookService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionLikeType;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.support.NullValue;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -164,7 +162,44 @@ public class RedisServiceImpl implements RedisService {
                     }
                 }
             } catch (InterruptedException e) {
-                log.error("Error when waiting get cache");
+                log.error("Error when waiting get cache: {}", e.getMessage(), e);
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        try {
+            value = cacheEntry.getFallBackFunction().get();
+            this.save(key,value,cacheEntry.getKeyTimeout(),cacheEntry.getKeyTimeUnit());
+            return value;
+        } finally {
+            if (isLockAcquired) {
+                this.delete(lockKey);
+            }
+        }
+    }
+
+    @Override
+    public <T> Collection<T> getWithLock(RedisCacheEntry<Collection<T>> cacheEntry, CollectionLikeType type, Class<T> clazz) {
+        final String key = cacheEntry.getKey();
+        final String lockKey = "get-lock:" + key;
+        Collection<T> value = this.get(key, type, clazz);
+        if(value != null) return value;
+
+        boolean isLockAcquired = this.saveIfAbsent(lockKey,1,
+                cacheEntry.getLockTimeout(), cacheEntry.getLockTimeUnit());
+
+        if(!isLockAcquired) {
+            try {
+                for(int i = 0; i < cacheEntry.getRetryTime(); i++) {
+                    Thread.sleep(Duration.ofMillis(cacheEntry.getRetryWait()));
+                    value = this.get(key, type, clazz);
+                    if(value != null) {
+                        return value;
+                    }
+                }
+            } catch (InterruptedException e) {
+                log.error("Error when waiting get cache: {}", e.getMessage(), e);
+                Thread.currentThread().interrupt();
             }
         }
 

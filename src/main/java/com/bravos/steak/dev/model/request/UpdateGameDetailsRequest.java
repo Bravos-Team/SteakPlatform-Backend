@@ -1,23 +1,22 @@
-package com.bravos.steak.store.entity.details;
+package com.bravos.steak.dev.model.request;
 
-import com.mongodb.lang.NonNull;
-import jakarta.persistence.Id;
+import com.bravos.steak.store.entity.details.Media;
+import com.bravos.steak.store.entity.details.SystemRequirements;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
-import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.util.Set;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Document(collection = "GameDetails")
-public class GameDetails {
+public class UpdateGameDetailsRequest {
 
-    @Id
-    @NonNull
-    private Long id;
+    @NotNull
+    Long gameId;
 
-    @NonNull
     private String title;
 
     private String[] developerTeams;
@@ -38,7 +37,8 @@ public class GameDetails {
 
     private String[] languageSupported;
 
-    @NonNull
-    private Long updatedAt;
+    private Set<Integer> genres;
+
+    private Set<Integer> tags;
 
 }

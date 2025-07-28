@@ -1,6 +1,7 @@
 package com.bravos.steak.exceptions;
 
 import com.bravos.steak.common.service.webhook.DiscordWebhookService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -20,9 +21,11 @@ public class GlobalExceptionHandler {
 
     private static final String VALIDATE_ERROR_MESSAGE = "Invalid request parameters";
     private final DiscordWebhookService discordWebhookService;
+    private final HttpServletRequest httpServletRequest;
 
-    public GlobalExceptionHandler(DiscordWebhookService discordWebhookService) {
+    public GlobalExceptionHandler(DiscordWebhookService discordWebhookService, HttpServletRequest httpServletRequest) {
         this.discordWebhookService = discordWebhookService;
+        this.httpServletRequest = httpServletRequest;
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
@@ -60,7 +63,10 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ResponseEntity<ErrorResponse> handleInternalServerError(RuntimeException ex) {
         ErrorResponse errorResponse = new ErrorResponse(ex.getMessage());
-        discordWebhookService.sendError(ex.getMessage(), ex);
+        String uri = httpServletRequest.getRequestURI();
+        String method = httpServletRequest.getMethod();
+        String errorMessage = String.format("An unexpected error occurred while processing the request. URI: %s, Method: %s", uri, method);
+        discordWebhookService.sendError(errorMessage + ". " + ex.getMessage(), ex);
         return ResponseEntity.internalServerError().body(errorResponse);
     }
 

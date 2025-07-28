@@ -9,23 +9,25 @@ import com.bravos.steak.exceptions.ResourceNotFoundException;
 import com.bravos.steak.exceptions.UnauthorizeException;
 import com.bravos.steak.store.entity.Game;
 import com.bravos.steak.store.entity.GameVersion;
+import com.bravos.steak.store.entity.Genre;
+import com.bravos.steak.store.entity.Tag;
 import com.bravos.steak.store.entity.details.GameDetails;
 import com.bravos.steak.store.model.enums.GameStatus;
 import com.bravos.steak.store.model.response.CursorResponse;
 import com.bravos.steak.store.model.response.DownloadResponse;
 import com.bravos.steak.store.model.response.GameListItem;
 import com.bravos.steak.store.model.response.GameStoreDetail;
-import com.bravos.steak.store.repo.GameDetailsRepository;
-import com.bravos.steak.store.repo.GameRepository;
-import com.bravos.steak.store.repo.GameVersionRepository;
-import com.bravos.steak.store.repo.UserGameRepository;
+import com.bravos.steak.store.repo.*;
 import com.bravos.steak.store.repo.injection.CartGameInfo;
 import com.bravos.steak.store.service.DownloadGameService;
 import com.bravos.steak.store.service.GameService;
 import com.bravos.steak.store.specifications.GameSpecification;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.CollectionLikeType;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -33,6 +35,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @Service
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @RequiredArgsConstructor
@@ -45,6 +48,9 @@ public class GameServiceImpl implements GameService {
     private final SessionService sessionService;
     private final GameVersionRepository gameVersionRepository;
     private final DownloadGameService downloadGameService;
+    private final ObjectMapper objectMapper;
+    private final GenreRepository genreRepository;
+    private final TagRepository tagRepository;
 
     @Override
     public CursorResponse<GameListItem> getGameStoreList(Long cursor, int pageSize) {
@@ -148,6 +154,56 @@ public class GameServiceImpl implements GameService {
                 .checksum(gameVersion.getChecksum())
                 .build();
     }
+
+    @Override
+    public Set<Genre> getAllGenres() {
+        RedisCacheEntry<Collection<Genre>> cacheEntry = RedisCacheEntry.<Collection<Genre>>builder()
+                .key("allGenres")
+                .fallBackFunction(this::getAllGenresFromDatabase)
+                .keyTimeout(15)
+                .keyTimeUnit(TimeUnit.MINUTES)
+                .build();
+        CollectionLikeType type = objectMapper.getTypeFactory().constructCollectionLikeType(Set.class, Genre.class);
+        return new HashSet<>(redisService.getWithLock(cacheEntry, type, Genre.class));
+    }
+
+    @Override
+    public Set<Tag> getAllTags() {
+        RedisCacheEntry<Collection<Tag>> cacheEntry = RedisCacheEntry.<Collection<Tag>>builder()
+                .key("allTags")
+                .fallBackFunction(this::getAllTagsFromDatabase)
+                .keyTimeout(15)
+                .keyTimeUnit(TimeUnit.MINUTES)
+                .build();
+        CollectionLikeType type = objectMapper.getTypeFactory().constructCollectionLikeType(Set.class, Tag.class);
+        return new HashSet<>(redisService.getWithLock(cacheEntry, type, Tag.class));
+    }
+
+    @Override
+    public GameStoreDetail invalidateAndGetGameStoreDetails(Long gameId) {
+        String key = "game:store:detail:" + gameId;
+        redisService.delete(key);
+        return getGameStoreDetails(gameId);
+    }
+
+    private List<Genre> getAllGenresFromDatabase() {
+        try {
+            return genreRepository.findAll();
+        } catch (Exception e) {
+            log.error("Failed to fetch genres from database: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to fetch genres from database", e);
+        }
+    }
+
+    private List<Tag> getAllTagsFromDatabase() {
+        try {
+            return tagRepository.findAll();
+        } catch (Exception e) {
+            log.error("Failed to fetch tags from database: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to fetch tags from database", e);
+        }
+    }
+
 
     private GameStoreDetail getGameStoreDetailWithOwnedStatus(Long gameId, GameStoreDetail cachedDetail) {
         if(cachedDetail.getDetails() == null) {

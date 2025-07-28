@@ -191,6 +191,9 @@ table "game_version" {
   index "idx_version_game" {
     columns = [column.game_id]
   }
+  unique "version_game_name_key" {
+    columns = [column.game_id, column.name]
+  }
 }
 table "genre" {
   schema = schema.public

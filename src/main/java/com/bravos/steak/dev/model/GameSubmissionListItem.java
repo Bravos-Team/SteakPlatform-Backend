@@ -3,7 +3,6 @@ package com.bravos.steak.dev.model;
 import com.bravos.steak.dev.entity.gamesubmission.BuildInfo;
 import com.bravos.steak.dev.entity.gamesubmission.GameSubmissionStatus;
 import lombok.Value;
-import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.io.Serializable;
 

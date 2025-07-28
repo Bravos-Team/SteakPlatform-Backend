@@ -31,6 +31,8 @@ public interface RedisService {
 
     <T> T getWithLock(RedisCacheEntry<T> cacheEntry, Class<T> clazz);
 
+    <T> Collection<T> getWithLock(RedisCacheEntry<Collection<T>> cacheEntry, CollectionLikeType type, Class<T> clazz);
+
     Long increment(String key, long delta);
 
     Long decrement(String key, long delta);
