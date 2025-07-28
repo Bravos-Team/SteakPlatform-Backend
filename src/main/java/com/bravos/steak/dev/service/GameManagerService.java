@@ -5,7 +5,6 @@ import com.bravos.steak.dev.model.request.UpdateGameDetailsRequest;
 import com.bravos.steak.dev.model.request.UpdateVersionRequest;
 import com.bravos.steak.dev.model.response.GameVersionListItem;
 import com.bravos.steak.dev.model.response.PublisherGameListItem;
-import com.bravos.steak.store.entity.GameVersion;
 import com.bravos.steak.store.model.response.GameStoreDetail;
 
 import java.util.List;

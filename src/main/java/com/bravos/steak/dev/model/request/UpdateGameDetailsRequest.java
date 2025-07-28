@@ -19,7 +19,7 @@ public class UpdateGameDetailsRequest {
 
     private String title;
 
-    private String[] developersTeams;
+    private String[] developerTeams;
 
     private String[] regions;
 

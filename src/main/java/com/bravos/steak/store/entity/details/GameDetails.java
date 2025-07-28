@@ -20,7 +20,7 @@ public class GameDetails {
     @NonNull
     private String title;
 
-    private String[] developersTeams;
+    private String[] developerTeams;
 
     private String[] regions;
 
