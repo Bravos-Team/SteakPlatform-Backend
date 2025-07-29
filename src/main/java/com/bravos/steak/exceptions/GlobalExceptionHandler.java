@@ -10,6 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentConversionNotSupportedException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.Map;
@@ -34,6 +35,15 @@ public class GlobalExceptionHandler {
         String requiredType = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "unknown type";
         String errorMessage = String.format("Invalid value '%s' for parameter '%s'. Expected type: %s",
                 ex.getValue(), ex.getName(), requiredType);
+        ErrorResponse errorResponse = new ErrorResponse(errorMessage);
+        return ResponseEntity.badRequest().body(errorResponse);
+    }
+
+    @ExceptionHandler(MethodArgumentConversionNotSupportedException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<ErrorResponse> handleConversionNotSupported(MethodArgumentConversionNotSupportedException ex) {
+        String errorMessage = String.format("Conversion not supported for parameter '%s': %s",
+                ex.getParameter().getParameterName(), ex.getMessage());
         ErrorResponse errorResponse = new ErrorResponse(errorMessage);
         return ResponseEntity.badRequest().body(errorResponse);
     }

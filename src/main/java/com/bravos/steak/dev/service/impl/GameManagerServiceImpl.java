@@ -74,7 +74,7 @@ public class GameManagerServiceImpl implements GameManagerService {
         });
         Long gameId = (Long) changedData.remove("gameId");
 
-        if (isGameOwnedByPublisher(gameId)) {
+        if (!isGameOwnedByPublisher(gameId)) {
             throw new BadRequestException("Game with ID " + request.getGameId() + " does not exist or is not owned by the publisher.");
         }
 
@@ -176,7 +176,7 @@ public class GameManagerServiceImpl implements GameManagerService {
         if (price == null || price < 0 || price.isNaN() || price.isInfinite()) {
             throw new BadRequestException("Price must be a positive number.");
         }
-        if (isGameOwnedByPublisher(gameId)) {
+        if (!isGameOwnedByPublisher(gameId)) {
             throw new BadRequestException("Game with ID " + gameId + " does not exist or is not owned by the publisher.");
         }
         try {
