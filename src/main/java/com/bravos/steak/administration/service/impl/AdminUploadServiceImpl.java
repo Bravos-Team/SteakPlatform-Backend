@@ -15,6 +15,7 @@ import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 
 import java.time.Duration;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -110,7 +111,7 @@ public class AdminUploadServiceImpl implements AdminUploadService {
             Arrays.stream(deleteImageRequests)
                     .filter(request -> request != null && request.getUrl() != null)
                     .map(request -> extractObjectKey(request.getUrl()))
-                    .filter(objectKey -> objectKey != null)
+                    .filter(Objects::nonNull)
                     .forEach(this::deleteS3Object);
         });
     }
