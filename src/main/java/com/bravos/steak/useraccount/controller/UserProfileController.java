@@ -24,7 +24,7 @@ public class UserProfileController {
     }
 
     @PostMapping("/update")
-    public ResponseEntity<?> updateUserProfile(UserProfile userProfile) {
+    public ResponseEntity<?> updateUserProfile(@RequestBody UserProfile userProfile) {
         UserProfile updatedProfile = userProfileService.updateUserProfile(userProfile);
         return ResponseEntity.ok(updatedProfile);
     }
