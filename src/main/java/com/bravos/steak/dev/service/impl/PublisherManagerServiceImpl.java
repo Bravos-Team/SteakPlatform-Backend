@@ -1,5 +1,6 @@
 package com.bravos.steak.dev.service.impl;
 
+import com.bravos.steak.common.security.JwtAuthentication;
 import com.bravos.steak.common.security.JwtTokenClaims;
 import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.common.service.helper.DateTimeHelper;
@@ -21,6 +22,7 @@ import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -548,6 +550,9 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
 
     @Override
     public Publisher getCurrentPublisher() {
+        if(!(SecurityContextHolder.getContext().getAuthentication() instanceof JwtAuthentication)) {
+            throw new UnauthorizeException("You need to login as a publisher to access this resource.");
+        }
         JwtTokenClaims claims = (JwtTokenClaims) sessionService.getAuthentication().getDetails();
         Long publisherId = (Long) claims.getOtherClaims().get("publisherId");
         if (publisherId == null) {
