@@ -9,12 +9,12 @@ import com.bravos.steak.dev.entity.*;
 import com.bravos.steak.dev.model.request.CreateCustomRoleRequest;
 import com.bravos.steak.dev.model.request.CreatePublisherAccountRequest;
 import com.bravos.steak.dev.model.response.*;
-import com.bravos.steak.dev.repo.PublisherAccountRepository;
-import com.bravos.steak.dev.repo.PublisherPermissionGroupRepository;
-import com.bravos.steak.dev.repo.PublisherPermissionRepository;
-import com.bravos.steak.dev.repo.PublisherRoleRepository;
+import com.bravos.steak.dev.repo.*;
 import com.bravos.steak.dev.service.PublisherManagerService;
 import com.bravos.steak.exceptions.BadRequestException;
+import com.bravos.steak.exceptions.ForbiddenException;
+import com.bravos.steak.exceptions.ResourceNotFoundException;
+import com.bravos.steak.exceptions.UnauthorizeException;
 import com.bravos.steak.useraccount.model.enums.AccountStatus;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
@@ -43,6 +43,7 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
     private final PublisherPermission masterPermission;
     private final ObjectMapper objectMapper;
     private final PublisherPermissionGroupRepository publisherPermissionGroupRepository;
+    private final PublisherRepository publisherRepository;
 
     public PublisherManagerServiceImpl(PublisherAccountRepository publisherAccountRepository,
                                        SessionService sessionService, SnowflakeGenerator snowflakeGenerator,
@@ -51,7 +52,7 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
                                        RedisService redisService,
                                        PublisherPermissionRepository publisherPermissionRepository,
                                        ObjectMapper objectMapper,
-                                       PublisherPermissionGroupRepository publisherPermissionGroupRepository) {
+                                       PublisherPermissionGroupRepository publisherPermissionGroupRepository, PublisherRepository publisherRepository) {
         this.publisherAccountRepository = publisherAccountRepository;
         this.sessionService = sessionService;
         this.snowflakeGenerator = snowflakeGenerator;
@@ -65,6 +66,7 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
                 new RuntimeException("Master permission not found. Please create a master permission first."));
         this.objectMapper = objectMapper;
         this.publisherPermissionGroupRepository = publisherPermissionGroupRepository;
+        this.publisherRepository = publisherRepository;
     }
 
     @Override
@@ -536,6 +538,23 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
             log.error("Failed to delete account: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to delete account: " + e.getMessage(), e);
         }
+    }
+
+    @Override
+    public Publisher getPublisherById(Long publisherId) {
+        return publisherRepository.findById(publisherId).orElseThrow(() ->
+                new ResourceNotFoundException("Publisher not found for ID: " + publisherId));
+    }
+
+    @Override
+    public Publisher getCurrentPublisher() {
+        JwtTokenClaims claims = (JwtTokenClaims) sessionService.getAuthentication().getDetails();
+        Long publisherId = (Long) claims.getOtherClaims().get("publisherId");
+        if (publisherId == null) {
+            throw new UnauthorizeException("You need to login as a publisher to access this resource.");
+        }
+        return publisherRepository.findById(publisherId)
+                .orElseThrow(() -> new ResourceNotFoundException("Publisher not found for ID: " + publisherId));
     }
 
     private void invalidatePublisherAccountToken(List<Long> accountIds) {

@@ -18,4 +18,5 @@ public class GameSubmissionListItem implements Serializable {
     BuildInfo buildInfo;
     GameSubmissionStatus status;
     Long updatedAt;
+    Long estimatedReleaseDate;
 }

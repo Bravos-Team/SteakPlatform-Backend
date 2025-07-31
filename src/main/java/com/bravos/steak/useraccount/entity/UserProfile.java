@@ -25,4 +25,6 @@ public class UserProfile {
 
     private String avatarUrl;
 
+    private String bio;
+
 }
