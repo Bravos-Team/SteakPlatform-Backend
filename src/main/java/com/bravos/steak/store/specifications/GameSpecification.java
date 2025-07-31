@@ -1,5 +1,6 @@
 package com.bravos.steak.store.specifications;
 
+import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.store.entity.Game;
 import com.bravos.steak.store.model.enums.GameStatus;
 import jakarta.persistence.criteria.Predicate;
@@ -16,8 +17,9 @@ public class GameSpecification {
                 query = cb.createQuery();
             }
             List<Predicate> predicates = new ArrayList<>(2);
+            long currentTime = DateTimeHelper.currentTimeMillis();
             if (cursor != null) {
-                predicates.add(cb.lessThan(root.get("releaseDate"), cursor));
+                predicates.add(cb.lessThan(root.get("releaseDate"), cursor > currentTime ? currentTime : cursor));
             }
             query.orderBy(cb.desc(root.get("releaseDate")));
             predicates.add(cb.equal(root.get("status"), GameStatus.OPENING));

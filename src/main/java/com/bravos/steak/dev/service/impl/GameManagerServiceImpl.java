@@ -17,6 +17,7 @@ import com.bravos.steak.store.entity.Game;
 import com.bravos.steak.store.entity.GameVersion;
 import com.bravos.steak.store.entity.Genre;
 import com.bravos.steak.store.entity.Tag;
+import com.bravos.steak.store.entity.details.GameDetails;
 import com.bravos.steak.store.model.enums.GameStatus;
 import com.bravos.steak.store.model.enums.VersionStatus;
 import com.bravos.steak.store.model.response.GameStoreDetail;
@@ -78,24 +79,13 @@ public class GameManagerServiceImpl implements GameManagerService {
             throw new BadRequestException("Game with ID " + request.getGameId() + " does not exist or is not owned by the publisher.");
         }
 
-        Set<Integer> genreIds = (Set<Integer>) changedData.remove("genres");
-        Set<Integer> tagIds = (Set<Integer>) changedData.remove("tags");
+        changedData.remove("genres");
+        changedData.remove("tags");
 
-        Update update = new Update();
-        changedData.forEach((key, value) -> {
-            if (value != null) {
-                update.set(key, value);
-            }
-        });
+        Set<Integer> genreIds = request.getGenres();
+        Set<Integer> tagIds = request.getTags();
 
-        update.set("updatedAt", DateTimeHelper.currentTimeMillis());
-
-        try {
-            mongoTemplate.updateFirst(Query.query(Criteria.where("id").is(gameId)), update, "gameDetails");
-        } catch (Exception e) {
-            log.error("Failed to update game details for game ID {}: {}", gameId, e.getMessage(), e);
-            throw new RuntimeException("Failed to update game details for game ID " + gameId, e);
-        }
+        this.updateGameDetailsDocument(gameId, changedData);
 
         Game game = null;
         if (genreIds != null && !genreIds.isEmpty()) {
@@ -112,9 +102,9 @@ public class GameManagerServiceImpl implements GameManagerService {
             Set<Tag> tags = new HashSet<>(tagRepository.findAllById(tagIds));
             game.setTags(tags);
         }
+
         if (request.getTitle() != null && !request.getTitle().isEmpty()) {
             if (game == null) {
-
                 try {
                     gameRepository.updateNameAndUpdatedAtById(
                             request.getTitle(), DateTimeHelper.currentTimeMillis(), gameId
@@ -122,7 +112,6 @@ public class GameManagerServiceImpl implements GameManagerService {
                 } catch (Exception e) {
                     throw new RuntimeException("Failed to update game name for game ID " + gameId, e);
                 }
-
             } else {
                 game.setName(request.getTitle());
             }
@@ -139,6 +128,23 @@ public class GameManagerServiceImpl implements GameManagerService {
 
         }
         return gameService.invalidateAndGetGameStoreDetails(gameId);
+    }
+
+    private void updateGameDetailsDocument(Long gameId, Map<String, Object> changedData) {
+        Update update = new Update();
+        changedData.forEach((key, value) -> {
+            if (value != null) {
+                update.set(key, value);
+            }
+        });
+        update.set("updatedAt", DateTimeHelper.currentTimeMillis());
+
+        try {
+            mongoTemplate.updateFirst(Query.query(Criteria.where("id").is(gameId)), update, GameDetails.class);
+        } catch (Exception e) {
+            log.error("Failed to update game details for game ID {}: {}", gameId, e.getMessage(), e);
+            throw new RuntimeException("Failed to update game details for game ID " + gameId, e);
+        }
     }
 
     @Override

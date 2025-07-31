@@ -21,7 +21,7 @@ import java.util.concurrent.Executors;
 public class DiscordWebhookServiceImpl implements DiscordWebhookService {
 
     private final WebClient discordWebhookClient;
-    private final ExecutorService executorService = Executors.newFixedThreadPool(3);
+    private final ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
 
     public DiscordWebhookServiceImpl(WebClient discordWebhookClient) {
         this.discordWebhookClient = discordWebhookClient;
