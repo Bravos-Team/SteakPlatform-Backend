@@ -1,9 +1,11 @@
 package com.bravos.steak.store.repo;
 
+import com.bravos.steak.administration.model.response.GameListItem;
 import com.bravos.steak.store.entity.Game;
 import com.bravos.steak.store.model.enums.GameStatus;
 import com.bravos.steak.store.repo.injection.GameIdStatusPrice;
 import com.bravos.steak.store.repo.injection.GamePrice;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
@@ -55,4 +57,17 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
     List<Game> findAllByPublisherId(Long publisherId, Pageable pageable);
 
     List<Game> findAllByPublisherIdAndStatus(Long publisherId, GameStatus status, Pageable pageable);
+
+    @Query("SELECT new com.bravos.steak.administration.model.response.GameListItem(g.id, g.name, g.publisher.id, g.publisher.name, g.releaseDate, g.status) " +
+            "FROM Game g ")
+    Page<GameListItem> getAllGames(Pageable pageable);
+
+    @Query("SELECT new com.bravos.steak.administration.model.response.GameListItem(g.id, g.name, g.publisher.id, g.publisher.name, g.releaseDate, g.status) " +
+            "FROM Game g WHERE LOWER(g.name) LIKE LOWER(CONCAT('%', :query, '%'))")
+    Page<GameListItem> findByNameContainingIgnoreCase(String name, Pageable pageable);
+
+    @Transactional
+    @Modifying
+    @Query("update Game g set g.status = ?1 where g.id = ?2")
+    void updateStatusById(GameStatus status, Long id);
 }

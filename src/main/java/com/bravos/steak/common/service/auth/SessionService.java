@@ -25,4 +25,9 @@ public interface SessionService {
     Cookie getCookie(String name);
 
     void addCookie(ResponseCookie cookie);
+
+    void invalidateToken(Long id);
+
+    boolean isInvalidToken(Long id, Long iat);
+
 }

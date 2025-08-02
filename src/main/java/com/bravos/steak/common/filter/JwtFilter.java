@@ -66,7 +66,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         if(tokenClaims == null ||
                 sessionService.isTokenBlacklisted(tokenClaims.getJti()) ||
-                isLockByChangeRole(tokenClaims)) {
+                isLockByChangeRole(tokenClaims) || sessionService.isInvalidToken(tokenClaims.getId(), tokenClaims.getIat())) {
             filterChain.doFilter(request,response);
             return;
         }

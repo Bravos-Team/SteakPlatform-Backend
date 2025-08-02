@@ -4,6 +4,7 @@ import com.bravos.steak.administration.repo.AdminRefreshTokenRepository;
 import com.bravos.steak.common.security.JwtAuthentication;
 import com.bravos.steak.common.security.JwtTokenClaims;
 import com.bravos.steak.common.service.auth.SessionService;
+import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.common.service.redis.RedisService;
 import com.bravos.steak.common.service.webhook.DiscordWebhookService;
 import com.bravos.steak.dev.repo.PublisherRefreshTokenRepository;
@@ -136,6 +137,20 @@ public class SessionServiceImpl implements SessionService {
         if (cookie != null) {
             httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         }
+    }
+
+    @Override
+    public void invalidateToken(Long id) {
+        String key = "invalid:" + id;
+        redisService.save(key, DateTimeHelper.currentTimeMillis(), 31, TimeUnit.MINUTES);
+    }
+
+    @Override
+    public boolean isInvalidToken(Long id, Long iat) {
+        if (iat == null) return false;
+        String key = "invalid:" + id;
+        Long invalidTime = redisService.get(key, Long.class);
+        return invalidTime != null && iat <= invalidTime;
     }
 
 }
