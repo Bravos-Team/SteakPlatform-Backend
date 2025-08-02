@@ -40,7 +40,7 @@ public class AdminUserController {
         return ResponseEntity.ok(count);
     }
 
-    @PostMapping("update-status/{userId}")
+    @PostMapping("/{userId}/status")
     @HasAuthority({AdminAuthority.MANAGE_USERS})
     public ResponseEntity<?> updateUserStatus(@PathVariable Long userId,
                                               @RequestParam String status) {

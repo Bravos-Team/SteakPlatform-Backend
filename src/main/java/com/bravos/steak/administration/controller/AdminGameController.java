@@ -40,6 +40,6 @@ public class AdminGameController {
             @PathVariable Long gameId,
             @RequestParam String status) {
         adminGameService.updateGameStatus(gameId, status);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok().build();
     }
 }
