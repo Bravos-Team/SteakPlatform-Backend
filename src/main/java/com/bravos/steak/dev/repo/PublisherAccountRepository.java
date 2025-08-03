@@ -10,6 +10,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.lang.ScopedValue;
+import java.util.Optional;
+
 @Repository
 public interface PublisherAccountRepository extends JpaRepository<PublisherAccount,Long> {
 
@@ -50,4 +53,5 @@ public interface PublisherAccountRepository extends JpaRepository<PublisherAccou
                                                     @Param("publisherId") Long publisherId,
                                                     Pageable pageable);
 
+    Optional<PublisherAccount> findByIdAndPublisherId(Long id, Long publisherId);
 }
