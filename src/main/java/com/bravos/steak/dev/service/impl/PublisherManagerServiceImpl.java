@@ -1,5 +1,6 @@
 package com.bravos.steak.dev.service.impl;
 
+import com.bravos.steak.common.model.RedisCacheEntry;
 import com.bravos.steak.common.security.JwtAuthentication;
 import com.bravos.steak.common.security.JwtTokenClaims;
 import com.bravos.steak.common.service.auth.SessionService;
@@ -53,7 +54,8 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
                                        RedisService redisService,
                                        PublisherPermissionRepository publisherPermissionRepository,
                                        ObjectMapper objectMapper,
-                                       PublisherPermissionGroupRepository publisherPermissionGroupRepository, PublisherRepository publisherRepository) {
+                                       PublisherPermissionGroupRepository publisherPermissionGroupRepository,
+                                       PublisherRepository publisherRepository) {
         this.publisherAccountRepository = publisherAccountRepository;
         this.sessionService = sessionService;
         this.snowflakeGenerator = snowflakeGenerator;
@@ -112,36 +114,43 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
     @Override
     public List<GroupPermissionItem> getPublisherPermissions() {
         String key = "publisher_permissions";
-        List<GroupPermissionItem> items;
-        Object cacheItem = redisService.get(key, List.class);
-        if (cacheItem != null) {
-            items = objectMapper.convertValue(cacheItem,
-                    objectMapper.getTypeFactory()
-                            .constructCollectionLikeType(List.class, GroupPermissionItem.class));
-        } else {
-            List<PublisherPermissionGroup> groups = publisherPermissionGroupRepository.findAllAndDetails();
-            items = groups.stream()
-                    .map(group -> GroupPermissionItem.builder()
-                            .id(group.getId())
-                            .name(group.getName())
-                            .description(group.getDescription())
-                            .permissions(group.getPublisherPermissionList().stream()
-                                    .map(permission -> PublisherPermissionListItem.builder()
-                                            .id(permission.getId())
-                                            .name(permission.getName())
-                                            .description(permission.getDescription())
-                                            .build())
-                                    .toList())
-                            .build())
-                    .toList();
+        Object groupPermissionItemsList = redisService.get(key, List.class);
+        if (groupPermissionItemsList == null) {
+            RedisCacheEntry<Object> cacheEntry = RedisCacheEntry.builder()
+                    .key(key)
+                    .fallBackFunction(this::getPublisherPermissionsFromDb)
+                    .keyTimeout(60)
+                    .keyTimeUnit(TimeUnit.MINUTES)
+                    .lockTimeout(3000)
+                    .lockTimeUnit(TimeUnit.MILLISECONDS)
+                    .retryTime(3)
+                    .build();
+            groupPermissionItemsList = redisService.getWithLock(cacheEntry, Object.class);
+        }
+        return objectMapper.convertValue(groupPermissionItemsList,
+                objectMapper.getTypeFactory()
+                        .constructCollectionLikeType(List.class, GroupPermissionItem.class));
+    }
 
-            redisService.save(key, items, 2, TimeUnit.HOURS);
+    private List<GroupPermissionItem> getPublisherPermissionsFromDb() {
+        List<PublisherPermissionGroup> groups = new ArrayList<>(publisherPermissionGroupRepository.findAllAndDetails());
+        if(!groups.isEmpty()) {
+            groups.removeIf(group -> group.getName().equalsIgnoreCase("Master"));
         }
-        JwtTokenClaims claims = (JwtTokenClaims) sessionService.getAuthentication().getDetails();
-        if(!claims.getAuthorities().contains("PUBLISHER_MASTER") && !items.isEmpty()) {
-            items.removeFirst();
-        }
-        return items;
+        return groups.stream()
+                .map(group -> GroupPermissionItem.builder()
+                        .id(group.getId())
+                        .name(group.getName())
+                        .description(group.getDescription())
+                        .permissions(group.getPublisherPermissionList().stream()
+                                .map(permission -> PublisherPermissionListItem.builder()
+                                        .id(permission.getId())
+                                        .name(permission.getName())
+                                        .description(permission.getDescription())
+                                        .build())
+                                .toList())
+                        .build())
+                .toList();
     }
 
     @Override
@@ -150,6 +159,7 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
         long publisherId = (long) claims.getOtherClaims().get("publisherId");
         List<PublisherRole> myCustomRoles = publisherRoleRepository.findAllByPublisherId(publisherId);
         if (myCustomRoles != null && !myCustomRoles.isEmpty()) {
+            myCustomRoles.add(masterRole);
             return myCustomRoles.stream()
                     .map(role -> RoleListItem.builder()
                             .id(role.getId())
@@ -159,7 +169,12 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
                             .build())
                     .toList();
         }
-        return List.of();
+        return List.of(RoleListItem.builder()
+                .id(masterRole.getId())
+                .name(masterRole.getName())
+                .description(masterRole.getDescription())
+                .active(masterRole.getActive())
+                .build());
     }
 
     @Override
@@ -332,11 +347,12 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
         if(role.getId().equals(masterRole.getId())) {
             throw new BadRequestException("You cannot update master role.");
         }
-        if (publisherRoleRepository.existsByNameAndPublisherId(request.getName(), publisherId)) {
+        if (!role.getName().equalsIgnoreCase(request.getName()) &&
+                publisherRoleRepository.existsByNameAndPublisherId(request.getName(), publisherId)) {
             throw new BadRequestException("Role with this name already exists.");
         }
-        Set<PublisherPermission> permissions = publisherPermissionRepository.findAllByIdIn(
-                List.of(request.getPermissionIds()));
+
+        Set<PublisherPermission> permissions = publisherPermissionRepository.findAllByIdIn(List.of(request.getPermissionIds()));
         if(permissions.contains(masterPermission)) {
             throw new BadRequestException("You cannot assign master permission to a custom role.");
         }
@@ -392,17 +408,23 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
     @Override
     @Transactional
     public void changeRoleStatus(Long roleId, Boolean isActive) {
-        PublisherRole role = publisherRoleRepository.findById(roleId)
-                .orElseThrow(() -> new BadRequestException("Role not found for ID: " + roleId));
+        if(roleId == null || isActive == null) {
+            throw new BadRequestException("Role ID and status cannot be null.");
+        }
+
         JwtTokenClaims claims = (JwtTokenClaims) sessionService.getAuthentication().getDetails();
         long publisherId = (long) claims.getOtherClaims().get("publisherId");
+
+        PublisherRole role = publisherRoleRepository.findAvailableRoleByIdAndPublisherId(roleId,publisherId);
+        if (role == null) {
+            throw new BadRequestException("Role not found or not available for this publisher.");
+        }
+
         if(role.getPublisher().getId() == null) {
             throw new BadRequestException("You cannot change status default roles.");
         }
-        if(!role.getPublisher().getId().equals(publisherId)) {
-            throw new BadRequestException("You cannot change status of roles that are not created by you.");
-        }
-        if (isActive == null || isActive.equals(role.getActive())) {
+
+        if (!isActive.equals(role.getActive())) {
             try {
                 invalidatePublisherAccountToken(role.getAssignedAccounts().stream()
                         .map(PublisherAccount::getId)
@@ -411,7 +433,9 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
                 log.error("Failed to invalidate account tokens: {}", e.getMessage(), e);
                 throw new RuntimeException("Failed to invalidate account tokens: " + e.getMessage(), e);
             }
+
             role.setActive(isActive);
+
             try {
                 publisherRoleRepository.saveAndFlush(role);
             } catch (Exception e) {
@@ -424,18 +448,19 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
     @Override
     @Transactional
     public void removeAccountFromRole(Long roleId, Long accountId) {
+        if(roleId == null || accountId == null) {
+            throw new BadRequestException("Role ID and account ID cannot be null.");
+        }
+
         if(roleId.equals(masterRole.getId())) {
             throw new BadRequestException("You cannot remove account from master role.");
         }
         JwtTokenClaims claims = (JwtTokenClaims) sessionService.getAuthentication().getDetails();
         long publisherId = (long) claims.getOtherClaims().get("publisherId");
         long userId = claims.getId();
-        PublisherAccount account = publisherAccountRepository.findById(accountId)
+        PublisherAccount account = publisherAccountRepository.findByIdAndPublisherId(accountId,publisherId)
                 .orElseThrow(() -> new BadRequestException("Publisher account not found for ID: " + accountId));
 
-        if (!account.getPublisher().getId().equals(publisherId)) {
-            throw new BadRequestException("You cannot remove roles from accounts that are not created by you.");
-        }
         if (account.getId().equals(userId)) {
             throw new BadRequestException("You cannot remove roles from your own account. " +
                     "Please contact support for assistance.");
@@ -465,21 +490,24 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
     @Override
     @Transactional
     public void assignAccountToRole(Long roleId, Long accountId) {
+        if(roleId == null || accountId == null) {
+            throw new BadRequestException("Role ID and account ID cannot be null.");
+        }
+
+        JwtTokenClaims claims = (JwtTokenClaims) sessionService.getAuthentication().getDetails();
+        long publisherId = (long) claims.getOtherClaims().get("publisherId");
+        PublisherAccount account = publisherAccountRepository.findByIdAndPublisherId(accountId, publisherId)
+                .orElseThrow(() -> new BadRequestException("Publisher account not found for ID: " + accountId));
+
         if(roleId.equals(masterRole.getId())) {
-            JwtTokenClaims claims = (JwtTokenClaims) sessionService.getAuthentication().getDetails();
             if(!claims.getAuthorities().contains("PUBLISHER_MASTER")) {
                 throw new BadRequestException("You do not have permission to assign accounts to the master role.");
             }
         }
-        JwtTokenClaims claims = (JwtTokenClaims) sessionService.getAuthentication().getDetails();
-        long publisherId = (long) claims.getOtherClaims().get("publisherId");
-        PublisherAccount account = publisherAccountRepository.findById(accountId)
-                .orElseThrow(() -> new BadRequestException("Publisher account not found for ID: " + accountId));
-        if (!account.getPublisher().getId().equals(publisherId)) {
-            throw new BadRequestException("You cannot assign roles to accounts that are not created by you.");
-        }
+
         PublisherRole role = publisherRoleRepository
                 .findAvailableRoleByIdAndPublisherId(roleId, account.getPublisher().getId());
+
         if (role == null) {
             throw new BadRequestException("Role not found or not available for this publisher.");
         }
@@ -503,24 +531,27 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
     @Override
     @Transactional
     public void deleteAccount(Long accountId) {
-        PublisherAccount account = publisherAccountRepository.findById(accountId)
-                .orElseThrow(() -> new BadRequestException("Publisher account not found for ID: " + accountId));
-        if (account.getRoles().stream().anyMatch(role -> role.getId().equals(masterRole.getId()))) {
-            throw new BadRequestException("You cannot delete an account that has the master role assigned.");
+        if (accountId == null) {
+            throw new BadRequestException("Account ID cannot be null.");
         }
 
         JwtTokenClaims claims = (JwtTokenClaims) sessionService.getAuthentication().getDetails();
         long publisherId = (long) claims.getOtherClaims().get("publisherId");
         long userId = claims.getId();
-        if (!account.getPublisher().getId().equals(publisherId)) {
-            throw new BadRequestException("You cannot delete an account that is not created by you.");
-        }
+
+        PublisherAccount account = publisherAccountRepository.findByIdAndPublisherId(accountId, publisherId)
+                .orElseThrow(() -> new BadRequestException("Publisher account not found for ID: " + accountId));
+
         if (account.getStatus() == AccountStatus.DELETED) {
             throw new BadRequestException("Account is already deleted.");
         }
+
         if (account.getId().equals(userId)) {
-            throw new BadRequestException("You cannot delete your own account." +
-                    " Please contact support for assistance.");
+            throw new BadRequestException("You cannot delete your own account. Please contact support for assistance.");
+        }
+
+        if (account.getRoles().stream().anyMatch(role -> role.getId().equals(masterRole.getId()))) {
+            throw new BadRequestException("You cannot delete an account that has the master role assigned.");
         }
 
         try {

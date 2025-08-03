@@ -1,11 +1,11 @@
 package com.bravos.steak.store.entity;
 
 import jakarta.persistence.Embeddable;
-import java.io.Serializable;
-import java.util.Objects;
-
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+
+import java.io.Serializable;
+import java.util.Objects;
 
 import static lombok.AccessLevel.PRIVATE;
 

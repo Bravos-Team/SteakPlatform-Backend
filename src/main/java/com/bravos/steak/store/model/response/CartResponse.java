@@ -1,9 +1,10 @@
 package com.bravos.steak.store.model.response;
 
-import java.util.List;
-
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.experimental.FieldDefaults;
+
+import java.util.List;
 
 import static lombok.AccessLevel.PRIVATE;
 

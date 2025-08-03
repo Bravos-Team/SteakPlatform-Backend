@@ -21,12 +21,12 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/v1/dev/project")
 @PublisherController
-public class PublisherPublishGameController {
+public class PublisherProjectController {
 
     private final GameSubmissionService gameSubmissionService;
     private final SessionService sessionService;
 
-    public PublisherPublishGameController(GameSubmissionService gameSubmissionService, SessionService sessionService) {
+    public PublisherProjectController(GameSubmissionService gameSubmissionService, SessionService sessionService) {
         this.gameSubmissionService = gameSubmissionService;
         this.sessionService = sessionService;
     }

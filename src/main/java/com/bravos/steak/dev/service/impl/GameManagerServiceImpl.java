@@ -1,8 +1,10 @@
 package com.bravos.steak.dev.service.impl;
 
+import com.bravos.steak.common.model.RedisCacheEntry;
 import com.bravos.steak.common.security.JwtTokenClaims;
 import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.common.service.helper.DateTimeHelper;
+import com.bravos.steak.common.service.redis.RedisService;
 import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
 import com.bravos.steak.dev.model.GameThumbnail;
 import com.bravos.steak.dev.model.request.CreateNewVersionRequest;
@@ -20,6 +22,7 @@ import com.bravos.steak.store.entity.Tag;
 import com.bravos.steak.store.entity.details.GameDetails;
 import com.bravos.steak.store.model.enums.GameStatus;
 import com.bravos.steak.store.model.enums.VersionStatus;
+import com.bravos.steak.store.model.response.FullGameDetails;
 import com.bravos.steak.store.model.response.GameStoreDetail;
 import com.bravos.steak.store.repo.*;
 import com.bravos.steak.store.service.GameService;
@@ -36,6 +39,7 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -51,11 +55,12 @@ public class GameManagerServiceImpl implements GameManagerService {
     private final GameDetailsRepository gameDetailsRepository;
     private final SnowflakeGenerator snowflakeGenerator;
     private final GameVersionRepository gameVersionRepository;
+    private final RedisService redisService;
 
     public GameManagerServiceImpl(ObjectMapper objectMapper, MongoTemplate mongoTemplate, GameRepository gameRepository,
                                   GenreRepository genreRepository, TagRepository tagRepository, SessionService sessionService,
                                   GameService gameService, GameDetailsRepository gameDetailsRepository, SnowflakeGenerator snowflakeGenerator,
-                                  GameVersionRepository gameVersionRepository) {
+                                  GameVersionRepository gameVersionRepository, RedisService redisService) {
         this.objectMapper = objectMapper;
         this.mongoTemplate = mongoTemplate;
         this.gameRepository = gameRepository;
@@ -66,68 +71,75 @@ public class GameManagerServiceImpl implements GameManagerService {
         this.gameDetailsRepository = gameDetailsRepository;
         this.snowflakeGenerator = snowflakeGenerator;
         this.gameVersionRepository = gameVersionRepository;
+        this.redisService = redisService;
     }
 
     @Override
     @Transactional
     public GameStoreDetail updateGameDetails(UpdateGameDetailsRequest request) {
-        Map<String, Object> changedData = objectMapper.convertValue(request, new TypeReference<>() {
-        });
-        Long gameId = (Long) changedData.remove("gameId");
+        try {
+            Map<String, Object> changedData = objectMapper.convertValue(request, new TypeReference<>() {
+            });
+            Long gameId = (Long) changedData.remove("gameId");
 
-        if (!isGameOwnedByPublisher(gameId)) {
-            throw new BadRequestException("Game with ID " + request.getGameId() + " does not exist or is not owned by the publisher.");
-        }
+            if (isGameNotOwnedByPublisher(gameId)) {
+                throw new BadRequestException("Game with ID " + request.getGameId() + " does not exist or is not owned by the publisher.");
+            }
 
-        changedData.remove("genres");
-        changedData.remove("tags");
+            changedData.remove("genres");
+            changedData.remove("tags");
 
-        Set<Integer> genreIds = request.getGenres();
-        Set<Integer> tagIds = request.getTags();
+            Set<Integer> genreIds = request.getGenres();
+            Set<Integer> tagIds = request.getTags();
 
-        this.updateGameDetailsDocument(gameId, changedData);
+            this.updateGameDetailsDocument(gameId, changedData);
 
-        Game game = null;
-        if (genreIds != null && !genreIds.isEmpty()) {
-            game = gameRepository.findById(gameId)
-                    .orElseThrow(() -> new BadRequestException("Game with ID " + gameId + " does not exist."));
-            Set<Genre> genres = new HashSet<>(genreRepository.findAllById(genreIds));
-            game.setGenres(genres);
-        }
-        if (tagIds != null && !tagIds.isEmpty()) {
-            if (game == null) {
+            Game game = null;
+            if (genreIds != null && !genreIds.isEmpty()) {
                 game = gameRepository.findById(gameId)
                         .orElseThrow(() -> new BadRequestException("Game with ID " + gameId + " does not exist."));
+                Set<Genre> genres = new HashSet<>(genreRepository.findAllById(genreIds));
+                game.setGenres(genres);
             }
-            Set<Tag> tags = new HashSet<>(tagRepository.findAllById(tagIds));
-            game.setTags(tags);
-        }
-
-        if (request.getTitle() != null && !request.getTitle().isEmpty()) {
-            if (game == null) {
-                try {
-                    gameRepository.updateNameAndUpdatedAtById(
-                            request.getTitle(), DateTimeHelper.currentTimeMillis(), gameId
-                    );
-                } catch (Exception e) {
-                    throw new RuntimeException("Failed to update game name for game ID " + gameId, e);
+            if (tagIds != null && !tagIds.isEmpty()) {
+                if (game == null) {
+                    game = gameRepository.findById(gameId)
+                            .orElseThrow(() -> new BadRequestException("Game with ID " + gameId + " does not exist."));
                 }
-            } else {
-                game.setName(request.getTitle());
-            }
-        }
-        if (game != null) {
-
-            game.setUpdatedAt(DateTimeHelper.currentTimeMillis());
-
-            try {
-                gameRepository.saveAndFlush(game);
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to save game with ID " + gameId, e);
+                Set<Tag> tags = new HashSet<>(tagRepository.findAllById(tagIds));
+                game.setTags(tags);
             }
 
+            if (request.getTitle() != null && !request.getTitle().isEmpty()) {
+                if (game == null) {
+                    try {
+                        gameRepository.updateNameAndUpdatedAtById(
+                                request.getTitle(), DateTimeHelper.currentTimeMillis(), gameId
+                        );
+                    } catch (Exception e) {
+                        throw new RuntimeException("Failed to update game name for game ID " + gameId, e);
+                    }
+                } else {
+                    game.setName(request.getTitle());
+                }
+            }
+            if (game != null) {
+
+                game.setUpdatedAt(DateTimeHelper.currentTimeMillis());
+
+                try {
+                    gameRepository.saveAndFlush(game);
+                } catch (Exception e) {
+                    throw new RuntimeException("Failed to save game with ID " + gameId, e);
+                }
+
+            }
+            return gameService.invalidateAndGetGameStoreDetails(gameId);
+        } catch (RuntimeException e) {
+            throw new RuntimeException(e);
+        } finally {
+            invalidateFullGameDetailsCache(request.getGameId());
         }
-        return gameService.invalidateAndGetGameStoreDetails(gameId);
     }
 
     private void updateGameDetailsDocument(Long gameId, Map<String, Object> changedData) {
@@ -153,24 +165,25 @@ public class GameManagerServiceImpl implements GameManagerService {
         Game game = gameRepository.findById(gameId)
                 .orElseThrow(() -> new BadRequestException("Game with ID " + gameId + " does not exist."));
         long publisherId = getPublisherIdFromClaims();
-        if(game.getPublisher().getId() != publisherId) {
+        if (game.getPublisher().getId() != publisherId) {
             throw new BadRequestException("Game with ID " + gameId + " is not owned by the publisher.");
         }
         try {
-            if(game.getStatus() == GameStatus.valueOf(status)) return;
+            if (game.getStatus() == GameStatus.valueOf(status)) return;
         } catch (IllegalArgumentException e) {
             throw new BadRequestException("Invalid game status: " + status);
         }
-        if(game.getStatus() == GameStatus.DELETED) {
+        if (game.getStatus() == GameStatus.DELETED) {
             throw new BadRequestException("Game with ID " + gameId + " is deleted and cannot be updated.");
         }
-        if(game.getStatus() == GameStatus.BANNED) {
+        if (game.getStatus() == GameStatus.BANNED) {
             throw new ForbiddenException("Game with ID " + gameId + " is banned and cannot be updated.");
         }
         game.setStatus(GameStatus.valueOf(status));
         game.setUpdatedAt(DateTimeHelper.currentTimeMillis());
         try {
             gameRepository.saveAndFlush(game);
+            invalidateFullGameDetailsCache(gameId);
         } catch (Exception e) {
             throw new RuntimeException("Failed to update game status for game ID " + gameId, e);
         }
@@ -182,11 +195,12 @@ public class GameManagerServiceImpl implements GameManagerService {
         if (price == null || price < 0 || price.isNaN() || price.isInfinite()) {
             throw new BadRequestException("Price must be a positive number.");
         }
-        if (!isGameOwnedByPublisher(gameId)) {
+        if (isGameNotOwnedByPublisher(gameId)) {
             throw new BadRequestException("Game with ID " + gameId + " does not exist or is not owned by the publisher.");
         }
         try {
             gameRepository.updatePriceAndUpdatedAtById(BigDecimal.valueOf(price), DateTimeHelper.currentTimeMillis(), gameId);
+            invalidateFullGameDetailsCache(gameId);
         } catch (Exception e) {
             throw new RuntimeException("Failed to update game price for game ID " + gameId, e);
         }
@@ -231,10 +245,10 @@ public class GameManagerServiceImpl implements GameManagerService {
     @Override
     @Transactional
     public void createNewVersion(CreateNewVersionRequest request) {
-        if(!isGameOwnedByPublisher(request.getGameId())) {
+        if (isGameNotOwnedByPublisher(request.getGameId())) {
             throw new BadRequestException("Game with ID " + request.getGameId() + " does not exist or is not owned by the publisher.");
         }
-        if(gameVersionRepository.existsByGameIdAndName(request.getGameId(), request.getVersionName())) {
+        if (gameVersionRepository.existsByGameIdAndName(request.getGameId(), request.getVersionName())) {
             throw new BadRequestException("Version with name " + request.getVersionName() + " already exists for game ID " + request.getGameId());
         }
         GameVersion gameVersion = GameVersion.builder()
@@ -255,6 +269,7 @@ public class GameManagerServiceImpl implements GameManagerService {
 
         try {
             gameVersionRepository.saveAndFlush(gameVersion);
+            invalidateFullGameDetailsCache(request.getGameId());
         } catch (Exception e) {
             throw new RuntimeException("Failed to create new version for game ID " + request.getGameId(), e);
         }
@@ -263,13 +278,13 @@ public class GameManagerServiceImpl implements GameManagerService {
     @Override
     @Transactional
     public void updateDraftVersion(UpdateVersionRequest request) {
-        if (!isGameOwnedByPublisher(request.getGameId())) {
+        if (isGameNotOwnedByPublisher(request.getGameId())) {
             throw new BadRequestException("Game with ID " + request.getGameId() + " does not exist or is not owned by the publisher.");
         }
         GameVersion gameVersion = gameVersionRepository.findById(request.getVersionId())
                 .orElseThrow(() -> new BadRequestException("Version with ID " + request.getVersionId() + " does not exist."));
 
-        if(!Objects.equals(gameVersion.getGame().getId(), request.getGameId())) {
+        if (!Objects.equals(gameVersion.getGame().getId(), request.getGameId())) {
             throw new BadRequestException("Version with ID " + request.getVersionId() + " does not belong to game ID " + request.getGameId());
         }
 
@@ -277,7 +292,7 @@ public class GameManagerServiceImpl implements GameManagerService {
             throw new BadRequestException("Version with ID " + request.getVersionId() + " is not a draft version.");
         }
 
-        if(request.getReleaseDate() != null && request.getReleaseDate() < DateTimeHelper.currentTimeMillis()) {
+        if (request.getReleaseDate() != null && request.getReleaseDate() < DateTimeHelper.currentTimeMillis()) {
             throw new BadRequestException("Release date cannot be in the past.");
         }
 
@@ -294,6 +309,7 @@ public class GameManagerServiceImpl implements GameManagerService {
 
         try {
             gameVersionRepository.saveAndFlush(gameVersion);
+            invalidateFullGameDetailsCache(request.getGameId());
         } catch (Exception e) {
             throw new RuntimeException("Failed to update draft version for game ID " + request.getGameId(), e);
         }
@@ -302,7 +318,7 @@ public class GameManagerServiceImpl implements GameManagerService {
     @Override
     @Transactional
     public void deleteDraftVersion(Long gameId, Long versionId) {
-        if (!isGameOwnedByPublisher(gameId)) {
+        if (isGameNotOwnedByPublisher(gameId)) {
             throw new BadRequestException("Game with ID " + gameId + " does not exist or is not owned by the publisher.");
         }
         GameVersion gameVersion = gameVersionRepository.findById(versionId)
@@ -315,6 +331,7 @@ public class GameManagerServiceImpl implements GameManagerService {
         }
         try {
             gameVersionRepository.deleteById(versionId);
+            invalidateFullGameDetailsCache(gameId);
         } catch (Exception e) {
             throw new RuntimeException("Failed to delete draft version with ID " + versionId + " for game ID " + gameId, e);
         }
@@ -323,7 +340,7 @@ public class GameManagerServiceImpl implements GameManagerService {
     @Override
     @Transactional
     public void markAsLatestStableNow(Long gameId, Long versionId) {
-        if (!isGameOwnedByPublisher(gameId)) {
+        if (isGameNotOwnedByPublisher(gameId)) {
             throw new BadRequestException("Game with ID " + gameId + " does not exist or is not owned by the publisher.");
         }
 
@@ -336,6 +353,7 @@ public class GameManagerServiceImpl implements GameManagerService {
             try {
                 gameVersionRepository.updateStatusByGameAndStatus(VersionStatus.ARCHIVED,
                         Game.builder().id(gameId).build(), VersionStatus.STABLE, now);
+                invalidateFullGameDetailsCache(gameId);
             } catch (Exception e) {
                 throw new RuntimeException("Failed to update previous stable version for game ID " + gameId, e);
             }
@@ -346,6 +364,7 @@ public class GameManagerServiceImpl implements GameManagerService {
 
         try {
             gameVersionRepository.save(gameVersion);
+            invalidateFullGameDetailsCache(gameId);
         } catch (Exception e) {
             throw new RuntimeException("Failed to mark version with ID " + versionId + " as stable for game ID " + gameId, e);
         }
@@ -353,10 +372,53 @@ public class GameManagerServiceImpl implements GameManagerService {
 
     @Override
     public List<GameVersionListItem> getGameVersions(Long gameId) {
-        if (!isGameOwnedByPublisher(gameId)) {
+        if (isGameNotOwnedByPublisher(gameId)) {
             throw new BadRequestException("Game with ID " + gameId + " does not exist or is not owned by the publisher.");
         }
         return gameVersionRepository.findGameVersionItemsByGameId(gameId);
+    }
+
+    @Override
+    public FullGameDetails getFullGameDetails(Long gameId) {
+        if(gameId == null || gameId <= 0) {
+            throw new BadRequestException("Game ID must be a positive number.");
+        }
+        long publisherId = getPublisherIdFromClaims();
+        String key = "fullGameDetails:" + gameId + ":" + publisherId;
+        FullGameDetails fullGameDetails = redisService.get(key, FullGameDetails.class);
+        if(fullGameDetails != null) return fullGameDetails;
+        RedisCacheEntry<FullGameDetails> cacheEntry = RedisCacheEntry.<FullGameDetails>builder()
+                .key(key)
+                .fallBackFunction(() -> getFullGameDetailsFromDb(gameId, publisherId))
+                .keyTimeout(5)
+                .keyTimeUnit(TimeUnit.MINUTES)
+                .lockTimeout(500)
+                .lockTimeUnit(TimeUnit.MILLISECONDS)
+                .retryTime(3)
+                .build();
+        return redisService.getWithLock(cacheEntry, FullGameDetails.class);
+    }
+
+    private FullGameDetails getFullGameDetailsFromDb(Long gameId, long publisherId) {
+        Game game = gameRepository.findFullDetailsByIdAndPublisherId(gameId, publisherId);
+        if (game == null) {
+            throw new BadRequestException("Game with ID " + gameId + " does not exist or is not owned by the publisher.");
+        }
+        if (game.getStatus() == GameStatus.DELETED) {
+            throw new BadRequestException("Game with ID " + gameId + " is deleted and cannot be accessed.");
+        }
+        GameDetails gameDetails = gameDetailsRepository.findById(gameId)
+                .orElseThrow(() -> new BadRequestException("Game details for game ID " + gameId + " do not exist."));
+        return FullGameDetails.builder()
+                .game(game)
+                .gameDetails(gameDetails)
+                .build();
+    }
+
+    private void invalidateFullGameDetailsCache(Long gameId) {
+        long publisherId = getPublisherIdFromClaims();
+        String key = "fullGameDetails:" + gameId + ":" + publisherId;
+        redisService.delete(key);
     }
 
     private long getPublisherIdFromClaims() {
@@ -364,10 +426,10 @@ public class GameManagerServiceImpl implements GameManagerService {
         return (long) claims.getOtherClaims().get("publisherId");
     }
 
-    private boolean isGameOwnedByPublisher(Long gameId) {
+    private boolean isGameNotOwnedByPublisher(Long gameId) {
         JwtTokenClaims claims = (JwtTokenClaims) sessionService.getAuthentication().getDetails();
         long publisherId = (long) claims.getOtherClaims().get("publisherId");
-        return gameRepository.existsByIdAndPublisherId(gameId, publisherId);
+        return !gameRepository.existsByIdAndPublisherId(gameId, publisherId);
     }
 
 }

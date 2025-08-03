@@ -55,20 +55,16 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public CursorResponse<GameListItem> getGameStoreList(Long cursor, int pageSize) {
-        if(cursor == null) {
-            cursor = DateTimeHelper.currentTimeMillis();
-        }
         String key = "game:store:list:" + cursor + ":" + pageSize;
         CursorResponse cachedResponse = redisService.get(key, CursorResponse.class);
         if(cachedResponse != null) return cachedResponse;
 
-        Long finalCursor = cursor;
         RedisCacheEntry<CursorResponse> cacheEntry = RedisCacheEntry.<CursorResponse>builder()
                 .key(key)
-                .fallBackFunction(() -> getGamesFromDb(finalCursor, pageSize))
+                .fallBackFunction(() -> getGamesFromDb(cursor, pageSize))
                 .keyTimeout(5)
                 .keyTimeUnit(TimeUnit.MINUTES)
-                .lockTimeout(250)
+                .lockTimeout(30000)
                 .lockTimeUnit(TimeUnit.MILLISECONDS)
                 .retryTime(3)
                 .build();
@@ -104,24 +100,29 @@ public class GameServiceImpl implements GameService {
     }
 
     private CursorResponse<GameListItem> getGamesFromDb(Long cursor, int pageSize) {
-        Specification<Game> spec = GameSpecification.withoutFilters(cursor);
-        List<Game> games = gameRepository.findAll(spec, PageRequest.of(0, pageSize)).getContent();
-        if (games.isEmpty()) return CursorResponse.empty();
-        games.sort(Comparator.comparing(Game::getReleaseDate).reversed());
-        List<CartGameInfo> gameDetails = gameDetailsRepository.findByIdIn(games.stream().map(Game::getId).toList());
-        Map<Long,GameListItem> gameListItemMap = getGameListItemMap(games, gameDetails);
-        Long maxCursor = getMaxCursorWithoutFilters();
-        Long currentCursor = games.getLast().getReleaseDate();
-        if(maxCursor < currentCursor) {
-            redisService.delete("cursor:non-filter");
-            maxCursor = getMaxCursorWithoutFilters();
+        try {
+            Specification<Game> spec = GameSpecification.withoutFilters(cursor);
+            List<Game> games = new ArrayList<>(gameRepository.findAll(spec, PageRequest.of(0, pageSize)).getContent());
+            games.sort(Comparator.comparing(Game::getReleaseDate).reversed());
+            if (games.isEmpty()) return CursorResponse.empty();
+            List<CartGameInfo> gameDetails = gameDetailsRepository.findByIdIn(games.stream().map(Game::getId).toList());
+            Map<Long,GameListItem> gameListItemMap = getGameListItemMap(games, gameDetails);
+            Long maxCursor = getMaxCursorWithoutFilters();
+            Long currentCursor = games.getLast().getReleaseDate();
+            if(maxCursor < currentCursor) {
+                redisService.delete("cursor:non-filter");
+                maxCursor = getMaxCursorWithoutFilters();
+            }
+            boolean hasNextCursor = maxCursor != null && maxCursor > currentCursor;
+            return CursorResponse.<GameListItem>builder()
+                    .items(gameListItemMap.values().stream().toList())
+                    .maxCursor(maxCursor)
+                    .hasNextCursor(hasNextCursor)
+                    .build();
+        } catch (Exception e) {
+            log.error("Failed to fetch game list from database: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to fetch game list from database", e);
         }
-        boolean hasNextCursor = maxCursor != null && maxCursor > currentCursor;
-        return CursorResponse.<GameListItem>builder()
-                .items(gameListItemMap.values().stream().toList())
-                .maxCursor(maxCursor)
-                .hasNextCursor(hasNextCursor)
-                .build();
     }
 
     private CursorResponse<GameListItem> getFilteredGamesFromDb(FilterQuery filterQuery) {

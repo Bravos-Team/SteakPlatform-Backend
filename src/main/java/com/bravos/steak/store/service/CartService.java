@@ -1,6 +1,5 @@
 package com.bravos.steak.store.service;
 
-import com.bravos.steak.store.model.response.CartListItem;
 import com.bravos.steak.store.model.response.CartResponse;
 
 import java.util.List;

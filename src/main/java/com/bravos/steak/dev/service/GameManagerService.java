@@ -5,6 +5,7 @@ import com.bravos.steak.dev.model.request.UpdateGameDetailsRequest;
 import com.bravos.steak.dev.model.request.UpdateVersionRequest;
 import com.bravos.steak.dev.model.response.GameVersionListItem;
 import com.bravos.steak.dev.model.response.PublisherGameListItem;
+import com.bravos.steak.store.model.response.FullGameDetails;
 import com.bravos.steak.store.model.response.GameStoreDetail;
 
 import java.util.List;
@@ -28,5 +29,7 @@ public interface GameManagerService {
     void markAsLatestStableNow(Long gameId, Long versionId);
 
     List<GameVersionListItem> getGameVersions(Long gameId);
+
+    FullGameDetails getFullGameDetails(Long gameId);
 
 }

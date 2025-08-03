@@ -7,7 +7,6 @@ import com.bravos.steak.store.repo.injection.GameIdStatusPrice;
 import com.bravos.steak.store.repo.injection.GamePrice;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
@@ -71,5 +70,10 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
     @Modifying
     @Query("update Game g set g.status = ?1 where g.id = ?2")
     void updateStatusById(GameStatus status, Long id);
+
+    @EntityGraph(type = EntityGraph.EntityGraphType.FETCH,
+            attributePaths = {"genres", "tags", "gameVersions"})
+    @Query("SELECT g FROM Game g WHERE g.id = :id AND g.publisher.id = :publisherId")
+    Game findFullDetailsByIdAndPublisherId(Long id, Long publisherId);
 
 }

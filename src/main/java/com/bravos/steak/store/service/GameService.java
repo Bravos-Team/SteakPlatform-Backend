@@ -2,14 +2,12 @@ package com.bravos.steak.store.service;
 
 import com.bravos.steak.store.entity.Genre;
 import com.bravos.steak.store.entity.Tag;
-import com.bravos.steak.store.model.enums.GameStatus;
 import com.bravos.steak.store.model.request.FilterQuery;
 import com.bravos.steak.store.model.response.CursorResponse;
 import com.bravos.steak.store.model.response.DownloadResponse;
 import com.bravos.steak.store.model.response.GameListItem;
 import com.bravos.steak.store.model.response.GameStoreDetail;
 
-import java.util.List;
 import java.util.Set;
 
 public interface GameService {
