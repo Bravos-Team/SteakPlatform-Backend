@@ -7,6 +7,7 @@ import com.bravos.steak.store.repo.injection.GameIdStatusPrice;
 import com.bravos.steak.store.repo.injection.GamePrice;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,7 +16,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
-public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificationExecutor<Game> {
+public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificationExecutor<Game>, GameRepositoryCustom {
 
     long countGameByIdAndStatus(Long id, GameStatus status);
 
@@ -70,4 +71,5 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
     @Modifying
     @Query("update Game g set g.status = ?1 where g.id = ?2")
     void updateStatusById(GameStatus status, Long id);
+
 }
