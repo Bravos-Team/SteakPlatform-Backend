@@ -3,6 +3,7 @@ package com.bravos.steak.store.service;
 import com.bravos.steak.store.entity.Genre;
 import com.bravos.steak.store.entity.Tag;
 import com.bravos.steak.store.model.enums.GameStatus;
+import com.bravos.steak.store.model.request.FilterQuery;
 import com.bravos.steak.store.model.response.CursorResponse;
 import com.bravos.steak.store.model.response.DownloadResponse;
 import com.bravos.steak.store.model.response.GameListItem;
@@ -16,10 +17,7 @@ public interface GameService {
     CursorResponse<GameListItem> getGameStoreList(Long cursor, int pageSize);
 
     CursorResponse<GameListItem> getFilteredGames(
-            Long cursor,
-            Long minPrice,
-            Long maxPrice,
-            int pageSize
+            FilterQuery filterQuery
     );
 
     GameStoreDetail getGameStoreDetails(Long gameId);

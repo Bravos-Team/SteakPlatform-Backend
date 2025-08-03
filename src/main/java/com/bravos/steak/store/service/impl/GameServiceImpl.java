@@ -13,6 +13,7 @@ import com.bravos.steak.store.entity.Genre;
 import com.bravos.steak.store.entity.Tag;
 import com.bravos.steak.store.entity.details.GameDetails;
 import com.bravos.steak.store.model.enums.GameStatus;
+import com.bravos.steak.store.model.request.FilterQuery;
 import com.bravos.steak.store.model.response.CursorResponse;
 import com.bravos.steak.store.model.response.DownloadResponse;
 import com.bravos.steak.store.model.response.GameListItem;
@@ -54,10 +55,87 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public CursorResponse<GameListItem> getGameStoreList(Long cursor, int pageSize) {
+        if(cursor == null) {
+            cursor = DateTimeHelper.currentTimeMillis();
+        }
+        String key = "game:store:list:" + cursor + ":" + pageSize;
+        CursorResponse cachedResponse = redisService.get(key, CursorResponse.class);
+        if(cachedResponse != null) return cachedResponse;
+
+        Long finalCursor = cursor;
+        RedisCacheEntry<CursorResponse> cacheEntry = RedisCacheEntry.<CursorResponse>builder()
+                .key(key)
+                .fallBackFunction(() -> getGamesFromDb(finalCursor, pageSize))
+                .keyTimeout(5)
+                .keyTimeUnit(TimeUnit.MINUTES)
+                .lockTimeout(250)
+                .lockTimeUnit(TimeUnit.MILLISECONDS)
+                .retryTime(3)
+                .build();
+        return redisService.getWithLock(cacheEntry, CursorResponse.class);
+    }
+
+    @Override
+    public CursorResponse<GameListItem> getFilteredGames(FilterQuery filterQuery) {
+        if(filterQuery == null) {
+            return getGameStoreList(null, 10);
+        }
+        if(filterQuery.getMinPrice() != null && filterQuery.getMaxPrice() != null
+                && filterQuery.getMinPrice() > filterQuery.getMaxPrice()) {
+            double temp = filterQuery.getMinPrice();
+            filterQuery.setMinPrice(filterQuery.getMaxPrice());
+            filterQuery.setMaxPrice(temp);
+        }
+        int hashCode = filterQuery.hashCode();
+
+        String key = "game:filter:" + hashCode;
+        CursorResponse cursorResponse = redisService.get(key, CursorResponse.class);
+        if(cursorResponse != null) return cursorResponse;
+        RedisCacheEntry<CursorResponse> cacheEntry = RedisCacheEntry.<CursorResponse>builder()
+                .key(key)
+                .fallBackFunction(() -> getFilteredGamesFromDb(filterQuery))
+                .keyTimeout(5)
+                .keyTimeUnit(TimeUnit.MINUTES)
+                .lockTimeout(3000)
+                .lockTimeUnit(TimeUnit.MILLISECONDS)
+                .retryTime(3)
+                .build();
+        return redisService.getWithLock(cacheEntry, CursorResponse.class);
+    }
+
+    private CursorResponse<GameListItem> getGamesFromDb(Long cursor, int pageSize) {
         Specification<Game> spec = GameSpecification.withoutFilters(cursor);
         List<Game> games = gameRepository.findAll(spec, PageRequest.of(0, pageSize)).getContent();
         if (games.isEmpty()) return CursorResponse.empty();
+        games.sort(Comparator.comparing(Game::getReleaseDate).reversed());
         List<CartGameInfo> gameDetails = gameDetailsRepository.findByIdIn(games.stream().map(Game::getId).toList());
+        Map<Long,GameListItem> gameListItemMap = getGameListItemMap(games, gameDetails);
+        Long maxCursor = getMaxCursorWithoutFilters();
+        Long currentCursor = games.getLast().getReleaseDate();
+        if(maxCursor < currentCursor) {
+            redisService.delete("cursor:non-filter");
+            maxCursor = getMaxCursorWithoutFilters();
+        }
+        boolean hasNextCursor = maxCursor != null && maxCursor > currentCursor;
+        return CursorResponse.<GameListItem>builder()
+                .items(gameListItemMap.values().stream().toList())
+                .maxCursor(maxCursor)
+                .hasNextCursor(hasNextCursor)
+                .build();
+    }
+
+    private CursorResponse<GameListItem> getFilteredGamesFromDb(FilterQuery filterQuery) {
+        Specification<Game> spec = GameSpecification.withFilters(filterQuery);
+        List<Game> games = gameRepository.findAll(spec, PageRequest.of(filterQuery.getPage() - 1, filterQuery.getPageSize())).getContent();
+        if(games.isEmpty()) return CursorResponse.empty();
+        List<CartGameInfo> gameDetails = gameDetailsRepository.findByIdIn(games.stream().map(Game::getId).toList());
+        Map<Long,GameListItem> gameListItemMap = getGameListItemMap(games, gameDetails);
+        return CursorResponse.<GameListItem>builder()
+                .items(gameListItemMap.values().stream().toList())
+                .build();
+    }
+
+    private Map<Long,GameListItem> getGameListItemMap(List<Game> games, List<CartGameInfo> gameDetails) {
         Map<Long,GameListItem> gameListItemMap = new LinkedHashMap<>(games.size());
         games.forEach(game -> gameListItemMap.put(game.getId(),
                 GameListItem.builder()
@@ -70,40 +148,10 @@ public class GameServiceImpl implements GameService {
             GameListItem item = gameListItemMap.get(detail.getId());
             item.setThumbnail(detail.getThumbnail());
         });
-
-        Long maxCursor = getMaxCursorWithoutFilters();
-        Long currentCursor = games.getLast().getReleaseDate();
-
-        if(maxCursor < currentCursor) {
-            redisService.delete("cursor:non-filter");
-            maxCursor = getMaxCursorWithoutFilters();
-        }
-
-        boolean hasNextCursor = maxCursor != null && maxCursor > currentCursor;
-        return CursorResponse.<GameListItem>builder()
-                .items(gameListItemMap.values().stream().toList())
-                .maxCursor(maxCursor)
-                .hasNextCursor(hasNextCursor)
-                .build();
+        return gameListItemMap;
     }
 
-    @Override
-    public CursorResponse<GameListItem> getFilteredGames(
-            Long cursor,
-            Long minPrice,
-            Long maxPrice,
-            int pageSize
-    ) {
-        if (pageSize == 0) pageSize = 10;
 
-        Specification<Game> spec = GameSpecification.withFilters(minPrice, maxPrice, cursor);
-        List<Game> games = gameRepository.findAll(spec,PageRequest.of(0,pageSize)).getContent();
-        if (games.isEmpty()) return CursorResponse.empty();
-
-        long maxCursor = gameRepository.getMaxCursorByStatus(GameStatus.OPENING);
-
-        return null;
-    }
 
     @Override
     public GameStoreDetail getGameStoreDetails(Long gameId) {
@@ -240,16 +288,6 @@ public class GameServiceImpl implements GameService {
         Long maxCursor = redisService.get(key, Long.class);
         if (maxCursor != null) return maxCursor;
         maxCursor = gameRepository.getMaxCursorByStatus(GameStatus.OPENING);
-        redisService.save(key,maxCursor,10, TimeUnit.MINUTES);
-        return maxCursor;
-    }
-
-    private Long getMaxCursorWithFilters(Long minPrice, Long maxPrice) {
-        int hashCode = Objects.hash(minPrice, maxPrice);
-        String key = "cursor:filter:" + hashCode;
-        Long maxCursor = redisService.get(key, Long.class);
-        if (maxCursor != null) return maxCursor;
-
         redisService.save(key,maxCursor,10, TimeUnit.MINUTES);
         return maxCursor;
     }

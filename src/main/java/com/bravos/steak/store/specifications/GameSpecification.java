@@ -3,6 +3,7 @@ package com.bravos.steak.store.specifications;
 import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.store.entity.Game;
 import com.bravos.steak.store.model.enums.GameStatus;
+import com.bravos.steak.store.model.request.FilterQuery;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -10,6 +11,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GameSpecification {
+
+    private static final List<String> allowedSortFields = List.of(
+            "name", "price"
+    );
 
     public static Specification<Game> withoutFilters(Long cursor) {
         return (root, query, cb) -> {
@@ -20,6 +25,8 @@ public class GameSpecification {
             long currentTime = DateTimeHelper.currentTimeMillis();
             if (cursor != null) {
                 predicates.add(cb.lessThan(root.get("releaseDate"), cursor > currentTime ? currentTime : cursor));
+            } else {
+                predicates.add(cb.lessThan(root.get("releaseDate"), currentTime));
             }
             query.orderBy(cb.desc(root.get("releaseDate")));
             predicates.add(cb.equal(root.get("status"), GameStatus.OPENING));
@@ -27,37 +34,61 @@ public class GameSpecification {
         };
     }
 
-    public static Specification<Game> withFilters(
-            Long minPrice,
-            Long maxPrice,
-            Long cursor
-    ) {
+    public static Specification<Game> withFilters(FilterQuery filterQuery) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>(5);
 
-            if(query == null) {
+            if (query == null) {
                 query = cb.createQuery();
             }
 
-            if (minPrice != null && minPrice > 0) {
-                predicates.add(cb.greaterThanOrEqualTo(root.get("price"), minPrice));
+            long currentTime = DateTimeHelper.currentTimeMillis();
+
+            if (filterQuery.getCursor() != null) {
+                predicates.add(cb.lessThan(root.get("releaseDate"), filterQuery.getCursor() > currentTime ? currentTime : filterQuery.getCursor()));
+            } else {
+                predicates.add(cb.lessThan(root.get("releaseDate"), currentTime));
             }
 
-            if (maxPrice != null && maxPrice > 0) {
-                predicates.add(cb.lessThanOrEqualTo(root.get("price"), maxPrice));
+            if(filterQuery.getKeyword() != null && !filterQuery.getKeyword().isEmpty()) {
+                predicates.add(cb.like(cb.lower(root.get("name")), "%" + filterQuery.getKeyword().toLowerCase() + "%"));
+            }
+            if (filterQuery.getGenreIds() != null && filterQuery.getGenreIds().length > 0) {
+                predicates.add(root.join("genres").get("id").in((Object[]) filterQuery.getGenreIds()));
+            }
+            if (filterQuery.getTagIds() != null && filterQuery.getTagIds().length > 0) {
+                predicates.add(root.join("tags").get("id").in((Object[]) filterQuery.getTagIds()));
+            }
+            if (filterQuery.getMinPrice() != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("price"), filterQuery.getMinPrice()));
+            }
+            if (filterQuery.getMaxPrice() != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("price"), filterQuery.getMaxPrice()));
+            }
+            if (filterQuery.getSortBy() != null && !filterQuery.getSortBy().isEmpty()) {
+                String[] sortParts = filterQuery.getSortBy().split(",");
+                String sortField = sortParts[0].trim();
+
+                if (allowedSortFields.contains(sortField)) {
+                    String sortDirection = sortParts.length > 1 ? sortParts[1].trim() : "desc";
+
+                    if ("asc".equalsIgnoreCase(sortDirection)) {
+                        query.orderBy(cb.asc(root.get(sortField)));
+                    } else {
+                        query.orderBy(cb.desc(root.get(sortField)));
+                    }
+                }
             }
 
-            if (cursor != null) {
-                predicates.add(cb.lessThan(root.get("releaseDate"), cursor));
+            if (filterQuery.getCursorDirection()) {
+                query.orderBy(cb.desc(root.get("releaseDate")));
+            } else {
+                query.orderBy(cb.asc(root.get("releaseDate")));
             }
 
             predicates.add(cb.equal(root.get("status"), GameStatus.OPENING));
 
-            query.orderBy(cb.desc(root.get("releaseDate")));
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
-
-
-
 }
