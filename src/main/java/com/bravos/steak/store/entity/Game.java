@@ -8,6 +8,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -54,6 +55,9 @@ public class Game {
             inverseJoinColumns = @JoinColumn(name = "tag_id")
     )
     Set<Tag> tags;
+
+    @OneToMany(mappedBy = "game", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    List<GameVersion> gameVersions = new ArrayList<>();
 
     @Builder.Default
     Long createdAt = DateTimeHelper.currentTimeMillis();
