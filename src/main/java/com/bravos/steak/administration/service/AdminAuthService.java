@@ -12,7 +12,6 @@ import com.bravos.steak.common.service.encryption.JwtService;
 import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.common.service.redis.RedisService;
 import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
