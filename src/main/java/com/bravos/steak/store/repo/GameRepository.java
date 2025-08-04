@@ -1,6 +1,7 @@
 package com.bravos.steak.store.repo;
 
 import com.bravos.steak.administration.model.response.GameListItem;
+import com.bravos.steak.dev.model.response.GameSQLInfo;
 import com.bravos.steak.store.entity.Game;
 import com.bravos.steak.store.model.enums.GameStatus;
 import com.bravos.steak.store.repo.injection.GameIdStatusPrice;
@@ -72,8 +73,11 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
     void updateStatusById(GameStatus status, Long id);
 
     @EntityGraph(type = EntityGraph.EntityGraphType.FETCH,
-            attributePaths = {"genres", "tags", "gameVersions"})
+            attributePaths = {"genres", "tags"})
     @Query("SELECT g FROM Game g WHERE g.id = :id AND g.publisher.id = :publisherId")
-    Game findFullDetailsByIdAndPublisherId(Long id, Long publisherId);
+    Game findFullDetailsByIdAndPublisherId(@Param("id") Long id, @Param("publisherId") Long publisherId);
 
+    Long countByPublisherIdAndStatus(Long publisherId, GameStatus status);
+
+    Long countByPublisherIdAndStatusNot(Long publisherId, GameStatus status);
 }

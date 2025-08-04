@@ -32,4 +32,6 @@ public interface GameManagerService {
 
     FullGameDetails getFullGameDetails(Long gameId);
 
+    Long countGamesByStatus(String status);
+
 }

@@ -114,19 +114,16 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
     @Override
     public List<GroupPermissionItem> getPublisherPermissions() {
         String key = "publisher_permissions";
-        Object groupPermissionItemsList = redisService.get(key, List.class);
-        if (groupPermissionItemsList == null) {
-            RedisCacheEntry<Object> cacheEntry = RedisCacheEntry.builder()
-                    .key(key)
-                    .fallBackFunction(this::getPublisherPermissionsFromDb)
-                    .keyTimeout(60)
-                    .keyTimeUnit(TimeUnit.MINUTES)
-                    .lockTimeout(3000)
-                    .lockTimeUnit(TimeUnit.MILLISECONDS)
-                    .retryTime(3)
-                    .build();
-            groupPermissionItemsList = redisService.getWithLock(cacheEntry, Object.class);
-        }
+        RedisCacheEntry<Object> cacheEntry = RedisCacheEntry.builder()
+                .key(key)
+                .fallBackFunction(this::getPublisherPermissionsFromDb)
+                .keyTimeout(60)
+                .keyTimeUnit(TimeUnit.MINUTES)
+                .lockTimeout(3000)
+                .lockTimeUnit(TimeUnit.MILLISECONDS)
+                .retryTime(3)
+                .build();
+        Object groupPermissionItemsList = redisService.getWithLock(cacheEntry, Object.class);
         return objectMapper.convertValue(groupPermissionItemsList,
                 objectMapper.getTypeFactory()
                         .constructCollectionLikeType(List.class, GroupPermissionItem.class));

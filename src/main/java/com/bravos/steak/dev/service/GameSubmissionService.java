@@ -33,5 +33,6 @@ public interface GameSubmissionService {
 
     void updateGameSubmissionStatus(Long submissionId, GameSubmissionStatus status);
 
+    void deleteGameSubmission(Long submissionId);
 
 }

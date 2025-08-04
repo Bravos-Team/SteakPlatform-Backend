@@ -10,6 +10,7 @@ import com.bravos.steak.dev.model.GameThumbnail;
 import com.bravos.steak.dev.model.request.CreateNewVersionRequest;
 import com.bravos.steak.dev.model.request.UpdateGameDetailsRequest;
 import com.bravos.steak.dev.model.request.UpdateVersionRequest;
+import com.bravos.steak.dev.model.response.GameSQLInfo;
 import com.bravos.steak.dev.model.response.GameVersionListItem;
 import com.bravos.steak.dev.model.response.PublisherGameListItem;
 import com.bravos.steak.dev.service.GameManagerService;
@@ -385,8 +386,6 @@ public class GameManagerServiceImpl implements GameManagerService {
         }
         long publisherId = getPublisherIdFromClaims();
         String key = "fullGameDetails:" + gameId + ":" + publisherId;
-        FullGameDetails fullGameDetails = redisService.get(key, FullGameDetails.class);
-        if(fullGameDetails != null) return fullGameDetails;
         RedisCacheEntry<FullGameDetails> cacheEntry = RedisCacheEntry.<FullGameDetails>builder()
                 .key(key)
                 .fallBackFunction(() -> getFullGameDetailsFromDb(gameId, publisherId))
@@ -399,19 +398,60 @@ public class GameManagerServiceImpl implements GameManagerService {
         return redisService.getWithLock(cacheEntry, FullGameDetails.class);
     }
 
+    @Override
+    public Long countGamesByStatus(String status) {
+        long publisherId = getPublisherIdFromClaims();
+        String key = "countGamesByStatus:" + status + ":" + publisherId;
+        RedisCacheEntry<Long> cacheEntry = RedisCacheEntry.<Long>builder()
+                .key(key)
+                .fallBackFunction(() -> countGamesByStatusFromDb(status, publisherId))
+                .keyTimeout(1)
+                .keyTimeUnit(TimeUnit.MINUTES)
+                .lockTimeout(500)
+                .lockTimeUnit(TimeUnit.MILLISECONDS)
+                .retryTime(3)
+                .build();
+        return redisService.getWithLock(cacheEntry, Long.class);
+    }
+
+    private Long countGamesByStatusFromDb(String status, long publisherId) {
+        if (status.equalsIgnoreCase("all")) {
+            return gameRepository.countByPublisherIdAndStatusNot(publisherId, GameStatus.DELETED);
+        }
+        GameStatus gameStatus;
+        try {
+            gameStatus = GameStatus.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new BadRequestException("Invalid game status: " + status);
+        }
+        return gameRepository.countByPublisherIdAndStatus(publisherId, gameStatus);
+    }
+
     private FullGameDetails getFullGameDetailsFromDb(Long gameId, long publisherId) {
         Game game = gameRepository.findFullDetailsByIdAndPublisherId(gameId, publisherId);
         if (game == null) {
             throw new BadRequestException("Game with ID " + gameId + " does not exist or is not owned by the publisher.");
         }
+        GameSQLInfo gameSQLInfo = GameSQLInfo.builder()
+                .id(game.getId())
+                .name(game.getName())
+                .status(game.getStatus())
+                .price(game.getPrice())
+                .releaseDate(game.getReleaseDate())
+                .genres(game.getGenres())
+                .tags(game.getTags())
+                .createdAt(game.getCreatedAt())
+                .updatedAt(game.getUpdatedAt())
+                .build();
+
         if (game.getStatus() == GameStatus.DELETED) {
             throw new BadRequestException("Game with ID " + gameId + " is deleted and cannot be accessed.");
         }
         GameDetails gameDetails = gameDetailsRepository.findById(gameId)
                 .orElseThrow(() -> new BadRequestException("Game details for game ID " + gameId + " do not exist."));
         return FullGameDetails.builder()
-                .game(game)
-                .gameDetails(gameDetails)
+                .game(gameSQLInfo)
+                .details(gameDetails)
                 .build();
     }
 

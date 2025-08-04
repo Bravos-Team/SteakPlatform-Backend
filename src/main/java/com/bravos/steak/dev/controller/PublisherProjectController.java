@@ -84,6 +84,7 @@ public class PublisherProjectController {
     }
 
     @GetMapping("/detail/{projectId}")
+    @HasAuthority({PublisherAuthority.READ_GAMES})
     public ResponseEntity<?> detailProject(@PathVariable Long projectId) {
         if(projectId == null) {
             return ResponseEntity.badRequest().body(Map.of(
@@ -96,6 +97,12 @@ public class PublisherProjectController {
         return ResponseEntity.ok(gameSubmissionService.detailByIdAndPublisher(projectId,publisherId));
     }
 
+    @DeleteMapping("/delete/{projectId}")
+    @HasAuthority({PublisherAuthority.WRITE_GAME_INFO})
+    public ResponseEntity<?> deleteProject(@PathVariable Long projectId) {
+        gameSubmissionService.deleteGameSubmission(projectId);
+        return ResponseEntity.ok().build();
+    }
 
 
 }
