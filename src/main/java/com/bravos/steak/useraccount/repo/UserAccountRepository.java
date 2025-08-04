@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,11 +33,11 @@ public interface UserAccountRepository extends JpaRepository<UserAccount,Long> {
 
     @Query("SELECT new com.bravos.steak.administration.model.response.UserListItem(u.id, u.username, u.email, u.status) " +
            "FROM UserAccount u WHERE u.username LIKE %:query%")
-    Page<UserListItem> getUsersByUsername(String username, Pageable pageable);
+    Page<UserListItem> getUsersByUsername(@Param("query") String username, Pageable pageable);
 
     @Query("SELECT new com.bravos.steak.administration.model.response.UserListItem(u.id, u.username, u.email, u.status) " +
            "FROM UserAccount u WHERE u.email LIKE %:email%")
-    Page<UserListItem> getUsersByEmail(String email, Pageable pageable);
+    Page<UserListItem> getUsersByEmail(@Param("query") String email, Pageable pageable);
 
     @Transactional
     @Modifying
