@@ -54,4 +54,20 @@ public class GameStoreController {
         return ResponseEntity.ok(gameService.getAllTags());
     }
 
+    @GetMapping("/newest")
+    public ResponseEntity<?> getNewestGames(
+            @RequestParam(defaultValue = "1", required = false) int page,
+            @RequestParam(defaultValue = "10", required = false) int pageSize
+    ) {
+        return ResponseEntity.ok(gameService.getNewestGames(page, pageSize));
+    }
+
+    @GetMapping("/coming-soon")
+    public ResponseEntity<?> getComingSoonGames(
+            @RequestParam(defaultValue = "1", required = false) int page,
+            @RequestParam(defaultValue = "10", required = false) int pageSize
+    ) {
+        return ResponseEntity.ok(gameService.getComingSoonGames(page, pageSize));
+    }
+
 }

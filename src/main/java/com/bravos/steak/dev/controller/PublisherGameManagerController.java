@@ -88,4 +88,10 @@ public class PublisherGameManagerController {
         return ResponseEntity.ok(gameManagerService.getFullGameDetails(gameId));
     }
 
+    @GetMapping("/count")
+    @HasAuthority({PublisherAuthority.READ_GAMES})
+    public ResponseEntity<?> countGamesByStatus(@RequestParam(defaultValue = "all") String status) {
+        return ResponseEntity.ok(gameManagerService.countGamesByStatus(status));
+    }
+
 }

@@ -1,5 +1,6 @@
 package com.bravos.steak.store.service.impl;
 
+import com.bravos.steak.common.model.CustomPage;
 import com.bravos.steak.common.model.RedisCacheEntry;
 import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.common.service.helper.DateTimeHelper;
@@ -23,12 +24,14 @@ import com.bravos.steak.store.repo.injection.CartGameInfo;
 import com.bravos.steak.store.service.DownloadGameService;
 import com.bravos.steak.store.service.GameService;
 import com.bravos.steak.store.specifications.GameSpecification;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionLikeType;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -42,7 +45,7 @@ import java.util.concurrent.TimeUnit;
 @RequiredArgsConstructor
 public class GameServiceImpl implements GameService {
 
-    GameRepository gameRepository;
+    private final GameRepository gameRepository;
     private final GameDetailsRepository gameDetailsRepository;
     private final RedisService redisService;
     private final UserGameRepository userGameRepository;
@@ -56,10 +59,7 @@ public class GameServiceImpl implements GameService {
     @Override
     public CursorResponse<GameListItem> getGameStoreList(Long cursor, int pageSize) {
         String key = "game:store:list:" + cursor + ":" + pageSize;
-        CursorResponse cachedResponse = redisService.get(key, CursorResponse.class);
-        if(cachedResponse != null) return cachedResponse;
-
-        RedisCacheEntry<CursorResponse> cacheEntry = RedisCacheEntry.<CursorResponse>builder()
+        RedisCacheEntry<Object> cacheEntry = RedisCacheEntry.builder()
                 .key(key)
                 .fallBackFunction(() -> getGamesFromDb(cursor, pageSize))
                 .keyTimeout(5)
@@ -68,14 +68,12 @@ public class GameServiceImpl implements GameService {
                 .lockTimeUnit(TimeUnit.MILLISECONDS)
                 .retryTime(3)
                 .build();
-        return redisService.getWithLock(cacheEntry, CursorResponse.class);
+        Object value = redisService.getWithLock(cacheEntry, Object.class);
+        return objectMapper.convertValue(value, new TypeReference<>() {});
     }
 
     @Override
-    public CursorResponse<GameListItem> getFilteredGames(FilterQuery filterQuery) {
-        if(filterQuery == null) {
-            return getGameStoreList(null, 10);
-        }
+    public CustomPage<GameListItem> getFilteredGames(FilterQuery filterQuery) {
         if(filterQuery.getMinPrice() != null && filterQuery.getMaxPrice() != null
                 && filterQuery.getMinPrice() > filterQuery.getMaxPrice()) {
             double temp = filterQuery.getMinPrice();
@@ -85,18 +83,59 @@ public class GameServiceImpl implements GameService {
         int hashCode = filterQuery.hashCode();
 
         String key = "game:filter:" + hashCode;
-        CursorResponse cursorResponse = redisService.get(key, CursorResponse.class);
-        if(cursorResponse != null) return cursorResponse;
-        RedisCacheEntry<CursorResponse> cacheEntry = RedisCacheEntry.<CursorResponse>builder()
+        RedisCacheEntry<Object> cacheEntry = RedisCacheEntry.builder()
                 .key(key)
                 .fallBackFunction(() -> getFilteredGamesFromDb(filterQuery))
                 .keyTimeout(5)
                 .keyTimeUnit(TimeUnit.MINUTES)
-                .lockTimeout(3000)
+                .lockTimeout(2000)
                 .lockTimeUnit(TimeUnit.MILLISECONDS)
                 .retryTime(3)
                 .build();
-        return redisService.getWithLock(cacheEntry, CursorResponse.class);
+        Object value = redisService.getWithLock(cacheEntry, Object.class);
+        return objectMapper.convertValue(value, new TypeReference<>() {});
+    }
+
+    @Override
+    public CustomPage<GameListItem> getNewestGames(int page, int pageSize) {
+        String key = "game:newest:" + page + ":" + pageSize;
+        RedisCacheEntry<Object> cacheEntry = RedisCacheEntry.builder()
+                .key(key)
+                .fallBackFunction(() -> getNewestGamesFromDb(page, pageSize))
+                .keyTimeout(1)
+                .keyTimeUnit(TimeUnit.MINUTES)
+                .lockTimeout(1000)
+                .lockTimeUnit(TimeUnit.MILLISECONDS)
+                .retryTime(3)
+                .build();
+        Object value = redisService.getWithLock(cacheEntry, Object.class);
+        return objectMapper.convertValue(value, new TypeReference<>() {});
+    }
+
+    private CustomPage<GameListItem> getNewestGamesFromDb(int page, int pageSize) {
+        Specification<Game> spec = GameSpecification.newestGames();
+        return new CustomPage<>(getGameListItemsBySpec(spec, page, pageSize));
+    }
+
+    @Override
+    public CustomPage<GameListItem> getComingSoonGames(int page, int pageSize) {
+        String key = "game:coming-soon:" + page + ":" + pageSize;
+        RedisCacheEntry<Object> cacheEntry = RedisCacheEntry.builder()
+                .key(key)
+                .fallBackFunction(() -> getComingSoonGamesFromDb(page, pageSize))
+                .keyTimeout(1)
+                .keyTimeUnit(TimeUnit.MINUTES)
+                .lockTimeout(1000)
+                .lockTimeUnit(TimeUnit.MILLISECONDS)
+                .retryTime(3)
+                .build();
+        Object value = redisService.getWithLock(cacheEntry, Object.class);
+        return objectMapper.convertValue(value, new TypeReference<>() {});
+    }
+
+    private CustomPage<GameListItem> getComingSoonGamesFromDb(int page, int pageSize) {
+        Specification<Game> spec = GameSpecification.comingSoonGames();
+        return new CustomPage<>(getGameListItemsBySpec(spec, page, pageSize));         
     }
 
     private CursorResponse<GameListItem> getGamesFromDb(Long cursor, int pageSize) {
@@ -125,15 +164,27 @@ public class GameServiceImpl implements GameService {
         }
     }
 
-    private CursorResponse<GameListItem> getFilteredGamesFromDb(FilterQuery filterQuery) {
+    private CustomPage<GameListItem> getFilteredGamesFromDb(FilterQuery filterQuery) {
         Specification<Game> spec = GameSpecification.withFilters(filterQuery);
-        List<Game> games = gameRepository.findAll(spec, PageRequest.of(filterQuery.getPage() - 1, filterQuery.getPageSize())).getContent();
-        if(games.isEmpty()) return CursorResponse.empty();
+        return new CustomPage<>(getGameListItemsBySpec(spec, filterQuery.getPage(), filterQuery.getPageSize()));
+    }
+
+    private Page<GameListItem> getGameListItemsBySpec(Specification<Game> spec, int page, int pageSize) {
+        Page<Game> gamePage = gameRepository.findAll(spec, PageRequest.of(page - 1, pageSize));
+        List<Game> games = gamePage.getContent();
+        if(games.isEmpty()) return Page.empty();
         List<CartGameInfo> gameDetails = gameDetailsRepository.findByIdIn(games.stream().map(Game::getId).toList());
         Map<Long,GameListItem> gameListItemMap = getGameListItemMap(games, gameDetails);
-        return CursorResponse.<GameListItem>builder()
-                .items(gameListItemMap.values().stream().toList())
-                .build();
+        return gamePage.map(game -> {
+            GameListItem item = gameListItemMap.get(game.getId());
+            return GameListItem.builder()
+                    .id(item.getId())
+                    .name(item.getName())
+                    .price(item.getPrice())
+                    .releaseDate(item.getReleaseDate())
+                    .thumbnail(item.getThumbnail())
+                    .build();
+        });
     }
 
     private Map<Long,GameListItem> getGameListItemMap(List<Game> games, List<CartGameInfo> gameDetails) {
@@ -157,10 +208,6 @@ public class GameServiceImpl implements GameService {
     @Override
     public GameStoreDetail getGameStoreDetails(Long gameId) {
         String key = "game:store:detail:" + gameId;
-        GameStoreDetail cachedDetail = redisService.get(key, GameStoreDetail.class);
-        if(cachedDetail != null) {
-            return getGameStoreDetailWithOwnedStatus(gameId, cachedDetail);
-        }
         RedisCacheEntry<GameStoreDetail> cacheEntry = RedisCacheEntry.<GameStoreDetail>builder()
                 .key(key)
                 .fallBackFunction(() -> getGameStoreDetailFromDb(gameId))

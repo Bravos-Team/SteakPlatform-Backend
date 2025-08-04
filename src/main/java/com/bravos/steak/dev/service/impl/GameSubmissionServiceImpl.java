@@ -82,7 +82,7 @@ public class GameSubmissionServiceImpl implements GameSubmissionService {
         long publisherId = (long) jwtTokenClaims.getOtherClaims().get("publisherId");
         long submissionId = snowflakeGenerator.generateId();
 
-        if(gameSubmissionRepository.findByNameAndPublisherId(projectName,publisherId) != null) {
+        if(gameSubmissionRepository.findByNameAndPublisherIdAndStatusNot(projectName,publisherId,GameSubmissionStatus.DELETED)) {
             throw new ConflictDataException("Project name is existed in your submissions");
         }
 
@@ -382,6 +382,30 @@ public class GameSubmissionServiceImpl implements GameSubmissionService {
             );
         } catch (Exception e) {
             throw new RuntimeException("Failed to update game submission status: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public void deleteGameSubmission(Long submissionId) {
+        JwtTokenClaims jwtTokenClaims = (JwtTokenClaims)
+                SecurityContextHolder.getContext().getAuthentication().getDetails();
+
+        Long publisherId = (long) jwtTokenClaims.getOtherClaims().get("publisherId");
+
+        GameSubmission gameSubmission = gameSubmissionRepository.findByIdAndPublisherId(submissionId, publisherId);
+        if(gameSubmission == null) {
+            throw new BadRequestException("Project not found or you are not the owner of this project");
+        }
+
+        if(gameSubmission.getStatus() == GameSubmissionStatus.DELETED) {
+            throw new BadRequestException("Project is already deleted");
+        }
+
+        try {
+            gameSubmission.setStatus(GameSubmissionStatus.DELETED);
+        } catch (Exception e) {
+            log.error("Error when deleting project: {}", e.getMessage(), e);
+            throw new RuntimeException("Error when deleting project");
         }
     }
 

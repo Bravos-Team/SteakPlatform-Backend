@@ -36,7 +36,7 @@ public class GameSpecification {
 
     public static Specification<Game> withFilters(FilterQuery filterQuery) {
         return (root, query, cb) -> {
-            List<Predicate> predicates = new ArrayList<>(5);
+            List<Predicate> predicates = new ArrayList<>(7);
 
             if (query == null) {
                 query = cb.createQuery();
@@ -44,11 +44,7 @@ public class GameSpecification {
 
             long currentTime = DateTimeHelper.currentTimeMillis();
 
-            if (filterQuery.getCursor() != null) {
-                predicates.add(cb.lessThan(root.get("releaseDate"), filterQuery.getCursor() > currentTime ? currentTime : filterQuery.getCursor()));
-            } else {
-                predicates.add(cb.lessThan(root.get("releaseDate"), currentTime));
-            }
+            predicates.add(cb.lessThanOrEqualTo(root.get("releaseDate"), currentTime));
 
             if(filterQuery.getKeyword() != null && !filterQuery.getKeyword().isEmpty()) {
                 predicates.add(cb.like(cb.lower(root.get("name")), "%" + filterQuery.getKeyword().toLowerCase() + "%"));
@@ -91,4 +87,33 @@ public class GameSpecification {
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
+
+    public static Specification<Game> newestGames() {
+        return (root, query, cb) -> {
+            if (query == null) {
+                query = cb.createQuery();
+            }
+            List<Predicate> predicates = new ArrayList<>(2);
+            long currentTime = DateTimeHelper.currentTimeMillis();
+            predicates.add(cb.lessThanOrEqualTo(root.get("releaseDate"), currentTime));
+            predicates.add(cb.equal(root.get("status"), GameStatus.OPENING));
+            query.orderBy(cb.desc(root.get("releaseDate")));
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+
+    public static Specification<Game> comingSoonGames() {
+        return (root, query, cb) -> {
+            if (query == null) {
+                query = cb.createQuery();
+            }
+            List<Predicate> predicates = new ArrayList<>(2);
+            long currentTime = DateTimeHelper.currentTimeMillis();
+            predicates.add(cb.greaterThan(root.get("releaseDate"), currentTime));
+            predicates.add(cb.equal(root.get("status"), GameStatus.OPENING));
+            query.orderBy(cb.asc(root.get("releaseDate")));
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+
 }
