@@ -29,8 +29,8 @@ table "game" {
     type = bigint
   }
   column "created_at" {
-    null = false
-    type = bigint
+    null    = false
+    type    = bigint
     default = sql("(extract(epoch from (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')) * 1000)::bigint")
   }
   column "updated_at" {
@@ -1033,8 +1033,8 @@ table "user_game" {
     default = sql("(extract(epoch from (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')) * 1000)::bigint")
   }
   column "play_seconds" {
-    null = false
-    type = bigint
+    null    = false
+    type    = bigint
     default = 0
   }
   column "play_recent_date" {
@@ -1257,5 +1257,41 @@ table "wishlist" {
   }
   index "idx_wishlist_user_account_id" {
     columns = [column.user_account_id]
+  }
+}
+table "playing_count_record" {
+  schema = schema.public
+  column "id" {
+    null = false
+    type = bigint
+  }
+  column "game_id" {
+    null = false
+    type = bigint
+  }
+  column "count" {
+    null    = false
+    type    = bigint
+    default = 0
+  }
+  column "record_at" {
+    null    = false
+    type    = bigint
+    default = sql("(extract(epoch from (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Ho_Chi_Minh')) * 1000)::bigint")
+  }
+  primary_key {
+    columns = [column.id]
+  }
+  foreign_key "playing_count_record_game_id_fkey" {
+    columns     = [column.game_id]
+    ref_columns = [table.game.column.id]
+    on_update   = NO_ACTION
+    on_delete   = NO_ACTION
+  }
+  index "idx_playing_count_record_game_id" {
+    columns = [column.game_id]
+  }
+  index "idx_playing_count_record_record_at" {
+    columns = [column.game_id,column.record_at]
   }
 }

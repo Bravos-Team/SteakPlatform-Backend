@@ -2,6 +2,8 @@ package com.bravos.steak.common.service.redis;
 
 import com.bravos.steak.common.model.RedisCacheEntry;
 import com.fasterxml.jackson.databind.type.CollectionLikeType;
+import org.springframework.data.redis.core.Cursor;
+import org.springframework.data.redis.core.KeyScanOptions;
 
 import java.util.Collection;
 import java.util.List;
@@ -42,6 +44,8 @@ public interface RedisService {
     void expire(String key, long timeout, TimeUnit timeUnit);
 
     void delete(String key);
+
+    Cursor<byte[]> scan(KeyScanOptions options);
 
     void clearAll();
 

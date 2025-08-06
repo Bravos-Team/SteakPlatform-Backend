@@ -82,7 +82,7 @@ public class GameSubmissionServiceImpl implements GameSubmissionService {
         long publisherId = (long) jwtTokenClaims.getOtherClaims().get("publisherId");
         long submissionId = snowflakeGenerator.generateId();
 
-        if(gameSubmissionRepository.findByNameAndPublisherIdAndStatusNot(projectName,publisherId,GameSubmissionStatus.DELETED)) {
+        if(gameSubmissionRepository.existsByNameAndPublisherIdAndStatusNot(projectName,publisherId,GameSubmissionStatus.DELETED)) {
             throw new ConflictDataException("Project name is existed in your submissions");
         }
 

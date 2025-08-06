@@ -70,7 +70,7 @@ public class PublisherManagerController {
         return ResponseEntity.ok(publisherManagerService.getRoleDetail(roleId));
     }
 
-    @GetMapping("/create-account")
+    @PostMapping("/create-account")
     @HasAuthority({PublisherAuthority.WRITE_MEMBERS})
     public ResponseEntity<?> createAccount(@RequestBody @Valid CreatePublisherAccountRequest request) {
         return ResponseEntity.ok(publisherManagerService.createAccount(request));

@@ -8,7 +8,6 @@ import com.bravos.steak.dev.model.request.SaveProjectRequest;
 import com.bravos.steak.dev.model.request.UpdatePreBuildRequest;
 import org.springframework.data.domain.Page;
 
-
 public interface GameSubmissionService {
 
     Long createProject(String projectName);

@@ -11,5 +11,5 @@ public interface GameSubmissionRepository extends MongoRepository<GameSubmission
     GameSubmission findByNameAndPublisherId(String name, Long publisherId);
     GameSubmission findByIdAndPublisherId(Long id, Long publisherId);
 
-    boolean findByNameAndPublisherIdAndStatusNot(String name, Long publisherId, GameSubmissionStatus status);
+    boolean existsByNameAndPublisherIdAndStatusNot(String name, Long publisherId, GameSubmissionStatus status);
 }
