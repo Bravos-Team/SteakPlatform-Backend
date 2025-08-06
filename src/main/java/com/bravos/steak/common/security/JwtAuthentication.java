@@ -11,9 +11,11 @@ import java.util.List;
 public class JwtAuthentication implements Authentication {
 
     private final JwtTokenClaims jwtTokenClaims;
+    private final String token;
 
-    public JwtAuthentication(JwtTokenClaims jwtTokenClaims) {
+    public JwtAuthentication(JwtTokenClaims jwtTokenClaims, String token) {
         this.jwtTokenClaims = jwtTokenClaims;
+        this.token = token;
     }
 
     @Override
@@ -27,7 +29,7 @@ public class JwtAuthentication implements Authentication {
 
     @Override
     public Object getCredentials() {
-        return null;
+        return token;
     }
 
     @Override
@@ -54,5 +56,7 @@ public class JwtAuthentication implements Authentication {
     public String getName() {
         return jwtTokenClaims.getId() + "";
     }
+
+
 
 }

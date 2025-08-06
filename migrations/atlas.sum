@@ -1,4 +1,4 @@
-h1:tWwgDEa1dKcdiDuOtKN9lY7AhaJPlDuiCrNY8t4Zi9s=
+h1:Dib96pksGijoNq2Ex0MV+bjd8mhGT3nifcbluarfQiA=
 20250706170756_migrate-datetime-to-bigint.sql h1:5JrcN/MgdPa3aItd1d1933e6qfnTW8l6qRWiXP76nQQ=
 20250706170919_add-game-default-created-at.sql h1:8EqGnGq3gsxGa0YGT0c1Q9yxTXsUglQe9fSKYUP96Bo=
 20250706170931.sql h1:VdBUOWMkg+Ua82QGrSeIZ2luY6+z7Wr0LHjCTE1A5So=
@@ -12,3 +12,6 @@ h1:tWwgDEa1dKcdiDuOtKN9lY7AhaJPlDuiCrNY8t4Zi9s=
 20250724155825_add-install-size-gversion.sql h1:WSsoUrIQQFuUfNT49gt6+xguMOVAzOEDa5X8GViofFQ=
 20250727054647_genres-and-tags.sql h1:FqkGDKIg1IDkJVAG+LznoYj5JPYQ1v98bKYqNMnJxI4=
 20250728140505_add-unique-version-name-checking.sql h1:+Qyjw2WeuSNMQeh8aK5ai/0V+EHWzaFONjaZ7NLatDQ=
+20250805131240_add-playing-count-record.sql h1:Gx2IvP7717yGEW1u93MrzVP0IABWT/zboHiDVbtucQ4=
+20250805132513_re-index-playing-count-record.sql h1:T5GEej3tVTZQ67I1FkRLs115eNkxUc9UfY2t0+YuRJ4=
+20250805151311_modify-playing-count-record.sql h1:CQV5shahJOpt5afaJFTP9OyCkx2UptaQ7XUP7ODKNCQ=

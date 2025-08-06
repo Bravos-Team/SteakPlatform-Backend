@@ -25,6 +25,7 @@ import java.util.List;
 public class JwtFilter extends OncePerRequestFilter {
 
     private final List<String> whiteList = List.of(
+            "/ws",
             "/ipn",
             "/verificate",
             "/api/v1/user/auth",
@@ -70,7 +71,7 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
 
-        JwtAuthentication authentication = new JwtAuthentication(tokenClaims);
+        JwtAuthentication authentication = new JwtAuthentication(tokenClaims, token);
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
