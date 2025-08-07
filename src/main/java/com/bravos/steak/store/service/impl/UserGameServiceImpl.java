@@ -1,5 +1,6 @@
 package com.bravos.steak.store.service.impl;
 
+import com.bravos.steak.common.model.RedisCacheEntry;
 import com.bravos.steak.common.service.redis.RedisService;
 import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
 import com.bravos.steak.store.entity.Game;
@@ -8,15 +9,17 @@ import com.bravos.steak.store.entity.UserGame;
 import com.bravos.steak.store.repo.PlayingCountRecordRepository;
 import com.bravos.steak.store.repo.UserGameRepository;
 import com.bravos.steak.store.service.UserGameService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.CollectionLikeType;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.KeyScanOptions;
 import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -27,18 +30,23 @@ public class UserGameServiceImpl implements UserGameService {
     private final SnowflakeGenerator snowflakeGenerator;
     private final PlayingCountRecordRepository playingCountRecordRepository;
 
+    private static final String GAME_LEADERBOARD_KEY = "leaderboard:game";
+    private final ObjectMapper objectMapper;
+
     public UserGameServiceImpl(UserGameRepository userGameRepository, RedisService redisService,
-                               SnowflakeGenerator snowflakeGenerator, PlayingCountRecordRepository playingCountRecordRepository) {
+                               SnowflakeGenerator snowflakeGenerator, PlayingCountRecordRepository playingCountRecordRepository,
+                               ObjectMapper objectMapper) {
         this.userGameRepository = userGameRepository;
         this.redisService = redisService;
         this.snowflakeGenerator = snowflakeGenerator;
         this.playingCountRecordRepository = playingCountRecordRepository;
+        this.objectMapper = objectMapper;
     }
 
     @Override
     public void updateUserGame(long userId, long gameId, long playTime, long currentTime) {
         UserGame userGame = userGameRepository.findByGameIdAndUserId(gameId, userId);
-        if(userGame != null && currentTime > userGame.getPlayRecentDate()) {
+        if(userGame != null && (userGame.getPlayRecentDate() == null || currentTime > userGame.getPlayRecentDate() )) {
             userGame.setPlayRecentDate(currentTime);
             userGame.setPlaySeconds(userGame.getPlaySeconds() + playTime / 1000);
             try {
@@ -49,7 +57,7 @@ public class UserGameServiceImpl implements UserGameService {
         }
     }
 
-    @Scheduled(cron = "0 0 */1 * * *")
+    @Scheduled(cron = "0 0/15 * * * ?")
     @Override
     public void savePlayingCountJob() {
         String lockKey = "lock:save:playing:count";
@@ -69,22 +77,22 @@ public class UserGameServiceImpl implements UserGameService {
     }
 
     private void savePlayingCount() {
-        String keyPattern  = "current:playing:game:*";
         ScanOptions options = KeyScanOptions.scanOptions()
-                .match(keyPattern)
                 .count(200)
                 .build();
+
         List<PlayingCountRecord> records = new ArrayList<>(200);
-        try(Cursor<byte[]> cursor = redisService.scan((KeyScanOptions) options)) {
+
+        try(var cursor = redisService.zscan(GAME_LEADERBOARD_KEY, options)) {
             while (cursor.hasNext()) {
-                String key = new String(cursor.next());
-                Long gameIdFromKey = Long.parseLong(key.substring(key.lastIndexOf(':') + 1));
-                Long value = redisService.get(key, Long.class);
-                if(value != null && value > 0) {
+                var current = cursor.next();
+                Long gameId = Long.parseLong(String.valueOf(current.getValue()));
+                long score = Objects.requireNonNull(current.getScore()).longValue();
+                if(score > 0) {
                     PlayingCountRecord record = PlayingCountRecord.builder()
                             .id(snowflakeGenerator.generateId())
-                            .game(Game.builder().id(gameIdFromKey).build())
-                            .count(value)
+                            .game(Game.builder().id(gameId).build())
+                            .count(score)
                             .build();
                     records.add(record);
                 }
@@ -100,28 +108,62 @@ public class UserGameServiceImpl implements UserGameService {
     }
 
     @Override
-    public void increaseCurrentPlayingGame(long gameId) {
-        String key = "current:playing:game:" + gameId;
-        if(redisService.hasKey(key)) {
-            redisService.increment(key, 1L);
-            return;
+    public Set<Long> getTopPlayedGames(long start, long end) {
+        if(start > end) {
+            throw new IllegalArgumentException("Start index cannot be greater than end index");
         }
-        redisService.save(key, 1L);
+        String key = "game:leaderboard:" + start + ":" + end;
+        RedisCacheEntry<Set<Long>> cacheEntry = RedisCacheEntry.<Set<Long>>builder()
+                .key(key)
+                .keyTimeout(5)
+                .keyTimeUnit(TimeUnit.MINUTES)
+                .lockTimeout(5)
+                .lockTimeUnit(TimeUnit.SECONDS)
+                .fallBackFunction(() -> getTopPlayedGamesFromRedis(start, end))
+                .build();
+        CollectionLikeType type = objectMapper.getTypeFactory().constructCollectionLikeType(List.class, Long.class);
+        return redisService.getWithLock(cacheEntry, type);
+    }
+
+    @Override
+    public long countTotalPlayedGames() {
+        String key = "game:leaderboard:count";
+        RedisCacheEntry<Long> cacheEntry = RedisCacheEntry.<Long>builder()
+                .key(key)
+                .keyTimeout(5)
+                .keyTimeUnit(TimeUnit.MINUTES)
+                .lockTimeout(1)
+                .lockTimeUnit(TimeUnit.SECONDS)
+                .fallBackFunction(this::countTotalPlayedGamesFromRedis)
+                .build();
+        return redisService.getWithLock(cacheEntry, Long.class);
+    }
+
+    private long countTotalPlayedGamesFromRedis() {
+        return redisService.zcount(GAME_LEADERBOARD_KEY);
+    }
+
+    private Set<Long> getTopPlayedGamesFromRedis(long start, long end) {
+        return redisService.zrange(GAME_LEADERBOARD_KEY, start, end)
+                .stream()
+                .map(value -> Long.parseLong(String.valueOf(value)))
+                .collect(Collectors.toSet());
+    }
+
+    @Override
+    public void increaseCurrentPlayingGame(long gameId) {
+        redisService.zincrement(GAME_LEADERBOARD_KEY, gameId, 1.0);
     }
 
     @Override
     public void decreaseCurrentPlayingGame(long gameId) {
-        String key = "current:playing:game:" + gameId;
-        redisService.decrement(key,1L);
+        redisService.decrementAndDeleteIfZero(GAME_LEADERBOARD_KEY,gameId, 1.0);
     }
 
     @Override
     public long getCurrentPlayingGameCount(long gameId) {
-        String key = "current:playing:game:" + gameId;
-        Long count = redisService.get(key, Long.class);
-        return count != null ? count : 0L;
+        return Double.valueOf(redisService.zget(GAME_LEADERBOARD_KEY,gameId)).longValue();
     }
-
 
 
 }

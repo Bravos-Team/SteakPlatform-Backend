@@ -2,21 +2,25 @@ package com.bravos.steak.common.service.redis.impl;
 
 import com.bravos.steak.common.model.RedisCacheEntry;
 import com.bravos.steak.common.service.redis.RedisService;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionLikeType;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.Cursor;
-import org.springframework.data.redis.core.KeyScanOptions;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.core.ScanOptions;
+import org.springframework.data.redis.core.ZSetOperations;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 @Slf4j
 @Service
@@ -49,6 +53,62 @@ public class RedisServiceImpl implements RedisService {
             log.error("Error when getting data: {}", e.getMessage(), e);
             throw new RuntimeException("Error when getting data");
         }
+    }
+
+    @Override
+    public void zsave(String key, Object value, double score) {
+        redisTemplate.opsForZSet().add("leaderboard:game", value, score);
+    }
+
+    @Override
+    public double zget(String key, Object value) {
+        Double score = redisTemplate.opsForZSet().score(key, value);
+        return score != null ? score : 0.0;
+    }
+
+    @Override
+    public double zincrement(String key, Object value, double delta) {
+        if (delta == 0) {
+            return zget(key, value);
+        }
+        Double score = redisTemplate.opsForZSet().incrementScore(key, value, delta);
+        if (score != null) return score;
+        return 0.0;
+    }
+
+    @Override
+    public double zdecrement(String key, Object value, double delta) {
+        if (delta == 0) {
+            return zget(key, value);
+        }
+        Double score = redisTemplate.opsForZSet().incrementScore(key, value, -delta);
+        if (score != null) return score;
+        return 0.0;
+    }
+
+    @Override
+    public Double decrementAndDeleteIfZero(String key, Object value, double delta) {
+        String luaScript = """
+                    local newScore = redis.call('ZINCRBY', KEYS[1], ARGV[1], ARGV[2])
+                    if tonumber(newScore) <= 0 then
+                        redis.call('ZREM', KEYS[1], ARGV[2])
+                    end
+                    return newScore
+                """;
+        DefaultRedisScript<Double> script = new DefaultRedisScript<>(luaScript);
+
+        String member;
+        try {
+            member = value instanceof String ? (String) value : objectMapper.writeValueAsString(value);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error serializing value: " + e.getMessage(), e);
+        }
+        return redisTemplate.execute(
+                script,
+                Collections.singletonList(key),
+                delta,
+                member
+        );
     }
 
     @Override
@@ -97,9 +157,12 @@ public class RedisServiceImpl implements RedisService {
     }
 
     @Override
-    public <T> Collection<T> get(String key, CollectionLikeType type, Class<T> clazz) {
+    public <E, C extends Collection<E>> C get(String key, CollectionLikeType type) {
         Object value = redisTemplate.opsForValue().get(key);
-        if (value == null) return List.of();
+        if (value == null) return null;
+        if (!(value instanceof Collection)) {
+            throw new RuntimeException("Value is not a collection: " + value.getClass().getName());
+        }
         try {
             return objectMapper.convertValue(value, type);
         } catch (IllegalArgumentException e) {
@@ -150,77 +213,85 @@ public class RedisServiceImpl implements RedisService {
         }
     }
 
+    private <T> T getWithLockInternal(
+            String key,
+            String lockKey,
+            Supplier<T> getFunction,
+            Supplier<T> fallbackFunction,
+            long lockTimeout,
+            TimeUnit lockTimeUnit,
+            long retryTime,
+            long retryWait,
+            long keyTimeout,
+            TimeUnit keyTimeUnit
+    ) {
+        T value = getFunction.get();
+        if (value != null) return value;
+
+        boolean isLockAcquired = this.saveIfAbsent(lockKey, 1, lockTimeout, lockTimeUnit);
+
+        if (!isLockAcquired) {
+            try {
+                for (int i = 0; i < retryTime; i++) {
+                    Thread.sleep(Duration.ofMillis(retryWait));
+                    value = getFunction.get();
+                    if (value != null) {
+                        return value;
+                    }
+                }
+            } catch (InterruptedException e) {
+                log.error("Error when waiting get cache: {}", e.getMessage(), e);
+                Thread.currentThread().interrupt();
+            }
+        }
+
+        try {
+            value = fallbackFunction.get();
+            this.save(key, value, keyTimeout, keyTimeUnit);
+            return value;
+        } finally {
+            if (isLockAcquired) {
+                this.delete(lockKey);
+            }
+        }
+    }
+
     @Override
     public <T> T getWithLock(RedisCacheEntry<T> cacheEntry, Class<T> clazz) {
         final String key = cacheEntry.getKey();
         final String lockKey = "get-lock:" + key;
-        T value = this.get(key, clazz);
-        if (value != null) return value;
-
-        boolean isLockAcquired = this.saveIfAbsent(lockKey, 1,
-                cacheEntry.getLockTimeout(), cacheEntry.getLockTimeUnit());
-
-        if (!isLockAcquired) {
-            try {
-                for (int i = 0; i < cacheEntry.getRetryTime(); i++) {
-                    Thread.sleep(Duration.ofMillis(cacheEntry.getRetryWait()));
-                    value = this.get(key, clazz);
-                    if (value != null) {
-                        return value;
-                    }
-                }
-            } catch (InterruptedException e) {
-                log.error("Error when waiting get cache: {}", e.getMessage(), e);
-                Thread.currentThread().interrupt();
-            }
-        }
-
-        try {
-            value = cacheEntry.getFallBackFunction().get();
-            this.save(key, value, cacheEntry.getKeyTimeout(), cacheEntry.getKeyTimeUnit());
-            return value;
-        } finally {
-            if (isLockAcquired) {
-                this.delete(lockKey);
-            }
-        }
+        return getWithLockInternal(
+                key,
+                lockKey,
+                () -> this.get(key, clazz),
+                cacheEntry.getFallBackFunction(),
+                cacheEntry.getLockTimeout(),
+                cacheEntry.getLockTimeUnit(),
+                cacheEntry.getRetryTime(),
+                cacheEntry.getRetryWait(),
+                cacheEntry.getKeyTimeout(),
+                cacheEntry.getKeyTimeUnit()
+        );
     }
 
     @Override
-    public <T> Collection<T> getWithLock(RedisCacheEntry<Collection<T>> cacheEntry, CollectionLikeType type, Class<T> clazz) {
+    public <E, C extends Collection<E>> C getWithLock(RedisCacheEntry<C> cacheEntry, CollectionLikeType type) {
         final String key = cacheEntry.getKey();
         final String lockKey = "get-lock:" + key;
-        Collection<T> value = this.get(key, type, clazz);
-        if (value != null) return value;
-
-        boolean isLockAcquired = this.saveIfAbsent(lockKey, 1,
-                cacheEntry.getLockTimeout(), cacheEntry.getLockTimeUnit());
-
-        if (!isLockAcquired) {
-            try {
-                for (int i = 0; i < cacheEntry.getRetryTime(); i++) {
-                    Thread.sleep(Duration.ofMillis(cacheEntry.getRetryWait()));
-                    value = this.get(key, type, clazz);
-                    if (value != null) {
-                        return value;
-                    }
-                }
-            } catch (InterruptedException e) {
-                log.error("Error when waiting get cache: {}", e.getMessage(), e);
-                Thread.currentThread().interrupt();
-            }
-        }
-
-        try {
-            value = cacheEntry.getFallBackFunction().get();
-            this.save(key, value, cacheEntry.getKeyTimeout(), cacheEntry.getKeyTimeUnit());
-            return value;
-        } finally {
-            if (isLockAcquired) {
-                this.delete(lockKey);
-            }
-        }
+        return getWithLockInternal(
+                key,
+                lockKey,
+                () -> this.get(key, type),
+                cacheEntry.getFallBackFunction(),
+                cacheEntry.getLockTimeout(),
+                cacheEntry.getLockTimeUnit(),
+                cacheEntry.getRetryTime(),
+                cacheEntry.getRetryWait(),
+                cacheEntry.getKeyTimeout(),
+                cacheEntry.getKeyTimeUnit()
+        );
     }
+
 
     @Override
     public Long increment(String key, long delta) {
@@ -282,20 +353,29 @@ public class RedisServiceImpl implements RedisService {
     }
 
     @Override
-    public Cursor<byte[]> scan(KeyScanOptions options) {
+    public Cursor<String> scan(ScanOptions options) {
         try {
-            RedisConnectionFactory redisConnectionFactory = redisTemplate.getConnectionFactory();
-            if (redisConnectionFactory != null && !redisConnectionFactory.getConnection().isClosed()) {
-                RedisConnection connection = redisConnectionFactory.getConnection();
-                if (!connection.isClosed()) {
-                    return connection.scan(options);
-                }
-            }
-            throw new RuntimeException("Redis connection is closed");
+            return redisTemplate.scan(options);
         } catch (Exception e) {
             log.error("Error when scanning keys: {}", e.getMessage(), e);
             throw new RuntimeException("Error when scanning keys");
         }
+    }
+
+    @Override
+    public Cursor<ZSetOperations.TypedTuple<Object>> zscan(String key, ScanOptions options) {
+        return redisTemplate.opsForZSet().scan(key, options);
+    }
+
+    @Override
+    public Set<Object> zrange(String key, long start, long end) {
+        return redisTemplate.opsForZSet().reverseRange(key, start, end);
+    }
+
+    @Override
+    public long zcount(String key) {
+        Long count = redisTemplate.opsForZSet().size(key);
+        return count != null ? count : 0L;
     }
 
     @Override

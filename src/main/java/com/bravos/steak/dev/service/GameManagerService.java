@@ -7,6 +7,7 @@ import com.bravos.steak.dev.model.response.GameVersionListItem;
 import com.bravos.steak.dev.model.response.PublisherGameListItem;
 import com.bravos.steak.store.model.response.FullGameDetails;
 import com.bravos.steak.store.model.response.GameStoreDetail;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -18,7 +19,7 @@ public interface GameManagerService {
 
     void updateGamePrice(Long gameId, Double price);
 
-    List<PublisherGameListItem> listAllGames(int page, int size, String status);
+    Page<PublisherGameListItem> listAllGames(int page, int size, String status);
 
     void createNewVersion(CreateNewVersionRequest request);
 

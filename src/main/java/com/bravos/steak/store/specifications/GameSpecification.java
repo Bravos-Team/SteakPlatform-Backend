@@ -9,6 +9,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class GameSpecification {
 
@@ -116,4 +117,14 @@ public class GameSpecification {
         };
     }
 
+    public static Specification<Game> topMostPlayedGames(Set<Long> gameIds) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>(2);
+            predicates.add(cb.equal(root.get("status"), GameStatus.OPENING));
+            if (gameIds != null && !gameIds.isEmpty()) {
+                predicates.add(root.get("id").in(gameIds));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+    }
 }

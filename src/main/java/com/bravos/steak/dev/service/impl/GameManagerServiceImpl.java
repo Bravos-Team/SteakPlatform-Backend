@@ -31,6 +31,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -208,7 +210,7 @@ public class GameManagerServiceImpl implements GameManagerService {
     }
 
     @Override
-    public List<PublisherGameListItem> listAllGames(int page, int size, String status) {
+    public Page<PublisherGameListItem> listAllGames(int page, int size, String status) {
         if (page < 0 || size <= 0) {
             throw new BadRequestException("Page must be >= 0 and size must be > 0.");
         }
@@ -226,7 +228,7 @@ public class GameManagerServiceImpl implements GameManagerService {
             games = gameRepository.findAllByPublisherIdAndStatus(publisherId, gameStatus, PageRequest.of(page, size));
         }
 
-        if (games.isEmpty()) return List.of();
+        if (games.isEmpty()) return Page.empty();
 
         List<GameThumbnail> gameThumbnails = gameDetailsRepository.findThumbnailsByIdIn(games.stream().map(Game::getId).toList());
         Map<Long, PublisherGameListItem> gameMap = new HashMap<>(games.size());
@@ -240,7 +242,11 @@ public class GameManagerServiceImpl implements GameManagerService {
             item.setThumbnail(thumbnail.getThumbnail());
         });
 
-        return gameMap.values().stream().toList();
+        return new PageImpl<>(
+                new ArrayList<>(gameMap.values()),
+                PageRequest.of(page, size),
+                gameRepository.countByPublisherIdAndStatusNot(publisherId, GameStatus.DELETED)
+        );
     }
 
     @Override
