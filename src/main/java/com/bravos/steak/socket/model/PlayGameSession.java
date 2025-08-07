@@ -15,8 +15,6 @@ public class PlayGameSession {
 
     long startTime;
 
-    long latestPingTime;
-
     String deviceId;
 
 }

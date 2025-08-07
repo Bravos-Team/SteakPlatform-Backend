@@ -44,17 +44,15 @@ public class TrackingUserGameServiceImpl implements TrackingUserGameService {
             if (!session.getDeviceId().equals(message.getDeviceId())) {
                 throw new ForbiddenException("You are playing this game on another device");
             }
-            session.setLatestPingTime(currentTime);
         } else {
             applicationEventPublisher.publishEvent(new CounterEvent.IncreasePlayingCountEvent(
                     this, message.getGameId(), userId));
             session = PlayGameSession.builder()
                     .deviceId(message.getDeviceId())
                     .startTime(currentTime)
-                    .latestPingTime(currentTime)
                     .build();
+            redisService.save(trackingUserKey, session, 10, TimeUnit.MINUTES);
         }
-        redisService.save(trackingUserKey, session, 10, TimeUnit.MINUTES);
     }
 
     @Override
@@ -65,9 +63,9 @@ public class TrackingUserGameServiceImpl implements TrackingUserGameService {
         if (session != null && !session.getDeviceId().equals(message.getDeviceId())) {
             throw new ForbiddenException("You are playing this game on another device");
         } else if(session != null) {
+            long playTime = DateTimeHelper.currentTimeMillis() - session.getStartTime();
             applicationEventPublisher.publishEvent(new CounterEvent.DecreasePlayingCountEvent(
-                    this, message.getGameId(), userId,
-                    session.getLatestPingTime() - session.getStartTime()));
+                    this, message.getGameId(), userId, playTime));
         }
         redisService.delete(trackingUserKey);
     }

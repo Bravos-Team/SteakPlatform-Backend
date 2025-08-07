@@ -1,33 +1,30 @@
 package com.bravos.steak.socket.configuration;
 
+import com.bravos.steak.socket.handler.GameTrackingHandler;
 import lombok.NonNull;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.messaging.simp.config.MessageBrokerRegistry;
-import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
-import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
-import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.web.socket.config.annotation.*;
 
 @Configuration
-@EnableWebSocketMessageBroker
-public class SocketConfiguration implements WebSocketMessageBrokerConfigurer {
+@EnableWebSocket
+public class SocketConfiguration implements WebSocketConfigurer {
 
     private final AuthHandshakeInterceptor authHandshakeInterceptor;
+    private final GameTrackingHandler gameTrackingHandler;
 
-    public SocketConfiguration(AuthHandshakeInterceptor authHandshakeInterceptor) {
+    public SocketConfiguration(AuthHandshakeInterceptor authHandshakeInterceptor, GameTrackingHandler gameTrackingHandler) {
         this.authHandshakeInterceptor = authHandshakeInterceptor;
+        this.gameTrackingHandler = gameTrackingHandler;
     }
 
+
     @Override
-    public void registerStompEndpoints(@NonNull StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*")
+    public void registerWebSocketHandlers(@NonNull WebSocketHandlerRegistry registry) {
+        registry.addHandler(gameTrackingHandler, "/ws/tracking")
+                .setAllowedOrigins("*")
                 .addInterceptors(authHandshakeInterceptor);
     }
 
-    @Override
-    public void configureMessageBroker(@NonNull MessageBrokerRegistry registry) {
-        registry.setApplicationDestinationPrefixes("/app");
-        registry.enableSimpleBroker("/topic");
-    }
+
 
 }

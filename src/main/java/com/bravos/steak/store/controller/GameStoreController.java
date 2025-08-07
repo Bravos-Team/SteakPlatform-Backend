@@ -70,4 +70,12 @@ public class GameStoreController {
         return ResponseEntity.ok(gameService.getComingSoonGames(page, pageSize));
     }
 
+    @GetMapping("/top-played")
+    public ResponseEntity<?> getTopMostPlayedGames(
+            @RequestParam(defaultValue = "1", required = false) int page,
+            @RequestParam(defaultValue = "10", required = false) int pageSize
+    ) {
+        return ResponseEntity.ok(gameService.getTopMostPlayedGames(page, pageSize));
+    }
+
 }

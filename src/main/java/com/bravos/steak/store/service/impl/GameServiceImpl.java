@@ -1,6 +1,7 @@
 package com.bravos.steak.store.service.impl;
 
 import com.bravos.steak.common.model.CustomPage;
+import com.bravos.steak.common.model.CustomPageInfo;
 import com.bravos.steak.common.model.RedisCacheEntry;
 import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.common.service.helper.DateTimeHelper;
@@ -23,6 +24,7 @@ import com.bravos.steak.store.repo.*;
 import com.bravos.steak.store.repo.injection.CartGameInfo;
 import com.bravos.steak.store.service.DownloadGameService;
 import com.bravos.steak.store.service.GameService;
+import com.bravos.steak.store.service.UserGameService;
 import com.bravos.steak.store.specifications.GameSpecification;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -55,6 +57,7 @@ public class GameServiceImpl implements GameService {
     private final ObjectMapper objectMapper;
     private final GenreRepository genreRepository;
     private final TagRepository tagRepository;
+    private final UserGameService userGameService;
 
     @Override
     public CursorResponse<GameListItem> getGameStoreList(Long cursor, int pageSize) {
@@ -131,6 +134,38 @@ public class GameServiceImpl implements GameService {
                 .build();
         Object value = redisService.getWithLock(cacheEntry, Object.class);
         return objectMapper.convertValue(value, new TypeReference<>() {});
+    }
+
+    @Override
+    public CustomPage<GameListItem> getTopMostPlayedGames(int page, int pageSize) {
+        String key = "game:top-most-played:" + page + ":" + pageSize;
+        RedisCacheEntry<Object> cacheEntry = RedisCacheEntry.builder()
+                .key(key)
+                .fallBackFunction(() -> getTopMostPlayedGamesFromDb(page, pageSize))
+                .keyTimeout(5)
+                .keyTimeUnit(TimeUnit.MINUTES)
+                .lockTimeout(1000)
+                .lockTimeUnit(TimeUnit.MILLISECONDS)
+                .retryTime(3)
+                .build();
+        Object value = redisService.getWithLock(cacheEntry, Object.class);
+        return objectMapper.convertValue(value, new TypeReference<>() {});
+    }
+
+    private CustomPage<GameListItem> getTopMostPlayedGamesFromDb(int page, int pageSize) {
+        long start = (long) (page - 1) * pageSize;
+        long end = start + pageSize - 1;
+        Set<Long> gameIds = userGameService.getTopPlayedGames(start, end);
+        Specification<Game> spec = GameSpecification.topMostPlayedGames(gameIds);
+        return CustomPage.<GameListItem>builder()
+                .content(getGameListItemsBySpec(spec, page, pageSize).getContent())
+                .page(CustomPageInfo.builder()
+                        .number(page - 1)
+                        .size(pageSize)
+                        .totalPages(Math.toIntExact(userGameService.countTotalPlayedGames()) / pageSize + 1)
+                        .totalElements(gameIds.size())
+                        .build())
+                .build();
     }
 
     private CustomPage<GameListItem> getComingSoonGamesFromDb(int page, int pageSize) {
@@ -253,26 +288,26 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public Set<Genre> getAllGenres() {
-        RedisCacheEntry<Collection<Genre>> cacheEntry = RedisCacheEntry.<Collection<Genre>>builder()
+        RedisCacheEntry<Set<Genre>> cacheEntry = RedisCacheEntry.<Set<Genre>>builder()
                 .key("allGenres")
                 .fallBackFunction(this::getAllGenresFromDatabase)
                 .keyTimeout(15)
                 .keyTimeUnit(TimeUnit.MINUTES)
                 .build();
         CollectionLikeType type = objectMapper.getTypeFactory().constructCollectionLikeType(Set.class, Genre.class);
-        return new HashSet<>(redisService.getWithLock(cacheEntry, type, Genre.class));
+        return redisService.getWithLock(cacheEntry,type);
     }
 
     @Override
     public Set<Tag> getAllTags() {
-        RedisCacheEntry<Collection<Tag>> cacheEntry = RedisCacheEntry.<Collection<Tag>>builder()
+        RedisCacheEntry<Set<Tag>> cacheEntry = RedisCacheEntry.<Set<Tag>>builder()
                 .key("allTags")
                 .fallBackFunction(this::getAllTagsFromDatabase)
                 .keyTimeout(15)
                 .keyTimeUnit(TimeUnit.MINUTES)
                 .build();
         CollectionLikeType type = objectMapper.getTypeFactory().constructCollectionLikeType(Set.class, Tag.class);
-        return new HashSet<>(redisService.getWithLock(cacheEntry, type, Tag.class));
+        return redisService.getWithLock(cacheEntry, type);
     }
 
     @Override
@@ -282,18 +317,18 @@ public class GameServiceImpl implements GameService {
         return getGameStoreDetails(gameId);
     }
 
-    private List<Genre> getAllGenresFromDatabase() {
+    private Set<Genre> getAllGenresFromDatabase() {
         try {
-            return genreRepository.findAll();
+            return new HashSet<>(genreRepository.findAll());
         } catch (Exception e) {
             log.error("Failed to fetch genres from database: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to fetch genres from database", e);
         }
     }
 
-    private List<Tag> getAllTagsFromDatabase() {
+    private Set<Tag> getAllTagsFromDatabase() {
         try {
-            return tagRepository.findAll();
+            return new HashSet<>(tagRepository.findAll());
         } catch (Exception e) {
             log.error("Failed to fetch tags from database: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to fetch tags from database", e);

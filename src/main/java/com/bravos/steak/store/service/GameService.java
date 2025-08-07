@@ -8,9 +8,7 @@ import com.bravos.steak.store.model.response.CursorResponse;
 import com.bravos.steak.store.model.response.DownloadResponse;
 import com.bravos.steak.store.model.response.GameListItem;
 import com.bravos.steak.store.model.response.GameStoreDetail;
-import org.springframework.data.domain.Page;
 
-import java.util.List;
 import java.util.Set;
 
 public interface GameService {
@@ -22,6 +20,8 @@ public interface GameService {
     CustomPage<GameListItem> getNewestGames(int page, int pageSize);
 
     CustomPage<GameListItem> getComingSoonGames(int page, int pageSize);
+
+    CustomPage<GameListItem> getTopMostPlayedGames(int page, int pageSize);
 
     GameStoreDetail getGameStoreDetails(Long gameId);
 

@@ -1,5 +1,6 @@
 package com.bravos.steak.store.listener;
 
+import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.store.model.event.CounterEvent;
 import com.bravos.steak.store.service.UserGameService;
 import org.springframework.context.event.EventListener;
@@ -7,25 +8,26 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
 @Component
-public class PlayingCountListener {
+public class GameTrackingListener {
 
     private final UserGameService userGameService;
 
-    public PlayingCountListener(UserGameService userGameService) {
+    public GameTrackingListener(UserGameService userGameService) {
         this.userGameService = userGameService;
     }
 
-    @Async
     @EventListener
-    public void increasePlayingCountEvent(CounterEvent.IncreasePlayingCountEvent event) {
+    @Async
+    public void increasePlayingCount(CounterEvent.IncreasePlayingCountEvent event) {
         userGameService.increaseCurrentPlayingGame(event.getGameId());
+        userGameService.updateUserGame(event.getUserId(), event.getGameId(), 0, DateTimeHelper.currentTimeMillis());
     }
 
-    @Async
     @EventListener
-    public void decreasePlayingCountEvent(CounterEvent.DecreasePlayingCountEvent event) {
+    @Async
+    public void decreasePlayingCount(CounterEvent.DecreasePlayingCountEvent event) {
         userGameService.decreaseCurrentPlayingGame(event.getGameId());
-        userGameService.updateUserGame(event.getUserId(), event.getGameId(), event.getPlayTime(), System.currentTimeMillis());
+        userGameService.updateUserGame(event.getUserId(), event.getGameId(), event.getPlayTime(), DateTimeHelper.currentTimeMillis());
     }
 
 }
