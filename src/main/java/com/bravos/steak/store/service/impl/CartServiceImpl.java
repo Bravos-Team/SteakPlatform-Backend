@@ -324,15 +324,7 @@ public class CartServiceImpl implements CartService {
     @Transactional
     @Order(2)
     public void removeCartWhenPaymentSuccessfully(PaymentSuccessEvent event) {
-        Long orderId = event.getOrderId();
-        List<OrderDetails> orderDetailsList = orderDetailsRepository.findByOrderId(orderId);
-        List<Long> gameIds = orderDetailsList.stream()
-                .map(OrderDetails::getGame)
-                .map(Game::getId)
-                .toList();
-        if (getUserId() != null) {
-            removeFromCart(gameIds);
-        }
+        clearCart();
     }
 
     @EventListener

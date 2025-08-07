@@ -77,12 +77,6 @@ public class GameSpecification {
                 }
             }
 
-            if (filterQuery.getCursorDirection()) {
-                query.orderBy(cb.desc(root.get("releaseDate")));
-            } else {
-                query.orderBy(cb.asc(root.get("releaseDate")));
-            }
-
             predicates.add(cb.equal(root.get("status"), GameStatus.OPENING));
 
             return cb.and(predicates.toArray(new Predicate[0]));
