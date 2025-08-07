@@ -28,9 +28,6 @@ public class FilterQuery {
 
     String sortBy;
 
-    @Builder.Default
-    Boolean cursorDirection = true; // true for ascending, false for descending
-
     @Min(1)
     @Builder.Default
     Integer page = 1;
@@ -49,7 +46,7 @@ public class FilterQuery {
         }
         return Arrays.hashCode(new Object[]{
                 keyword, Arrays.hashCode(genreIds), Arrays.hashCode(tagIds),
-                minPrice, maxPrice, sortBy, cursorDirection, page, pageSize
+                minPrice, maxPrice, sortBy, page, pageSize
         });
     }
 
@@ -78,7 +75,6 @@ public class FilterQuery {
                         minPrice.equals(that.minPrice) &&
                         maxPrice.equals(that.maxPrice) &&
                         sortBy.equals(that.sortBy) &&
-                        cursorDirection.equals(that.cursorDirection) &&
                         page.equals(that.page) &&
                         pageSize.equals(that.pageSize);
     }
