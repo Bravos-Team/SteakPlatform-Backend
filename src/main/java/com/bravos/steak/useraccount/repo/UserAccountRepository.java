@@ -36,7 +36,7 @@ public interface UserAccountRepository extends JpaRepository<UserAccount,Long> {
     Page<UserListItem> getUsersByUsername(@Param("query") String username, Pageable pageable);
 
     @Query("SELECT new com.bravos.steak.administration.model.response.UserListItem(u.id, u.username, u.email, u.status) " +
-           "FROM UserAccount u WHERE u.email LIKE %:email%")
+           "FROM UserAccount u WHERE u.email LIKE %:query%")
     Page<UserListItem> getUsersByEmail(@Param("query") String email, Pageable pageable);
 
     @Transactional
