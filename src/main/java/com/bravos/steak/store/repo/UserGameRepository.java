@@ -1,6 +1,7 @@
 package com.bravos.steak.store.repo;
 
 import com.bravos.steak.store.entity.UserGame;
+import com.bravos.steak.store.model.response.TimePlayResponse;
 import com.bravos.steak.store.repo.injection.LibraryInfo;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,7 +16,7 @@ public interface UserGameRepository extends JpaRepository<UserGame, Long> {
 
     List<UserGame> findByUserId(Long userId);
 
-    @Query("SELECT new com.bravos.steak.store.repo.injection.LibraryInfo(ug.id.gameId,ug.ownedDate,ug.playRecentDate) " +
+    @Query("SELECT new com.bravos.steak.store.repo.injection.LibraryInfo(ug.id.gameId,ug.ownedDate,ug.playSeconds,ug.playRecentDate) " +
            "FROM UserGame ug WHERE ug.user.id = :userId")
     List<LibraryInfo> findLibraryInfoByUserId(@Param("userId") Long userId, Sort sort);
 
@@ -25,4 +26,9 @@ public interface UserGameRepository extends JpaRepository<UserGame, Long> {
     Long countUserGamesByUserIdAndGameIdIn(Long userId, Long[] gameIds);
 
     UserGame findByGameIdAndUserId(Long gameId, Long userId);
+
+    @Query("SELECT new com.bravos.steak.store.model.response.TimePlayResponse(ug.game.id, ug.playSeconds, ug.playRecentDate) " +
+           "FROM UserGame ug WHERE ug.game.id = :gameId AND ug.user.id = :userId")
+    TimePlayResponse findTimePlayedByGameIdAndUserId(Long gameId, Long userId);
+
 }

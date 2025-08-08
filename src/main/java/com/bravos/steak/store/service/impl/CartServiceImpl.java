@@ -9,7 +9,6 @@ import com.bravos.steak.exceptions.UnauthorizeException;
 import com.bravos.steak.store.entity.Cart;
 import com.bravos.steak.store.entity.CartItem;
 import com.bravos.steak.store.entity.Game;
-import com.bravos.steak.store.entity.OrderDetails;
 import com.bravos.steak.store.event.MoveToCartEvent;
 import com.bravos.steak.store.event.MoveToWishlistEvent;
 import com.bravos.steak.store.event.PaymentSuccessEvent;
@@ -44,21 +43,18 @@ public class CartServiceImpl implements CartService {
     private final CartRepository cartRepository;
     private final GameRepository gameRepository;
     private final CartItemRepository cartItemRepository;
-    private final OrderDetailsRepository orderDetailsRepository;
     private final GameDetailsRepository gameDetailsRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
 
     public CartServiceImpl(SessionService sessionService, SnowflakeGenerator snowflakeGenerator,
                            CartRepository cartRepository, GameRepository gameRepository,
-                           CartItemRepository cartItemRepository, OrderDetailsRepository orderDetailsRepository,
-                           GameDetailsRepository gameDetailsRepository,
+                           CartItemRepository cartItemRepository, GameDetailsRepository gameDetailsRepository,
                            ApplicationEventPublisher applicationEventPublisher) {
         this.sessionService = sessionService;
         this.snowflakeGenerator = snowflakeGenerator;
         this.cartRepository = cartRepository;
         this.gameRepository = gameRepository;
         this.cartItemRepository = cartItemRepository;
-        this.orderDetailsRepository = orderDetailsRepository;
         this.gameDetailsRepository = gameDetailsRepository;
         this.applicationEventPublisher = applicationEventPublisher;
     }

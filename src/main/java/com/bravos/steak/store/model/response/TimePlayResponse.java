@@ -1,4 +1,4 @@
-package com.bravos.steak.store.repo.injection;
+package com.bravos.steak.store.model.response;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -11,14 +11,12 @@ import static lombok.AccessLevel.PRIVATE;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = PRIVATE)
-public class LibraryInfo {
+public class TimePlayResponse {
 
     Long gameId;
 
-    Long ownedDate;
-
     Long playSeconds;
 
-    Long lastPlayedAt;
+    Long playRecentDate;
 
 }

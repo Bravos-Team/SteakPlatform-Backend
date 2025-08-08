@@ -17,8 +17,8 @@ public class GameLibraryItem {
 
     private Long ownedDate;
 
+    private Long playSeconds;
+
     private Long lastPlayedAt;
-
-
 
 }
