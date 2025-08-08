@@ -6,6 +6,7 @@ public enum GameSubmissionStatus {
     PENDING_REVIEW,
     NEED_UPDATE,
     ACCEPTED,
-    DELETED, REJECTED
+    DELETED,
+    REJECTED
 
 }

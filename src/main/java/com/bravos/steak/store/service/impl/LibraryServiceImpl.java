@@ -1,8 +1,11 @@
 package com.bravos.steak.store.service.impl;
 
 import com.bravos.steak.common.service.auth.SessionService;
+import com.bravos.steak.exceptions.BadRequestException;
+import com.bravos.steak.store.entity.UserGame;
 import com.bravos.steak.store.entity.details.GameDetails;
 import com.bravos.steak.store.model.response.GameLibraryItem;
+import com.bravos.steak.store.model.response.TimePlayResponse;
 import com.bravos.steak.store.repo.GameDetailsRepository;
 import com.bravos.steak.store.repo.UserGameRepository;
 import com.bravos.steak.store.repo.injection.LibraryInfo;
@@ -47,6 +50,7 @@ public class LibraryServiceImpl implements LibraryService {
                         .gameId(l.getGameId())
                         .ownedDate(l.getOwnedDate())
                         .lastPlayedAt(l.getLastPlayedAt())
+                        .playSeconds(l.getPlaySeconds())
                         .build()));
         gameDetailsList.forEach(detail -> {
             GameLibraryItem item = libraryMap.get(detail.getId());
@@ -54,6 +58,14 @@ public class LibraryServiceImpl implements LibraryService {
             item.setThumbnailUrl(detail.getThumbnail());
         });
         return libraryMap.values().stream().toList();
+    }
+
+    @Override
+    public TimePlayResponse getTimesPlayed(Long gameId) {
+        Long userId = (Long) sessionService.getAuthentication().getPrincipal();
+        TimePlayResponse response = userGameRepository.findTimePlayedByGameIdAndUserId(gameId, userId);
+        if(response == null) throw new BadRequestException("You don't own this game");
+        return response;
     }
 
 }
