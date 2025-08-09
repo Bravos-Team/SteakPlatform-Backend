@@ -35,8 +35,8 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
 
     @EntityGraph(type = EntityGraph.EntityGraphType.FETCH,
             attributePaths = {"genres", "tags", "publisher"})
-    @Query("SELECT g FROM Game g WHERE g.id = :id AND g.status = 0 AND g.releaseDate <= :currentTime")
-    Optional<Game> findAvailableGameById(@Param("id") Long id, @Param("currentTime") Long currentTime);
+    @Query("SELECT g FROM Game g WHERE g.id = :id AND (g.status = 0 or g.status = 1)")
+    Optional<Game> findAvailableGameById(@Param("id") Long id);
 
     @Transactional
     @Modifying
