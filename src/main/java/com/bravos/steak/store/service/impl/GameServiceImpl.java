@@ -347,8 +347,7 @@ public class GameServiceImpl implements GameService {
     }
 
     private GameStoreDetail getGameStoreDetailFromDb(Long gameId) {
-        Game game = gameRepository.findAvailableGameById(gameId,
-                DateTimeHelper.currentTimeMillis()).orElse(null);
+        Game game = gameRepository.findById(gameId).orElse(null);
 
         if(game == null) {
             return GameStoreDetail.builder().build();
