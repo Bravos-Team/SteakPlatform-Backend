@@ -177,8 +177,8 @@ public class GameServiceImpl implements GameService {
         try {
             Specification<Game> spec = GameSpecification.withoutFilters(cursor);
             List<Game> games = new ArrayList<>(gameRepository.findAll(spec, PageRequest.of(0, pageSize)).getContent());
-            games.sort(Comparator.comparing(Game::getReleaseDate).reversed());
             if (games.isEmpty()) return CursorResponse.empty();
+            games.sort(Comparator.comparing(Game::getReleaseDate).reversed());
             List<CartGameInfo> gameDetails = gameDetailsRepository.findByIdIn(games.stream().map(Game::getId).toList());
             Map<Long,GameListItem> gameListItemMap = getGameListItemMap(games, gameDetails);
             Long maxCursor = getMaxCursorWithoutFilters();
