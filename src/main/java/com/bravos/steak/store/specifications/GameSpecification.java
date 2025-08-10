@@ -1,6 +1,7 @@
 package com.bravos.steak.store.specifications;
 
 import com.bravos.steak.common.service.helper.DateTimeHelper;
+import com.bravos.steak.exceptions.BadRequestException;
 import com.bravos.steak.store.entity.Game;
 import com.bravos.steak.store.model.enums.GameStatus;
 import com.bravos.steak.store.model.request.FilterQuery;
@@ -121,4 +122,27 @@ public class GameSpecification {
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
+
+    public static Specification<Game> publisherManager(Long publisherId, String keyword, String status) {
+        return (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>(3);
+
+            if (publisherId != null) {
+                predicates.add(cb.equal(root.get("publisher").get("id"), publisherId));
+            }
+            if (keyword != null && !keyword.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get("name")), "%" + keyword.toLowerCase() + "%"));
+            }
+            if (status != null) {
+                try {
+                    predicates.add(cb.equal(root.get("status"), GameStatus.valueOf(status)));
+                } catch (IllegalArgumentException e) {
+                    throw new BadRequestException("Invalid game status: " + status);
+                }
+            }
+
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+    }
+
 }

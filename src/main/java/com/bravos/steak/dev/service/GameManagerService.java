@@ -19,7 +19,7 @@ public interface GameManagerService {
 
     void updateGamePrice(Long gameId, Double price);
 
-    Page<PublisherGameListItem> listAllGames(int page, int size, String status);
+    Page<PublisherGameListItem> listAllGames(int page, int size, String status, String keyword);
 
     void createNewVersion(CreateNewVersionRequest request);
 

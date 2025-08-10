@@ -10,6 +10,7 @@ import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
 import com.bravos.steak.dev.entity.*;
 import com.bravos.steak.dev.model.request.CreateCustomRoleRequest;
 import com.bravos.steak.dev.model.request.CreatePublisherAccountRequest;
+import com.bravos.steak.dev.model.request.UpdateCustomRoleRequest;
 import com.bravos.steak.dev.model.response.*;
 import com.bravos.steak.dev.repo.*;
 import com.bravos.steak.dev.service.PublisherManagerService;
@@ -350,7 +351,7 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
 
     @Override
     @Transactional
-    public RoleDetail updateRole(CreateCustomRoleRequest request) {
+    public RoleDetail updateRole(UpdateCustomRoleRequest request) {
         JwtTokenClaims claims = (JwtTokenClaims) sessionService.getAuthentication().getDetails();
         long roleId = request.getRoleId();
         long publisherId = (long) claims.getOtherClaims().get("publisherId");

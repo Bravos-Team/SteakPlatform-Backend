@@ -27,6 +27,7 @@ import com.bravos.steak.store.model.response.FullGameDetails;
 import com.bravos.steak.store.model.response.GameStoreDetail;
 import com.bravos.steak.store.repo.*;
 import com.bravos.steak.store.service.GameService;
+import com.bravos.steak.store.specifications.GameSpecification;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
@@ -34,6 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -211,23 +213,15 @@ public class GameManagerServiceImpl implements GameManagerService {
     }
 
     @Override
-    public Page<PublisherGameListItem> listAllGames(int page, int size, String status) {
+    public Page<PublisherGameListItem> listAllGames(int page, int size, String status, String keyword) {
         if (page < 0 || size <= 0) {
             throw new BadRequestException("Page must be >= 0 and size must be > 0.");
         }
         long publisherId = getPublisherIdFromClaims();
-        List<Game> games;
-        if (status == null || status.isBlank() || status.equalsIgnoreCase("all")) {
-            games = gameRepository.findAllByPublisherId(publisherId, PageRequest.of(page, size));
-        } else {
-            GameStatus gameStatus;
-            try {
-                gameStatus = GameStatus.valueOf(status.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                throw new BadRequestException("Invalid game status: " + status);
-            }
-            games = gameRepository.findAllByPublisherIdAndStatus(publisherId, gameStatus, PageRequest.of(page, size));
-        }
+
+        Specification<Game> spec = GameSpecification.publisherManager(publisherId, keyword, status);
+
+        List<Game> games = gameRepository.findAll(spec, PageRequest.of(page, size)).getContent();
 
         if (games.isEmpty()) return Page.empty();
 
