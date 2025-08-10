@@ -5,6 +5,7 @@ import com.bravos.steak.common.annotation.PublisherController;
 import com.bravos.steak.dev.model.PublisherAuthority;
 import com.bravos.steak.dev.model.request.CreateCustomRoleRequest;
 import com.bravos.steak.dev.model.request.CreatePublisherAccountRequest;
+import com.bravos.steak.dev.model.request.UpdateCustomRoleRequest;
 import com.bravos.steak.dev.service.PublisherManagerService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -91,7 +92,7 @@ public class PublisherManagerController {
 
     @PostMapping("/role/update-role")
     @HasAuthority({PublisherAuthority.WRITE_MEMBERS})
-    public ResponseEntity<?> updateCustomRole(@RequestBody @Valid CreateCustomRoleRequest request) {
+    public ResponseEntity<?> updateCustomRole(@RequestBody @Valid UpdateCustomRoleRequest request) {
         return ResponseEntity.ok(publisherManagerService.updateRole(request));
     }
 

@@ -3,6 +3,7 @@ package com.bravos.steak.dev.service;
 import com.bravos.steak.dev.entity.Publisher;
 import com.bravos.steak.dev.model.request.CreateCustomRoleRequest;
 import com.bravos.steak.dev.model.request.CreatePublisherAccountRequest;
+import com.bravos.steak.dev.model.request.UpdateCustomRoleRequest;
 import com.bravos.steak.dev.model.response.*;
 import org.springframework.data.domain.Page;
 
@@ -29,7 +30,7 @@ public interface PublisherManagerService {
 
     RoleDetail createNewCustomRole(CreateCustomRoleRequest request);
 
-    RoleDetail updateRole(CreateCustomRoleRequest request);
+    RoleDetail updateRole(UpdateCustomRoleRequest request);
 
     void changeRoleStatus(Long roleId, Boolean isActive);
 

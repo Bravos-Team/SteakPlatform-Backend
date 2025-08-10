@@ -24,8 +24,9 @@ public class PublisherGameManagerController {
     @HasAuthority({PublisherAuthority.READ_GAMES})
     public ResponseEntity<?> listGames(@RequestParam(defaultValue = "1") int page,
                                        @RequestParam(defaultValue = "10") int size,
-                                       @RequestParam(required = false) String status) {
-        return ResponseEntity.ok(gameManagerService.listAllGames(page - 1, size, status));
+                                       @RequestParam(required = false) String status,
+                                       @RequestParam(required = false) String keyword) {
+        return ResponseEntity.ok(gameManagerService.listAllGames(page - 1, size, status, keyword));
     }
 
     @PostMapping("/update-game-details")
