@@ -6,6 +6,8 @@ import com.bravos.steak.useraccount.entity.UserAccount;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
+
 @Entity
 @Table(name = "orders")
 @NoArgsConstructor
@@ -25,6 +27,14 @@ public class Order {
     @Enumerated(EnumType.ORDINAL)
     @Builder.Default
     private OrderStatus status = OrderStatus.UNPAID;
+
+    @OneToMany(
+            mappedBy = "order",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY
+    )
+    private List<OrderDetails> orderDetails;
 
     @Builder.Default
     private Long createdAt = DateTimeHelper.currentTimeMillis();

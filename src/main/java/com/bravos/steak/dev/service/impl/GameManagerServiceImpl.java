@@ -204,6 +204,7 @@ public class GameManagerServiceImpl implements GameManagerService {
         try {
             gameRepository.updatePriceAndUpdatedAtById(BigDecimal.valueOf(price), DateTimeHelper.currentTimeMillis(), gameId);
             invalidateFullGameDetailsCache(gameId);
+            gameService.invalidateAndGetGameStoreDetails(gameId);
         } catch (Exception e) {
             throw new RuntimeException("Failed to update game price for game ID " + gameId, e);
         }

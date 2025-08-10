@@ -11,4 +11,6 @@ public interface OrderService {
 
     void handleFailedPayment(Long orderId, String reason);
 
+    void handleFreeOrder(Long orderId);
+
 }

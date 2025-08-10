@@ -24,6 +24,7 @@ import com.bravos.steak.useraccount.entity.UserAccount;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 
@@ -42,11 +43,12 @@ public class OrderServiceImpl implements OrderService {
     private final SessionService sessionService;
     private final GameRepository gameRepository;
     private final HttpServletRequest httpServletRequest;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     public OrderServiceImpl(OrderRepository orderRepository, OrderDetailsRepository orderDetailsRepository,
                             UserGameRepository userGameRepository, PaymentService paymentService,
                             SnowflakeGenerator snowflakeGenerator, SessionService sessionService,
-                            GameRepository gameRepository, HttpServletRequest httpServletRequest) {
+                            GameRepository gameRepository, HttpServletRequest httpServletRequest, ApplicationEventPublisher applicationEventPublisher) {
         this.orderRepository = orderRepository;
         this.orderDetailsRepository = orderDetailsRepository;
         this.userGameRepository = userGameRepository;
@@ -55,6 +57,7 @@ public class OrderServiceImpl implements OrderService {
         this.sessionService = sessionService;
         this.gameRepository = gameRepository;
         this.httpServletRequest = httpServletRequest;
+        this.applicationEventPublisher = applicationEventPublisher;
     }
 
     @EventListener
@@ -135,12 +138,19 @@ public class OrderServiceImpl implements OrderService {
             log.error("Failed to save order details for order: {}", order.getId(), e);
             throw new RuntimeException("Failed to save order details for order: " + order.getId());
         }
+
+        double amout = orderDetailsList.stream().mapToDouble(o -> o.getPrice().doubleValue()).sum();
+
+        if(amout == 0) {
+            return getFreeOrder(order.getId());
+        }
+
         CreatePaymentRequest paymentRequest = CreatePaymentRequest.builder()
                 .orderInfo("Payment for order ID: " + order.getId())
                 .orderId(order.getId())
                 .locale("en")
                 .ipAddress(getIpAddress())
-                .amount(orderDetailsList.stream().mapToDouble(o -> o.getPrice().doubleValue()).sum())
+                .amount(amout)
                 .returnUrl(System.getProperty("DOMAIN") + "/ipn/vnpay")
                 .build();
 
@@ -150,7 +160,14 @@ public class OrderServiceImpl implements OrderService {
                 .build();
     }
 
+    private CreateOrderResponse getFreeOrder(Long orderId) {
+        return CreateOrderResponse.builder()
+                .paymentUrl(System.getProperty("DOMAIN") + "/api/v1/store/private/free-order/" + orderId)
+                .build();
+    }
+
     @Override
+    @Transactional
     public void handleSuccessfulPayment(Long orderId) {
         Order order = orderRepository.findById(orderId).orElse(null);
         if(order == null) {
@@ -187,6 +204,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional
     public void handleFailedPayment(Long orderId, String reason) {
         Order order = orderRepository.findById(orderId).orElse(null);
         if(order == null) {
@@ -204,6 +222,22 @@ public class OrderServiceImpl implements OrderService {
             log.error("Failed to update order status for transaction reference: {}", orderId, e);
             throw new RuntimeException("Failed to update order status for transaction reference: " + orderId);
         }
+    }
+
+    @Override
+    @Transactional
+    public void handleFreeOrder(Long orderId) {
+        Order order = orderRepository.getFullOrderDetailsById(orderId);
+        if(order == null) {
+            throw new BadRequestException("Order not found for ID: " + orderId);
+        }
+        double totalPrice = order.getOrderDetails().stream()
+                .mapToDouble(od -> od.getPrice().doubleValue())
+                .sum();
+        if(totalPrice > 0) {
+            throw new BadRequestException("Order is not free, cannot process free order");
+        }
+        applicationEventPublisher.publishEvent(new PaymentSuccessEvent(this, orderId));
     }
 
     private String getIpAddress() {

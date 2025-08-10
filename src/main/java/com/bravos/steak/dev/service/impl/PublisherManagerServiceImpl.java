@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -97,6 +98,22 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
         }
         long publisherId = (long) ((JwtTokenClaims) sessionService.getAuthentication().getDetails())
                 .getOtherClaims().get("publisherId");
+        if(keyword.startsWith("id:")) {
+            try {
+                long accountId = Long.parseLong(keyword.substring(3).trim());
+                PublisherAccount account = publisherAccountRepository.findByIdAndPublisherId(accountId, publisherId)
+                        .orElseThrow(() -> new ResourceNotFoundException("Publisher account not found for ID: " + accountId));
+                PublisherAccountListItem accountItem = PublisherAccountListItem.builder()
+                        .id(account.getId())
+                        .username(account.getUsername())
+                        .email(account.getEmail())
+                        .status(account.getStatus())
+                        .build();
+                return new PageImpl<>(List.of(accountItem), PageRequest.of(page - 1, size), 1);
+            } catch (NumberFormatException e) {
+                throw new BadRequestException("Invalid account ID format.");
+            }
+        }
         try {
             if ("all".equalsIgnoreCase(status)) {
                 return publisherAccountRepository.searchByUsername(keyword, publisherId,
@@ -396,8 +413,8 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
                 .isActive(role.getActive())
                 .assignedAccounts(role.getAssignedAccounts().stream()
                         .map(account ->
-                                new PublisherAccountListItem(account.getId(),
-                                        account.getUsername(), account.getEmail()))
+                                new PublisherAccountListItem(account.getId(), account.getUsername(),
+                                        account.getEmail(),account.getStatus()))
                         .toList())
                 .build();
     }
