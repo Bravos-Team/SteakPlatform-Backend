@@ -26,7 +26,7 @@ public interface PublisherRoleRepository extends JpaRepository<PublisherRole, Lo
     PublisherRole findAvailableRoleByIdAndPublisherId(Long roleId, Long publisherId);
 
     @Query("SELECT new com.bravos.steak.dev.model.response.PublisherAccountListItem(" +
-           "pa.id, pa.username, pa.email) " +
+           "pa.id, pa.username, pa.email, pa.status) " +
            "FROM PublisherAccount pa " +
            "JOIN pa.roles pr " +
            "WHERE pr.id = :roleId AND" +
