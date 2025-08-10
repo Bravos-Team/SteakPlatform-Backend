@@ -45,11 +45,12 @@ public class CartServiceImpl implements CartService {
     private final CartItemRepository cartItemRepository;
     private final GameDetailsRepository gameDetailsRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final OrderRepository orderRepository;
 
     public CartServiceImpl(SessionService sessionService, SnowflakeGenerator snowflakeGenerator,
                            CartRepository cartRepository, GameRepository gameRepository,
                            CartItemRepository cartItemRepository, GameDetailsRepository gameDetailsRepository,
-                           ApplicationEventPublisher applicationEventPublisher) {
+                           ApplicationEventPublisher applicationEventPublisher, OrderRepository orderRepository) {
         this.sessionService = sessionService;
         this.snowflakeGenerator = snowflakeGenerator;
         this.cartRepository = cartRepository;
@@ -57,6 +58,7 @@ public class CartServiceImpl implements CartService {
         this.cartItemRepository = cartItemRepository;
         this.gameDetailsRepository = gameDetailsRepository;
         this.applicationEventPublisher = applicationEventPublisher;
+        this.orderRepository = orderRepository;
     }
 
     @Override
@@ -320,7 +322,20 @@ public class CartServiceImpl implements CartService {
     @Transactional
     @Order(2)
     public void removeCartWhenPaymentSuccessfully(PaymentSuccessEvent event) {
-        clearCart();
+        Long orderId = event.getOrderId();
+        com.bravos.steak.store.entity.Order order = orderRepository.getFullOrderDetailsById(orderId);
+        List<Long> gameIds = order.getOrderDetails().stream()
+                .map(detail -> detail.getGame().getId())
+                .toList();
+        Cart cart = cartRepository.findByUserAccountId(order.getUserAccount().getId()).orElse(null);
+        if (cart != null && !gameIds.isEmpty()) {
+            try {
+                cartItemRepository.deleteCartItemByCartIdAndGameIdIn(cart.getId(), gameIds);
+                cartRepository.updateUpdatedAtById(DateTimeHelper.currentTimeMillis(), cart.getId());
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to remove items from cart after payment success: " + e.getMessage(), e);
+            }
+        }
     }
 
     @EventListener

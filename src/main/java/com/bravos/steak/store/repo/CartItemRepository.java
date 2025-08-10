@@ -1,11 +1,13 @@
 package com.bravos.steak.store.repo;
 
 import com.bravos.steak.store.entity.CartItem;
+import com.bravos.steak.store.entity.Game;
 import com.bravos.steak.store.model.enums.GameStatus;
 import com.bravos.steak.store.repo.injection.GamePrice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface CartItemRepository extends JpaRepository<CartItem, Long> {
@@ -28,4 +30,5 @@ public interface CartItemRepository extends JpaRepository<CartItem, Long> {
 
     boolean existsByCartIdAndGameId(Long cartId, Long gameId);
 
+    List<CartItem> findByCartIdAndGameIn(Long cartId, Collection<Game> games);
 }
