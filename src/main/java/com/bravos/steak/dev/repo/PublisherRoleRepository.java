@@ -2,6 +2,7 @@ package com.bravos.steak.dev.repo;
 
 import com.bravos.steak.dev.entity.PublisherRole;
 import com.bravos.steak.dev.model.response.PublisherAccountListItem;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -19,10 +20,12 @@ public interface PublisherRoleRepository extends JpaRepository<PublisherRole, Lo
            "WHERE (pr.publisher.id = :publisherId or pr.publisher.id IS NULL) AND pr.id IN :roleIds")
     Long countRolesAvailableByPublisherId(Long publisherId, Set<Long> roleIds);
 
+    @EntityGraph(attributePaths = {"publisherPermissions"})
     List<PublisherRole> findAllByPublisherId(Long publisherId);
 
     @Query("SELECT pr FROM PublisherRole pr " +
            "WHERE pr.id = :roleId AND (pr.publisher.id = :publisherId OR pr.publisher.id IS NULL)")
+    @EntityGraph(attributePaths = {"publisherPermissions"})
     PublisherRole findAvailableRoleByIdAndPublisherId(Long roleId, Long publisherId);
 
     @Query("SELECT new com.bravos.steak.dev.model.response.PublisherAccountListItem(" +
@@ -45,5 +48,6 @@ public interface PublisherRoleRepository extends JpaRepository<PublisherRole, Lo
 
     boolean existsByNameAndPublisherId(String name, Long publisherId);
 
+    @EntityGraph(attributePaths = {"publisherPermissions"})
     PublisherRole findByIdAndPublisherId(Long id, Long publisherId);
 }
