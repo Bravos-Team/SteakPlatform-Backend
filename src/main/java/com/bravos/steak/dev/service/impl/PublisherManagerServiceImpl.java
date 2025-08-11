@@ -202,12 +202,23 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
         }
         List<PublisherAccountListItem> assignedAccounts =
                 publisherRoleRepository.findAssignedAccountsByRoleIdAndPublisherId(roleId, publisherId);
+
+        List<PublisherPermissionItem> permissions = role.getPublisherPermissions().stream()
+                .map(permission -> PublisherPermissionItem.builder()
+                        .id(permission.getId())
+                        .name(permission.getName())
+                        .description(permission.getDescription())
+                        .authorities(permission.getAuthorities())
+                        .build())
+                .toList();
+
         return RoleDetail.builder()
                 .id(role.getId())
                 .name(role.getName())
                 .description(role.getDescription())
                 .isActive(role.getActive())
                 .assignedAccounts(assignedAccounts)
+                .permissions(permissions)
                 .build();
     }
 
@@ -340,12 +351,22 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
             throw new RuntimeException("Failed to create new custom role: " + e.getMessage(), e);
         }
 
+        List<PublisherPermissionItem> permissionItems = newRole.getPublisherPermissions().stream()
+                .map(permission -> PublisherPermissionItem.builder()
+                        .id(permission.getId())
+                        .name(permission.getName())
+                        .description(permission.getDescription())
+                        .authorities(permission.getAuthorities())
+                        .build())
+                .toList();
+
         return RoleDetail.builder()
                 .id(newRole.getId())
                 .name(newRole.getName())
                 .description(newRole.getDescription())
                 .isActive(newRole.getActive())
                 .assignedAccounts(List.of())
+                .permissions(permissionItems)
                 .build();
     }
 
@@ -407,6 +428,15 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
             throw new RuntimeException("Failed to update role: " + e.getMessage(), e);
         }
 
+        List<PublisherPermissionItem> permissionItems = role.getPublisherPermissions().stream()
+                .map(permission -> PublisherPermissionItem.builder()
+                        .id(permission.getId())
+                        .name(permission.getName())
+                        .description(permission.getDescription())
+                        .authorities(permission.getAuthorities())
+                        .build())
+                .toList();
+
         return RoleDetail.builder()
                 .id(role.getId())
                 .name(role.getName())
@@ -417,6 +447,7 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
                                 new PublisherAccountListItem(account.getId(), account.getUsername(),
                                         account.getEmail(),account.getStatus()))
                         .toList())
+                .permissions(permissionItems)
                 .build();
     }
 

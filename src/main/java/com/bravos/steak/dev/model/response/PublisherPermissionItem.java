@@ -1,9 +1,9 @@
 package com.bravos.steak.dev.model.response;
 
+import java.util.Collection;
+
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-
-import java.util.List;
 
 import static lombok.AccessLevel.PRIVATE;
 
@@ -13,7 +13,7 @@ import static lombok.AccessLevel.PRIVATE;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = PRIVATE)
-public class RoleDetail {
+public class PublisherPermissionItem {
 
     Long id;
 
@@ -21,10 +21,6 @@ public class RoleDetail {
 
     String description;
 
-    Boolean isActive;
-
-    List<PublisherAccountListItem> assignedAccounts;
-
-    List<PublisherPermissionItem> permissions;
+    Collection<String> authorities;
 
 }

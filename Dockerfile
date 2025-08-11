@@ -12,5 +12,4 @@ WORKDIR /app
 COPY --from=build /app/target/*.jar steak.jar
 COPY prod.env .env
 
-ENTRYPOINT ["java", "-Xms5g", "-Xmx5g", "-XX:+UseZGC", "-XX:+UseContainerSupport", "-Duser.timezone=GMT+7", "-jar", "steak.jar", "--spring.profiles.active=prod"]
-
+ENTRYPOINT ["java", "-Xms5g", "-Xmx5g", "-XX:+UseZGC", "-XX:+ZGenerational", "-XX:+UseContainerSupport", "-Duser.timezone=GMT+7", "-jar", "steak.jar", "--spring.profiles.active=prod"]
