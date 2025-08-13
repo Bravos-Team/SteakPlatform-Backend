@@ -186,7 +186,7 @@ public class GameServiceImpl implements GameService {
                 redisService.delete("cursor:non-filter");
                 maxCursor = getMaxCursorWithoutFilters();
             }
-            boolean hasNextCursor = maxCursor != null && maxCursor >= currentCursor;
+            boolean hasNextCursor = maxCursor != null && maxCursor > currentCursor;
             return CursorResponse.<GameListItem>builder()
                     .items(gameListItemMap.values().stream().toList())
                     .maxCursor(maxCursor)

@@ -29,7 +29,7 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
 
     List<Game> findByStatusAndCreatedAtLessThanOrderByCreatedAtDesc(GameStatus status, Long cursor);
 
-    @Query("SELECT MAX(g.releaseDate) FROM Game g WHERE g.status = 0 AND g.releaseDate <= :current")
+    @Query("SELECT MAX(g.id) FROM Game g WHERE g.status = 0 AND g.releaseDate <= :current")
     Long getMaxCursorByStatus(Long current);
 
     @EntityGraph(type = EntityGraph.EntityGraphType.FETCH,
