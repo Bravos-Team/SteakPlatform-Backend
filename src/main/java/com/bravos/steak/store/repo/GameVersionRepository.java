@@ -23,6 +23,13 @@ public interface GameVersionRepository extends JpaRepository<GameVersion, Long> 
     GameVersion findLatestGameVersionByGameId(@Param("gameId") Long gameId,
                                               @Param("current") Long currentTimeMillis);
 
+    @Query("SELECT gv FROM GameVersion gv " +
+            "WHERE gv.game.id = :gameId and gv.releaseDate > :current and gv.status = 0 " +
+            "ORDER BY gv.releaseDate ASC " +
+            "LIMIT 1")
+    GameVersion findNextVersionByGameId(@Param("gameId") Long gameId,
+                                        @Param("current") Long currentTimeMillis);
+
     boolean existsByGameIdAndName(Long gameId, String name);
 
     List<GameVersion> findAllByGameIdAndStatus(Long gameId, VersionStatus status);

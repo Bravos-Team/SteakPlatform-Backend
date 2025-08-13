@@ -293,9 +293,16 @@ public class CartServiceImpl implements CartService {
                 return;
             }
             List<CartItem> userCartItems = cartItemRepository.findAllByCartId(userCart.getId());
+            Set<Long> userGameIds = userCartItems.stream()
+                    .map(item -> item.getGame().getId())
+                    .collect(Collectors.toSet());
+
+            afterMergedCartItems.removeIf(item -> userGameIds.contains(item.getGame().getId()));
+
             Cart finalUserCart = userCart;
             afterMergedCartItems.forEach(cartItem -> cartItem.setCart(finalUserCart));
             afterMergedCartItems.addAll(userCartItems);
+
             try {
                 cartItemRepository.saveAll(afterMergedCartItems);
                 removeGuestCookie();

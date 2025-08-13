@@ -3,6 +3,7 @@ package com.bravos.steak.dev.service;
 import com.bravos.steak.dev.model.request.CreateNewVersionRequest;
 import com.bravos.steak.dev.model.request.UpdateGameDetailsRequest;
 import com.bravos.steak.dev.model.request.UpdateVersionRequest;
+import com.bravos.steak.dev.model.response.CurrentVersionInfo;
 import com.bravos.steak.dev.model.response.GameVersionListItem;
 import com.bravos.steak.dev.model.response.PublisherGameListItem;
 import com.bravos.steak.store.model.response.FullGameDetails;
@@ -34,5 +35,7 @@ public interface GameManagerService {
     FullGameDetails getFullGameDetails(Long gameId);
 
     Long countGamesByStatus(String status);
+
+    CurrentVersionInfo getGameCurrentVersion(Long gameId);
 
 }

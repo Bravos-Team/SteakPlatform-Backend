@@ -14,7 +14,6 @@ import com.bravos.steak.store.entity.GameVersion;
 import com.bravos.steak.store.entity.Genre;
 import com.bravos.steak.store.entity.Tag;
 import com.bravos.steak.store.entity.details.GameDetails;
-import com.bravos.steak.store.model.enums.GameStatus;
 import com.bravos.steak.store.model.request.FilterQuery;
 import com.bravos.steak.store.model.response.CursorResponse;
 import com.bravos.steak.store.model.response.DownloadResponse;
@@ -183,11 +182,11 @@ public class GameServiceImpl implements GameService {
             Map<Long,GameListItem> gameListItemMap = getGameListItemMap(games, gameDetails);
             Long maxCursor = getMaxCursorWithoutFilters();
             Long currentCursor = games.getLast().getReleaseDate();
-            if(maxCursor < currentCursor) {
+            if(maxCursor <= currentCursor) {
                 redisService.delete("cursor:non-filter");
                 maxCursor = getMaxCursorWithoutFilters();
             }
-            boolean hasNextCursor = maxCursor != null && maxCursor > currentCursor;
+            boolean hasNextCursor = maxCursor != null && maxCursor >= currentCursor;
             return CursorResponse.<GameListItem>builder()
                     .items(gameListItemMap.values().stream().toList())
                     .maxCursor(maxCursor)
@@ -356,12 +355,15 @@ public class GameServiceImpl implements GameService {
         GameDetails gameDetails = gameDetailsRepository.findById(gameId)
                 .orElseThrow(() -> new ResourceNotFoundException("Game details not found"));
 
+        GameVersion latestVersion = gameVersionRepository.findLatestGameVersionByGameId(gameId, DateTimeHelper.currentTimeMillis());
+
         return GameStoreDetail.builder()
                 .details(gameDetails)
                 .price(game.getPrice().doubleValue())
                 .publisherName(game.getPublisher().getName())
                 .tags(game.getTags().stream().toList())
                 .genres(game.getGenres().stream().toList())
+                .latestVersionName(latestVersion.getName())
                 .build();
     }
 
@@ -369,8 +371,8 @@ public class GameServiceImpl implements GameService {
         String key = "cursor:non-filter";
         Long maxCursor = redisService.get(key, Long.class);
         if (maxCursor != null) return maxCursor;
-        maxCursor = gameRepository.getMaxCursorByStatus(GameStatus.OPENING);
-        redisService.save(key,maxCursor,10, TimeUnit.MINUTES);
+        maxCursor = gameRepository.getMaxCursorByStatus(DateTimeHelper.currentTimeMillis());
+        redisService.save(key,maxCursor,2, TimeUnit.MINUTES);
         return maxCursor;
     }
 

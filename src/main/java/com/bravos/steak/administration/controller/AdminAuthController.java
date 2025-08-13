@@ -42,7 +42,7 @@ public class AdminAuthController {
         return ResponseEntity.ok(new LoginResponse(account.getUsername()));
     }
 
-    @GetMapping("/logout")
+    @PostMapping("/logout")
     public ResponseEntity<?> logout() {
         authService.logout();
         return ResponseEntity.ok().build();

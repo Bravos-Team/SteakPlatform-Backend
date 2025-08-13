@@ -10,6 +10,7 @@ import com.bravos.steak.dev.model.GameThumbnail;
 import com.bravos.steak.dev.model.request.CreateNewVersionRequest;
 import com.bravos.steak.dev.model.request.UpdateGameDetailsRequest;
 import com.bravos.steak.dev.model.request.UpdateVersionRequest;
+import com.bravos.steak.dev.model.response.CurrentVersionInfo;
 import com.bravos.steak.dev.model.response.GameSQLInfo;
 import com.bravos.steak.dev.model.response.GameVersionListItem;
 import com.bravos.steak.dev.model.response.PublisherGameListItem;
@@ -413,6 +414,57 @@ public class GameManagerServiceImpl implements GameManagerService {
                 .retryTime(3)
                 .build();
         return redisService.getWithLock(cacheEntry, Long.class);
+    }
+
+    @Override
+    public CurrentVersionInfo getGameCurrentVersion(Long gameId) {
+        Game game = gameRepository.findByIdAndPublisherId(gameId, getPublisherIdFromClaims());
+        if (game == null) {
+            throw new BadRequestException("Game with ID " + gameId + " does not exist or is not owned by the publisher.");
+        }
+        long now = DateTimeHelper.currentTimeMillis();
+        GameVersion currentVersion = gameVersionRepository.findLatestGameVersionByGameId(gameId, now);
+        GameVersion nextVersion = gameVersionRepository.findNextVersionByGameId(gameId, now);
+        GameVersionListItem currentVersionItem = null;
+        GameVersionListItem nextVersionItem = null;
+        if (currentVersion != null) {
+            currentVersionItem = GameVersionListItem.builder()
+                    .versionId(currentVersion.getId())
+                    .name(currentVersion.getName())
+                    .changeLog(currentVersion.getChangeLog())
+                    .execPath(currentVersion.getExecPath())
+                    .downloadUrl(currentVersion.getDownloadUrl())
+                    .status(currentVersion.getStatus())
+                    .releaseDate(currentVersion.getReleaseDate())
+                    .fileSize(currentVersion.getFileSize())
+                    .installSize(currentVersion.getInstallSize())
+                    .checksum(currentVersion.getChecksum())
+                    .createdAt(currentVersion.getCreatedAt())
+                    .updatedAt(currentVersion.getUpdatedAt())
+                    .build();
+        }
+        if (nextVersion != null) {
+            nextVersionItem = GameVersionListItem.builder()
+                    .versionId(nextVersion.getId())
+                    .name(nextVersion.getName())
+                    .changeLog(nextVersion.getChangeLog())
+                    .execPath(nextVersion.getExecPath())
+                    .downloadUrl(nextVersion.getDownloadUrl())
+                    .status(nextVersion.getStatus())
+                    .releaseDate(nextVersion.getReleaseDate())
+                    .fileSize(nextVersion.getFileSize())
+                    .installSize(nextVersion.getInstallSize())
+                    .checksum(nextVersion.getChecksum())
+                    .createdAt(nextVersion.getCreatedAt())
+                    .updatedAt(nextVersion.getUpdatedAt())
+                    .build();
+        }
+        return CurrentVersionInfo.builder()
+                .gameId(gameId)
+                .title(game.getName())
+                .currentVersion(currentVersionItem)
+                .nextVersion(nextVersionItem)
+                .build();
     }
 
     private Long countGamesByStatusFromDb(String status, long publisherId) {

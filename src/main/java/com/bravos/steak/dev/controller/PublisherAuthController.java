@@ -56,7 +56,7 @@ public class PublisherAuthController {
         ));
     }
 
-    @GetMapping("/logout")
+    @PostMapping("/logout")
     public ResponseEntity<?> logout() {
         authService.logout();
         return ResponseEntity.ok().build();

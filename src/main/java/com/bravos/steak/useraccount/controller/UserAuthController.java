@@ -59,7 +59,7 @@ public class UserAuthController {
         return ResponseEntity.ok(userLoginResponse);
     }
 
-    @GetMapping("/logout")
+    @PostMapping("/logout")
     public ResponseEntity<?> logout() {
         authService.logout();
         return ResponseEntity.ok().build();
