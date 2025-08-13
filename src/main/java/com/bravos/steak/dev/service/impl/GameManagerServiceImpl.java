@@ -1,11 +1,13 @@
 package com.bravos.steak.dev.service.impl;
 
+import com.bravos.steak.common.model.GameS3Config;
 import com.bravos.steak.common.model.RedisCacheEntry;
 import com.bravos.steak.common.security.JwtTokenClaims;
 import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.common.service.redis.RedisService;
 import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
+import com.bravos.steak.common.service.storage.impl.AwsS3Service;
 import com.bravos.steak.dev.model.GameThumbnail;
 import com.bravos.steak.dev.model.request.CreateNewVersionRequest;
 import com.bravos.steak.dev.model.request.UpdateGameDetailsRequest;
@@ -27,21 +29,25 @@ import com.bravos.steak.store.model.enums.VersionStatus;
 import com.bravos.steak.store.model.response.FullGameDetails;
 import com.bravos.steak.store.model.response.GameStoreDetail;
 import com.bravos.steak.store.repo.*;
+import com.bravos.steak.store.service.DownloadGameService;
 import com.bravos.steak.store.service.GameService;
 import com.bravos.steak.store.specifications.GameSpecification;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 
 import java.math.BigDecimal;
 import java.util.*;
@@ -62,11 +68,15 @@ public class GameManagerServiceImpl implements GameManagerService {
     private final SnowflakeGenerator snowflakeGenerator;
     private final GameVersionRepository gameVersionRepository;
     private final RedisService redisService;
+    private final DownloadGameService downloadGameService;
+    private final AwsS3Service awsS3Service;
+    private final GameS3Config gameS3Config;
 
     public GameManagerServiceImpl(ObjectMapper objectMapper, MongoTemplate mongoTemplate, GameRepository gameRepository,
                                   GenreRepository genreRepository, TagRepository tagRepository, SessionService sessionService,
                                   GameService gameService, GameDetailsRepository gameDetailsRepository, SnowflakeGenerator snowflakeGenerator,
-                                  GameVersionRepository gameVersionRepository, RedisService redisService) {
+                                  GameVersionRepository gameVersionRepository, RedisService redisService,
+                                  DownloadGameService downloadGameService, AwsS3Service awsS3Service, GameS3Config gameS3Config) {
         this.objectMapper = objectMapper;
         this.mongoTemplate = mongoTemplate;
         this.gameRepository = gameRepository;
@@ -78,6 +88,9 @@ public class GameManagerServiceImpl implements GameManagerService {
         this.snowflakeGenerator = snowflakeGenerator;
         this.gameVersionRepository = gameVersionRepository;
         this.redisService = redisService;
+        this.downloadGameService = downloadGameService;
+        this.awsS3Service = awsS3Service;
+        this.gameS3Config = gameS3Config;
     }
 
     @Override
@@ -335,6 +348,11 @@ public class GameManagerServiceImpl implements GameManagerService {
         try {
             gameVersionRepository.deleteById(versionId);
             invalidateFullGameDetailsCache(gameId);
+            DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
+                    .bucket(gameS3Config.getBucketName())
+                    .key(awsS3Service.getObjectNameFromUrl(gameVersion.getDownloadUrl()))
+                    .build();
+            Thread.startVirtualThread(() -> awsS3Service.getS3Client().deleteObject(deleteObjectRequest));
         } catch (Exception e) {
             throw new RuntimeException("Failed to delete draft version with ID " + versionId + " for game ID " + gameId, e);
         }
@@ -374,11 +392,51 @@ public class GameManagerServiceImpl implements GameManagerService {
     }
 
     @Override
-    public List<GameVersionListItem> getGameVersions(Long gameId) {
+    public Page<GameVersionListItem> getGameVersions(Long gameId, String keyword, String status, int page, int size) {
         if (isGameNotOwnedByPublisher(gameId)) {
             throw new BadRequestException("Game with ID " + gameId + " does not exist or is not owned by the publisher.");
         }
-        return gameVersionRepository.findGameVersionItemsByGameId(gameId);
+        Pageable pageable = PageRequest.of(page, size);
+        Specification<GameVersion> spec = (root, query, criteriaBuilder) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            predicates.add(criteriaBuilder.equal(root.get("game").get("id"), gameId));
+            if (keyword != null && !keyword.isBlank()) {
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), "%" + keyword.toLowerCase() + "%"));
+            }
+            if (status != null && !status.equalsIgnoreCase("all")) {
+                try {
+                    VersionStatus versionStatus = VersionStatus.valueOf(status.toUpperCase());
+                    predicates.add(criteriaBuilder.equal(root.get("status"), versionStatus));
+                } catch (IllegalArgumentException e) {
+                    throw new BadRequestException("Invalid version status: " + status);
+                }
+            }
+            return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
+        };
+        Page<GameVersion> gameVersions = gameVersionRepository.findAll(spec, pageable);
+
+        if (gameVersions.isEmpty()) {
+            return Page.empty();
+        }
+
+        List<GameVersionListItem> items = gameVersions.getContent().stream()
+                .map(version -> GameVersionListItem.builder()
+                        .versionId(version.getId())
+                        .name(version.getName())
+                        .changeLog(version.getChangeLog())
+                        .execPath(version.getExecPath())
+                        .downloadUrl(version.getDownloadUrl())
+                        .status(version.getStatus())
+                        .releaseDate(version.getReleaseDate())
+                        .fileSize(version.getFileSize())
+                        .installSize(version.getInstallSize())
+                        .checksum(version.getChecksum())
+                        .createdAt(version.getCreatedAt())
+                        .updatedAt(version.getUpdatedAt())
+                        .build())
+                .toList();
+
+        return new PageImpl<>(items, pageable, gameVersions.getTotalElements());
     }
 
     @Override
@@ -441,6 +499,22 @@ public class GameManagerServiceImpl implements GameManagerService {
                 .currentVersion(currentVersionName)
                 .nextVersion(nextVersionItem)
                 .build();
+    }
+
+    @Override
+    public String downloadGameVersion(Long gameId, Long versionId) {
+        if (isGameNotOwnedByPublisher(gameId)) {
+            throw new BadRequestException("Game with ID " + gameId + " does not exist or is not owned by the publisher.");
+        }
+        GameVersion gameVersion = gameVersionRepository.findById(versionId)
+                .orElseThrow(() -> new BadRequestException("Version with ID " + versionId + " does not exist."));
+        if(gameVersion.getStatus() == VersionStatus.DELETED) {
+            throw new BadRequestException("Version with ID " + versionId + " is deleted and cannot be downloaded.");
+        }
+        if (!Objects.equals(gameVersion.getGame().getId(), gameId)) {
+            throw new BadRequestException("Version with ID " + versionId + " does not belong to game ID " + gameId);
+        }
+        return downloadGameService.getGameDownloadUrl(gameVersion.getDownloadUrl(), null);
     }
 
     private Long countGamesByStatusFromDb(String status, long publisherId) {

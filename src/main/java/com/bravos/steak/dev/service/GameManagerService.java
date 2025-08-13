@@ -10,8 +10,6 @@ import com.bravos.steak.store.model.response.FullGameDetails;
 import com.bravos.steak.store.model.response.GameStoreDetail;
 import org.springframework.data.domain.Page;
 
-import java.util.List;
-
 public interface GameManagerService {
 
     GameStoreDetail updateGameDetails(UpdateGameDetailsRequest request);
@@ -30,12 +28,14 @@ public interface GameManagerService {
 
     void markAsLatestStableNow(Long gameId, Long versionId);
 
-    List<GameVersionListItem> getGameVersions(Long gameId);
+    Page<GameVersionListItem> getGameVersions(Long gameId, String keyword, String status, int page, int size);
 
     FullGameDetails getFullGameDetails(Long gameId);
 
     Long countGamesByStatus(String status);
 
     CurrentVersionInfo getGameCurrentVersion(Long gameId);
+
+    String downloadGameVersion(Long gameId, Long versionId);
 
 }

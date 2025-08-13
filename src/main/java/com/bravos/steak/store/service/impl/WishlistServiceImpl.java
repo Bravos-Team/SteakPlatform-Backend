@@ -4,12 +4,16 @@ import com.bravos.steak.common.security.JwtAuthentication;
 import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
 import com.bravos.steak.exceptions.BadRequestException;
 import com.bravos.steak.store.entity.Game;
+import com.bravos.steak.store.entity.Order;
 import com.bravos.steak.store.entity.Wishlist;
 import com.bravos.steak.store.event.MoveToCartEvent;
 import com.bravos.steak.store.event.MoveToWishlistEvent;
+import com.bravos.steak.store.event.PaymentSuccessEvent;
 import com.bravos.steak.store.model.enums.GameStatus;
 import com.bravos.steak.store.model.response.CartListItem;
 import com.bravos.steak.store.repo.GameDetailsRepository;
+import com.bravos.steak.store.repo.OrderRepository;
+import com.bravos.steak.store.repo.UserGameRepository;
 import com.bravos.steak.store.repo.WishlistRepository;
 import com.bravos.steak.store.repo.injection.CartGameInfo;
 import com.bravos.steak.store.repo.injection.GamePrice;
@@ -35,14 +39,18 @@ public class WishlistServiceImpl implements WishlistService {
     private final SnowflakeGenerator snowflakeGenerator;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final GameDetailsRepository gameDetailsRepository;
+    private final UserGameRepository userGameRepository;
+    private final OrderRepository orderRepository;
 
     public WishlistServiceImpl(WishlistRepository wishlistRepository, SnowflakeGenerator snowflakeGenerator,
                                ApplicationEventPublisher applicationEventPublisher,
-                               GameDetailsRepository gameDetailsRepository) {
+                               GameDetailsRepository gameDetailsRepository, UserGameRepository userGameRepository, OrderRepository orderRepository) {
         this.wishlistRepository = wishlistRepository;
         this.snowflakeGenerator = snowflakeGenerator;
         this.applicationEventPublisher = applicationEventPublisher;
         this.gameDetailsRepository = gameDetailsRepository;
+        this.userGameRepository = userGameRepository;
+        this.orderRepository = orderRepository;
     }
 
     @Override
@@ -51,6 +59,10 @@ public class WishlistServiceImpl implements WishlistService {
 
         if(wishlistRepository.existsByGameIdAndUserAccountId(gameId,userId)) {
             throw new BadRequestException("Game with ID " + gameId + " is already in the wishlist for user ID " + userId);
+        }
+
+        if (userGameRepository.existsByGameIdAndUserId(gameId, userId)) {
+            throw new BadRequestException("Game with ID " + gameId + " is already owned by user ID " + userId);
         }
 
         Wishlist wishlist = Wishlist.builder()
@@ -117,6 +129,24 @@ public class WishlistServiceImpl implements WishlistService {
     @EventListener
     public void handleMoveToWishlistEvent(MoveToWishlistEvent event) {
         addToWishlist(event.getGameId());
+    }
+
+    @EventListener
+    @Transactional
+    public void handleRemoveWishlistAfterPurchase(PaymentSuccessEvent event) {
+        Order order = orderRepository.findById(event.getOrderId())
+                .orElseThrow(() -> new BadRequestException("Order not found with ID: " + event.getOrderId()));
+
+        Long userId = getUserId();
+        List<Long> gameIds = order.getOrderDetails().stream()
+                .map(item -> item.getGame().getId())
+                .toList();
+
+        try {
+            wishlistRepository.deleteByUserAccountIdAndGameIdIn(userId, gameIds);
+        } catch (Exception e) {
+            log.error("Failed to remove games from wishlist after purchase for user ID {}: {}", userId, e.getMessage());
+        }
     }
 
     private Long getUserId() {

@@ -9,6 +9,7 @@ import com.bravos.steak.exceptions.UnauthorizeException;
 import com.bravos.steak.store.entity.Cart;
 import com.bravos.steak.store.entity.CartItem;
 import com.bravos.steak.store.entity.Game;
+import com.bravos.steak.store.entity.UserGame;
 import com.bravos.steak.store.event.MoveToCartEvent;
 import com.bravos.steak.store.event.MoveToWishlistEvent;
 import com.bravos.steak.store.event.PaymentSuccessEvent;
@@ -46,11 +47,13 @@ public class CartServiceImpl implements CartService {
     private final GameDetailsRepository gameDetailsRepository;
     private final ApplicationEventPublisher applicationEventPublisher;
     private final OrderRepository orderRepository;
+    private final UserGameRepository userGameRepository;
 
     public CartServiceImpl(SessionService sessionService, SnowflakeGenerator snowflakeGenerator,
                            CartRepository cartRepository, GameRepository gameRepository,
                            CartItemRepository cartItemRepository, GameDetailsRepository gameDetailsRepository,
-                           ApplicationEventPublisher applicationEventPublisher, OrderRepository orderRepository) {
+                           ApplicationEventPublisher applicationEventPublisher, OrderRepository orderRepository,
+                           UserGameRepository userGameRepository) {
         this.sessionService = sessionService;
         this.snowflakeGenerator = snowflakeGenerator;
         this.cartRepository = cartRepository;
@@ -59,6 +62,7 @@ public class CartServiceImpl implements CartService {
         this.gameDetailsRepository = gameDetailsRepository;
         this.applicationEventPublisher = applicationEventPublisher;
         this.orderRepository = orderRepository;
+        this.userGameRepository = userGameRepository;
     }
 
     @Override
@@ -86,6 +90,9 @@ public class CartServiceImpl implements CartService {
 
         } else {
             try {
+                if(userGameRepository.existsByGameIdAndUserId(gameId, userId)) {
+                    throw new BadRequestException("You already own this game.");
+                }
                 cart = cartRepository.findByUserAccountId(userId).orElseGet(() ->
                          cartRepository.save(Cart.builder()
                                 .id(snowflakeGenerator.generateId())
@@ -274,7 +281,22 @@ public class CartServiceImpl implements CartService {
         } catch (NumberFormatException e) {
             throw new BadRequestException("Invalid guest cart ID format");
         }
-        Set<CartItem> afterMergedCartItems = new HashSet<>(cartItemRepository.findAllByCartId(guestCartId));
+
+        List<CartItem> guestCartItems = cartItemRepository.findAllByCartId(guestCartId);
+        List<UserGame> ownedGames = userGameRepository.findByUserIdAndGameIdIn(
+                userId,
+                guestCartItems.stream().map(item -> item.getGame().getId()).collect(Collectors.toList())
+        );
+
+        if (!ownedGames.isEmpty()) {
+            Set<Long> ownedGameIds = ownedGames.stream()
+                    .map(UserGame::getGame)
+                    .map(Game::getId)
+                    .collect(Collectors.toSet());
+            guestCartItems.removeIf(item -> ownedGameIds.contains(item.getGame().getId()));
+        }
+
+        Set<CartItem> afterMergedCartItems = new HashSet<>(guestCartItems);
         if (afterMergedCartItems.isEmpty()) return;
 
         Cart userCart = cartRepository.findByUserAccountId(userId).orElse(null);
