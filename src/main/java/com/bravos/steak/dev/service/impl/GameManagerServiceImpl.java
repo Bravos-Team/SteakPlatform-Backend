@@ -425,44 +425,20 @@ public class GameManagerServiceImpl implements GameManagerService {
         long now = DateTimeHelper.currentTimeMillis();
         GameVersion currentVersion = gameVersionRepository.findLatestGameVersionByGameId(gameId, now);
         GameVersion nextVersion = gameVersionRepository.findNextVersionByGameId(gameId, now);
-        GameVersionListItem currentVersionItem = null;
-        GameVersionListItem nextVersionItem = null;
+        String currentVersionName = null;
+        String nextVersionItem;
         if (currentVersion != null) {
-            currentVersionItem = GameVersionListItem.builder()
-                    .versionId(currentVersion.getId())
-                    .name(currentVersion.getName())
-                    .changeLog(currentVersion.getChangeLog())
-                    .execPath(currentVersion.getExecPath())
-                    .downloadUrl(currentVersion.getDownloadUrl())
-                    .status(currentVersion.getStatus())
-                    .releaseDate(currentVersion.getReleaseDate())
-                    .fileSize(currentVersion.getFileSize())
-                    .installSize(currentVersion.getInstallSize())
-                    .checksum(currentVersion.getChecksum())
-                    .createdAt(currentVersion.getCreatedAt())
-                    .updatedAt(currentVersion.getUpdatedAt())
-                    .build();
+            currentVersionName = currentVersion.getName();
         }
         if (nextVersion != null) {
-            nextVersionItem = GameVersionListItem.builder()
-                    .versionId(nextVersion.getId())
-                    .name(nextVersion.getName())
-                    .changeLog(nextVersion.getChangeLog())
-                    .execPath(nextVersion.getExecPath())
-                    .downloadUrl(nextVersion.getDownloadUrl())
-                    .status(nextVersion.getStatus())
-                    .releaseDate(nextVersion.getReleaseDate())
-                    .fileSize(nextVersion.getFileSize())
-                    .installSize(nextVersion.getInstallSize())
-                    .checksum(nextVersion.getChecksum())
-                    .createdAt(nextVersion.getCreatedAt())
-                    .updatedAt(nextVersion.getUpdatedAt())
-                    .build();
+            nextVersionItem = nextVersion.getName();
+        } else {
+            nextVersionItem = "No upcoming version";
         }
         return CurrentVersionInfo.builder()
                 .gameId(gameId)
                 .title(game.getName())
-                .currentVersion(currentVersionItem)
+                .currentVersion(currentVersionName)
                 .nextVersion(nextVersionItem)
                 .build();
     }
