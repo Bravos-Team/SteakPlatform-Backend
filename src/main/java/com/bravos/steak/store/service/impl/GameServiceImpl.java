@@ -177,11 +177,11 @@ public class GameServiceImpl implements GameService {
             Specification<Game> spec = GameSpecification.withoutFilters(cursor);
             List<Game> games = new ArrayList<>(gameRepository.findAll(spec, PageRequest.of(0, pageSize)).getContent());
             if (games.isEmpty()) return CursorResponse.empty();
-            games.sort(Comparator.comparing(Game::getReleaseDate).reversed());
+            games.sort(Comparator.comparing(Game::getId).reversed());
             List<CartGameInfo> gameDetails = gameDetailsRepository.findByIdIn(games.stream().map(Game::getId).toList());
             Map<Long,GameListItem> gameListItemMap = getGameListItemMap(games, gameDetails);
             Long maxCursor = getMaxCursorWithoutFilters();
-            Long currentCursor = games.getLast().getReleaseDate();
+            Long currentCursor = games.getLast().getId();
             if(maxCursor <= currentCursor) {
                 redisService.delete("cursor:non-filter");
                 maxCursor = getMaxCursorWithoutFilters();
