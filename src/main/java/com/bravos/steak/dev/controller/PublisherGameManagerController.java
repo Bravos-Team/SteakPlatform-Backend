@@ -22,8 +22,8 @@ public class PublisherGameManagerController {
 
     @GetMapping("/list")
     @HasAuthority({PublisherAuthority.READ_GAMES})
-    public ResponseEntity<?> listGames(@RequestParam(defaultValue = "1") int page,
-                                       @RequestParam(defaultValue = "10") int size,
+    public ResponseEntity<?> listGames(@RequestParam(defaultValue = "1") Integer page,
+                                       @RequestParam(defaultValue = "10") Integer size,
                                        @RequestParam(required = false) String status,
                                        @RequestParam(required = false) String keyword) {
         return ResponseEntity.ok(gameManagerService.listAllGames(page - 1, size, status, keyword));
@@ -63,7 +63,7 @@ public class PublisherGameManagerController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/delete-draft-version")
+    @DeleteMapping("/delete-draft-version")
     @HasAuthority({PublisherAuthority.WRITE_GAME_INFO})
     public ResponseEntity<?> deleteDraftVersion(@RequestParam Long gameId, @RequestParam Long versionId) {
         gameManagerService.deleteDraftVersion(gameId, versionId);
@@ -79,8 +79,12 @@ public class PublisherGameManagerController {
 
     @GetMapping("/get-all-versions")
     @HasAuthority({PublisherAuthority.READ_GAMES})
-    public ResponseEntity<?> getAllVersions(@RequestParam Long gameId) {
-        return ResponseEntity.ok(gameManagerService.getGameVersions(gameId));
+    public ResponseEntity<?> getAllVersions(@RequestParam Long gameId,
+                                            @RequestParam(required = false) String keyword,
+                                            @RequestParam(required = false) String status,
+                                            @RequestParam(defaultValue = "1") int page,
+                                            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(gameManagerService.getGameVersions(gameId, keyword, status, page - 1, size));
     }
 
     @GetMapping("/details/{gameId}")
@@ -99,6 +103,13 @@ public class PublisherGameManagerController {
     @HasAuthority({PublisherAuthority.READ_GAMES})
     public ResponseEntity<?> getGameCurrentVersion(@PathVariable Long gameId) {
         return ResponseEntity.ok(gameManagerService.getGameCurrentVersion(gameId));
+    }
+
+    @GetMapping("/download-version")
+    @HasAuthority({PublisherAuthority.READ_GAMES})
+    public ResponseEntity<?> downloadGameVersion(@RequestParam Long versionId,
+                                                 @RequestParam Long gameId) {
+        return ResponseEntity.ok(gameManagerService.downloadGameVersion(gameId, versionId));
     }
 
 }

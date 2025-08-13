@@ -31,4 +31,7 @@ public interface UserGameRepository extends JpaRepository<UserGame, Long> {
            "FROM UserGame ug WHERE ug.game.id = :gameId AND ug.user.id = :userId")
     TimePlayResponse findTimePlayedByGameIdAndUserId(Long gameId, Long userId);
 
+    @Query("SELECT ug FROM UserGame ug WHERE ug.user.id = :userId AND ug.game.id IN :ids")
+    List<UserGame> findByUserIdAndGameIdIn(Long userId, List<Long> ids);
+
 }

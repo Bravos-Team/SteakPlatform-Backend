@@ -4,17 +4,21 @@ import com.bravos.steak.dev.model.response.GameVersionListItem;
 import com.bravos.steak.store.entity.Game;
 import com.bravos.steak.store.entity.GameVersion;
 import com.bravos.steak.store.model.enums.VersionStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.awt.print.Pageable;
 import java.util.List;
 
 @Repository
-public interface GameVersionRepository extends JpaRepository<GameVersion, Long> {
+public interface GameVersionRepository extends JpaRepository<GameVersion, Long>, JpaSpecificationExecutor<GameVersion> {
 
     @Query("SELECT gv FROM GameVersion gv " +
             "WHERE gv.game.id = :gameId and gv.releaseDate <= :current and gv.status = 0 " +
@@ -45,6 +49,6 @@ public interface GameVersionRepository extends JpaRepository<GameVersion, Long> 
             "gv.releaseDate, gv.fileSize, gv.installSize, gv.checksum, gv.createdAt, gv.updatedAt) " +
             "FROM GameVersion gv WHERE gv.game.id = :gameId " +
             "ORDER BY gv.createdAt DESC")
-    List<GameVersionListItem> findGameVersionItemsByGameId(Long gameId);
+    List<GameVersionListItem> findGameVersionItemsByGameId(Long gameId, Pageable pageable);
 
 }
