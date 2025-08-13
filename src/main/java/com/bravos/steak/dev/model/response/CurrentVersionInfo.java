@@ -3,8 +3,6 @@ package com.bravos.steak.dev.model.response;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.io.Serializable;
-
 import static lombok.AccessLevel.PRIVATE;
 
 @Getter
@@ -13,14 +11,14 @@ import static lombok.AccessLevel.PRIVATE;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = PRIVATE)
-public class CurrentVersionInfo implements Serializable {
+public class CurrentVersionInfo {
 
     Long gameId;
 
     String title;
 
-    GameVersionListItem currentVersion;
+    String currentVersion;
 
-    GameVersionListItem nextVersion;
+    String nextVersion;
 
 }
