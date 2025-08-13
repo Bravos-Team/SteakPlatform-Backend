@@ -25,12 +25,14 @@ public class GameSpecification {
             }
             List<Predicate> predicates = new ArrayList<>(2);
             long currentTime = DateTimeHelper.currentTimeMillis();
+
+            predicates.add(cb.lessThanOrEqualTo(root.get("releaseDate"), currentTime));
+
             if (cursor != null) {
-                predicates.add(cb.lessThan(root.get("releaseDate"), cursor > currentTime ? currentTime : cursor));
-            } else {
-                predicates.add(cb.lessThan(root.get("releaseDate"), currentTime));
+                predicates.add(cb.lessThan(root.get("id"), cursor));
             }
-            query.orderBy(cb.desc(root.get("releaseDate")));
+
+            query.orderBy(cb.desc(root.get("id")));
             predicates.add(cb.equal(root.get("status"), GameStatus.OPENING));
             return cb.and(predicates.toArray(new Predicate[0]));
         };
