@@ -95,4 +95,10 @@ public class PublisherGameManagerController {
         return ResponseEntity.ok(gameManagerService.countGamesByStatus(status));
     }
 
+    @GetMapping("/current-version/{gameId}")
+    @HasAuthority({PublisherAuthority.READ_GAMES})
+    public ResponseEntity<?> getGameCurrentVersion(@PathVariable Long gameId) {
+        return ResponseEntity.ok(gameManagerService.getGameCurrentVersion(gameId));
+    }
+
 }

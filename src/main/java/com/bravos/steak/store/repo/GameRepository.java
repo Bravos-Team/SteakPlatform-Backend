@@ -1,7 +1,6 @@
 package com.bravos.steak.store.repo;
 
 import com.bravos.steak.administration.model.response.GameListItem;
-import com.bravos.steak.dev.model.response.GameSQLInfo;
 import com.bravos.steak.store.entity.Game;
 import com.bravos.steak.store.model.enums.GameStatus;
 import com.bravos.steak.store.repo.injection.GameIdStatusPrice;
@@ -30,8 +29,8 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
 
     List<Game> findByStatusAndCreatedAtLessThanOrderByCreatedAtDesc(GameStatus status, Long cursor);
 
-    @Query("SELECT MAX(g.releaseDate) FROM Game g WHERE g.status = :status")
-    Long getMaxCursorByStatus(GameStatus status);
+    @Query("SELECT MAX(g.releaseDate) FROM Game g WHERE g.status = 0 AND g.releaseDate <= :current")
+    Long getMaxCursorByStatus(Long current);
 
     @EntityGraph(type = EntityGraph.EntityGraphType.FETCH,
             attributePaths = {"genres", "tags", "publisher"})
@@ -51,7 +50,7 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
     @Transactional
     @Modifying
     @Query("update Game g set g.price = ?1, g.updatedAt = ?2 where g.id = ?3")
-    int updatePriceAndUpdatedAtById(BigDecimal price, Long updatedAt, Long id);
+    void updatePriceAndUpdatedAtById(BigDecimal price, Long updatedAt, Long id);
 
     boolean existsByIdAndPublisherId(Long id, Long publisherId);
 
@@ -80,4 +79,6 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
     Long countByPublisherIdAndStatus(Long publisherId, GameStatus status);
 
     Long countByPublisherIdAndStatusNot(Long publisherId, GameStatus status);
+
+    Game findByIdAndPublisherId(Long id, Long publisherId);
 }
