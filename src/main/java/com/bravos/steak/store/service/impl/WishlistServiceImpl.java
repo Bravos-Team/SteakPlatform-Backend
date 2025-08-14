@@ -58,11 +58,11 @@ public class WishlistServiceImpl implements WishlistService {
         Long userId = getUserId();
 
         if(wishlistRepository.existsByGameIdAndUserAccountId(gameId,userId)) {
-            throw new BadRequestException("Game with ID " + gameId + " is already in the wishlist for user ID " + userId);
+            throw new BadRequestException("You already have this game in your wishlist");
         }
 
         if (userGameRepository.existsByGameIdAndUserId(gameId, userId)) {
-            throw new BadRequestException("Game with ID " + gameId + " is already owned by user ID " + userId);
+            throw new BadRequestException("You already own this game");
         }
 
         Wishlist wishlist = Wishlist.builder()

@@ -89,10 +89,12 @@ public class CartServiceImpl implements CartService {
             }
 
         } else {
+
+            if(userGameRepository.existsByGameIdAndUserId(gameId, userId)) {
+                throw new BadRequestException("You already own this game.");
+            }
+
             try {
-                if(userGameRepository.existsByGameIdAndUserId(gameId, userId)) {
-                    throw new BadRequestException("You already own this game.");
-                }
                 cart = cartRepository.findByUserAccountId(userId).orElseGet(() ->
                          cartRepository.save(Cart.builder()
                                 .id(snowflakeGenerator.generateId())
