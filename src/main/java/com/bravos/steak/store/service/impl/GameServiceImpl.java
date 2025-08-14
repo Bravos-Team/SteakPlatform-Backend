@@ -363,7 +363,7 @@ public class GameServiceImpl implements GameService {
                 .publisherName(game.getPublisher().getName())
                 .tags(game.getTags().stream().toList())
                 .genres(game.getGenres().stream().toList())
-                .latestVersionName(latestVersion.getName())
+                .latestVersionName(latestVersion != null ? latestVersion.getName() : "N/A")
                 .build();
     }
 

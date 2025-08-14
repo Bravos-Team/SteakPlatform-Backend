@@ -62,7 +62,11 @@ public class PublisherUploadServiceImpl implements PublisherUploadService {
     public PresignedUrlResponse createPublisherPresignedImageUrl(ImageUploadPresignedRequest imageUploadPresignedRequest) {
         String fileName = imageUploadPresignedRequest.getFileName();
         long fileSize = imageUploadPresignedRequest.getFileSize();
-        String extension = fileName.substring(fileName.lastIndexOf("."));
+        int extensionIndex = fileName.lastIndexOf(".");
+        if (extensionIndex < 0) {
+            throw new BadRequestException("File name must have an extension");
+        }
+        String extension = fileName.substring(extensionIndex);
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         JwtTokenClaims jwtTokenClaims = (JwtTokenClaims) authentication.getDetails();
         long publisherId = (long) jwtTokenClaims.getOtherClaims().get("publisherId");
@@ -95,7 +99,11 @@ public class PublisherUploadServiceImpl implements PublisherUploadService {
             ImageUploadPresignedRequest request = imageUploadPresignedRequests[i];
             String fileName = request.getFileName();
             long fileSize = request.getFileSize();
-            String extension = fileName.substring(fileName.lastIndexOf("."));
+            int extensionIndex = fileName.lastIndexOf(".");
+            if (extensionIndex < 0) {
+                throw new BadRequestException("File name must have an extension");
+            }
+            String extension = fileName.substring(extensionIndex);
             String objectName = "publisher/" + publisherIdStr + "/images/" + snowflakeGenerator.generateId() + extension;
             try {
                 String signedUrl = cloudflareS3Service.generateS3PutSignedUrl(
