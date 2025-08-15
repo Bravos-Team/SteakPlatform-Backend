@@ -51,9 +51,8 @@ public class UserAuthController {
     @PostMapping("/oauth2-login")
     public ResponseEntity<?> oauthLogin(@RequestBody @Valid OauthLoginRequest oauthLoginRequest) {
         Account account = authService.oauthLogin(oauthLoginRequest);
-//        UserLoginResponse userLoginResponse = userAccountService.getLoginResponseById(account.getId());
-//        return ResponseEntity.ok(userLoginResponse);
-        return ResponseEntity.ok().build();
+        UserLoginResponse userLoginResponse = userAccountService.getLoginResponseById(account.getId());
+        return ResponseEntity.ok(userLoginResponse);
     }
 
     @PostMapping("/email-login")
