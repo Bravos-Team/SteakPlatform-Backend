@@ -214,6 +214,9 @@ public class GameManagerServiceImpl implements GameManagerService {
         if (price == null || price < 0 || price.isNaN() || price.isInfinite()) {
             throw new BadRequestException("Price must be a positive number.");
         }
+        if(price != 0 && price < 10000) {
+            throw new BadRequestException("Price must be at least 10,000 VND or 0 for free games.");
+        }
         if (isGameNotOwnedByPublisher(gameId)) {
             throw new BadRequestException("Game with ID " + gameId + " does not exist or is not owned by the publisher.");
         }

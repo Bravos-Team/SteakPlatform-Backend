@@ -12,6 +12,8 @@ import com.bravos.steak.common.service.encryption.JwtService;
 import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.common.service.redis.RedisService;
 import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
+import com.bravos.steak.exceptions.BadRequestException;
+import com.bravos.steak.useraccount.model.request.OauthLoginRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -92,6 +94,11 @@ public class AdminAuthService extends AuthService {
     @Override
     public void logout() {
         sessionService.logout("ADMIN");
+    }
+
+    @Override
+    public Account oauthLogin(OauthLoginRequest oauthLoginRequest) {
+        throw new BadRequestException("Admin account does not support OAuth login");
     }
 
 }

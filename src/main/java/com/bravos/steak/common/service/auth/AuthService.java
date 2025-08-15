@@ -3,18 +3,22 @@ package com.bravos.steak.common.service.auth;
 import com.bravos.steak.common.entity.Account;
 import com.bravos.steak.common.entity.RefreshToken;
 import com.bravos.steak.common.security.JwtTokenClaims;
+import com.bravos.steak.common.service.encryption.AesEncryptionService;
 import com.bravos.steak.common.service.encryption.JwtService;
 import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.common.service.redis.RedisService;
+import com.bravos.steak.exceptions.BadRequestException;
 import com.bravos.steak.exceptions.ForbiddenException;
 import com.bravos.steak.exceptions.TooManyRequestException;
 import com.bravos.steak.exceptions.UnauthorizeException;
 import com.bravos.steak.useraccount.model.enums.AccountStatus;
 import com.bravos.steak.useraccount.model.request.EmailLoginRequest;
+import com.bravos.steak.useraccount.model.request.OauthLoginRequest;
 import com.bravos.steak.useraccount.model.request.RefreshRequest;
 import com.bravos.steak.useraccount.model.request.UsernameLoginRequest;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
@@ -25,6 +29,7 @@ import org.springframework.stereotype.Service;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -33,6 +38,7 @@ import java.util.concurrent.TimeUnit;
 public abstract class AuthService {
 
     private final RedisService redisService;
+    @Getter
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final HttpServletResponse httpServletResponse;
@@ -75,7 +81,7 @@ public abstract class AuthService {
         return account;
     }
 
-    private void generateAndAttachCredentials(Account accountInfo, String deviceId, String deviceInfo) {
+    protected void generateAndAttachCredentials(Account accountInfo, String deviceId, String deviceInfo) {
         RefreshToken refreshToken = createRefreshToken(accountInfo,deviceId, deviceInfo);
         String jwt = generateJwtToken(accountInfo,refreshToken.getId());
 
@@ -245,5 +251,23 @@ public abstract class AuthService {
     }
 
     public abstract void logout();
+
+    public abstract Account oauthLogin(OauthLoginRequest oauthLoginRequest);
+
+    public String generateOAuth2LoginState(String deviceId) {
+        String state = UUID.randomUUID().toString();
+        String key = "oauth2:state:" + state;
+        redisService.save(key, deviceId, 5, TimeUnit.MINUTES);
+        return state;
+    }
+
+    public String getDeviceIdFromOAuth2State(String state) {
+        String key = "oauth2:state:" + state;
+        String deviceId = redisService.get(key, String.class);
+        if(deviceId == null) {
+            throw new BadRequestException("Invalid OAuth2 state");
+        }
+        return deviceId;
+    }
 
 }

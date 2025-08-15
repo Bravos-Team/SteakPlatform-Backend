@@ -12,6 +12,8 @@ import com.bravos.steak.dev.entity.PublisherAccount;
 import com.bravos.steak.dev.entity.PublisherRefreshToken;
 import com.bravos.steak.dev.repo.PublisherAccountRepository;
 import com.bravos.steak.dev.repo.PublisherRefreshTokenRepository;
+import com.bravos.steak.exceptions.BadRequestException;
+import com.bravos.steak.useraccount.model.request.OauthLoginRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -104,6 +106,11 @@ public class PublisherAuthService extends AuthService {
     @Override
     public void logout() {
         sessionService.logout("PUBLISHER");
+    }
+
+    @Override
+    public Account oauthLogin(OauthLoginRequest oauthLoginRequest) {
+        throw new BadRequestException("OAuth login is not supported for publishers.");
     }
 
 }
