@@ -134,6 +134,12 @@
             <artifactId>reactor-netty-http</artifactId>
             <version>1.2.8</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/io.netty/netty-codec-http2 -->
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-codec-http2</artifactId>
+            <version>5.0.0.Alpha2</version>
+        </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-websocket</artifactId>
