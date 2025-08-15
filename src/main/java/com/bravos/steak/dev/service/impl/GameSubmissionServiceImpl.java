@@ -290,6 +290,10 @@ public class GameSubmissionServiceImpl implements GameSubmissionService {
             errorMessage.append("Project price cannot be negative. \n");
         }
 
+        if(gameSubmission.getPrice() != 0 && gameSubmission.getPrice() < 10000) {
+            errorMessage.append("Project price must be at least 10,000 VND or 0 if free. \n");
+        }
+
         if(gameSubmission.getMedia().length < 1) {
             errorMessage.append("You must upload at least one media file. \n");
         }

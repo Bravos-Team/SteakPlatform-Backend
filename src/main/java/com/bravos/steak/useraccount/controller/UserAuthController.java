@@ -2,10 +2,7 @@ package com.bravos.steak.useraccount.controller;
 
 import com.bravos.steak.common.entity.Account;
 import com.bravos.steak.common.service.auth.AuthService;
-import com.bravos.steak.useraccount.model.request.EmailLoginRequest;
-import com.bravos.steak.useraccount.model.request.RefreshRequest;
-import com.bravos.steak.useraccount.model.request.UserRegistrationRequest;
-import com.bravos.steak.useraccount.model.request.UsernameLoginRequest;
+import com.bravos.steak.useraccount.model.request.*;
 import com.bravos.steak.useraccount.model.response.UserLoginResponse;
 import com.bravos.steak.useraccount.service.UserAccountService;
 import com.bravos.steak.useraccount.service.UserRegistrationService;
@@ -43,6 +40,20 @@ public class UserAuthController {
         Account userAccount = authService.login(usernameLoginRequest);
         UserLoginResponse userLoginResponse = userAccountService.getLoginResponseById(userAccount.getId());
         return ResponseEntity.ok().body(userLoginResponse);
+    }
+
+    @GetMapping("/oauth2-state")
+    public ResponseEntity<?> getOauth2State(@RequestParam String deviceId) {
+        String state = authService.generateOAuth2LoginState(deviceId);
+        return ResponseEntity.ok(state);
+    }
+
+    @PostMapping("/oauth2-login")
+    public ResponseEntity<?> oauthLogin(@RequestBody @Valid OauthLoginRequest oauthLoginRequest) {
+        Account account = authService.oauthLogin(oauthLoginRequest);
+//        UserLoginResponse userLoginResponse = userAccountService.getLoginResponseById(account.getId());
+//        return ResponseEntity.ok(userLoginResponse);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/email-login")
