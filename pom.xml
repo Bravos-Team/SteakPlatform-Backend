@@ -114,31 +114,19 @@
         <dependency>
             <groupId>com.azure</groupId>
             <artifactId>azure-identity</artifactId>
-            <version>1.16.2</version>
+            <version>1.17.0</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/com.azure/azure-security-keyvault-secrets -->
         <dependency>
             <groupId>com.azure</groupId>
             <artifactId>azure-security-keyvault-secrets</artifactId>
-            <version>4.10.0</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/com.nimbusds/nimbus-jose-jwt -->
-        <dependency>
-            <groupId>com.nimbusds</groupId>
-            <artifactId>nimbus-jose-jwt</artifactId>
-            <version>10.3.1</version>
+            <version>4.10.1</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/io.projectreactor.netty/reactor-netty-http -->
         <dependency>
             <groupId>io.projectreactor.netty</groupId>
             <artifactId>reactor-netty-http</artifactId>
-            <version>1.2.8</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/io.netty/netty-codec-http2 -->
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty-codec-http2</artifactId>
-            <version>5.0.0.Alpha2</version>
+            <version>1.2.9</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
