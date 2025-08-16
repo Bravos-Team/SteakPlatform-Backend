@@ -52,7 +52,7 @@ public class SessionServiceImpl implements SessionService {
     @Override
     public String getUserIpAddress() {
         String realIp = httpServletRequest.getHeader("X-Real-IP");
-        return (realIp != null && !realIp.isEmpty()) ? realIp : httpServletRequest.getRemoteAddr();
+        return realIp == null ? null : realIp.trim();
     }
 
     @Override
