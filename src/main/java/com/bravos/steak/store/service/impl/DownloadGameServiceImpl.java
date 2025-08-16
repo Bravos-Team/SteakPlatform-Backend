@@ -33,7 +33,6 @@ public class DownloadGameServiceImpl implements DownloadGameService {
                 .keyPairId(cdnKeyPair.getKeyPairId())
                 .privateKey(cdnKeyPair.getPrivateKey())
                 .expirationDate(expirationTime)
-                .ipRange(ipAddress != null ? ipAddress + "/32" : null)
                 .build();
 
         SignedUrl signedUrl = cloudFrontUtilities.getSignedUrlWithCustomPolicy(customSignerRequest);
