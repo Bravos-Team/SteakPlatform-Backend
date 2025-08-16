@@ -64,7 +64,7 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
 
     @Query("SELECT new com.bravos.steak.administration.model.response.GameListItem(g.id, g.name, g.publisher.id, g.publisher.name, g.releaseDate, g.status) " +
             "FROM Game g WHERE LOWER(g.name) LIKE LOWER(CONCAT('%', :name, '%'))")
-    Page<GameListItem> findByNameContainingIgnoreCase(String name, Pageable pageable);
+    Page<GameListItem> findByNameContainingIgnoreCase(@Param("name") String name, Pageable pageable);
 
     @Transactional
     @Modifying
