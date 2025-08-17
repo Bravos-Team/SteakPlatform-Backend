@@ -1,14 +1,10 @@
 package com.bravos.steak.common.service.auth.impl;
 
-import com.bravos.steak.administration.repo.AdminRefreshTokenRepository;
 import com.bravos.steak.common.security.JwtAuthentication;
 import com.bravos.steak.common.security.JwtTokenClaims;
 import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.common.service.redis.RedisService;
-import com.bravos.steak.common.service.webhook.DiscordWebhookService;
-import com.bravos.steak.dev.repo.PublisherRefreshTokenRepository;
-import com.bravos.steak.useraccount.repo.UserRefreshTokenRepository;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -28,10 +24,6 @@ import java.util.concurrent.TimeUnit;
 public class SessionServiceImpl implements SessionService {
 
     private final RedisService redisService;
-    private final UserRefreshTokenRepository userRefreshTokenRepository;
-    private final AdminRefreshTokenRepository adminRefreshTokenRepository;
-    private final PublisherRefreshTokenRepository publisherRefreshTokenRepository;
-    private final DiscordWebhookService discordWebhookService;
     private final HttpServletRequest httpServletRequest;
     private final HttpServletResponse httpServletResponse;
 
@@ -56,34 +48,6 @@ public class SessionServiceImpl implements SessionService {
     }
 
     @Override
-    public void killRefreshToken(long jti, String role) {
-        try {
-            if(role.equalsIgnoreCase("USER")) {
-                userRefreshTokenRepository.findById(jti).ifPresent(accountRefreshToken -> {
-                    accountRefreshToken.setRevoked(true);
-                    userRefreshTokenRepository.save(accountRefreshToken);
-                });
-            } else if (role.equalsIgnoreCase("ADMIN")) {
-                adminRefreshTokenRepository.findById(jti).ifPresent(adminRefreshToken -> {
-                    adminRefreshToken.setRevoked(true);
-                    adminRefreshTokenRepository.save(adminRefreshToken);
-                });
-            } else if (role.equalsIgnoreCase("PUBLISHER")) {
-                publisherRefreshTokenRepository.findById(jti).ifPresent(publisherRefreshToken -> {
-                    publisherRefreshToken.setRevoked(true);
-                    publisherRefreshTokenRepository.save(publisherRefreshToken);
-                });
-            } else {
-                log.error("Unknown role: {}", role);
-                throw new IllegalArgumentException("Unknown role: " + role);
-            }
-        } catch (Exception e) {
-            log.error("Error when killing refresh token: {}", e.getMessage());
-            discordWebhookService.sendError("Error when killing refresh token: " + e.getMessage(), e);
-        }
-    }
-
-    @Override
     public void addBlacklistJti(long jti, long expireTime, TimeUnit timeUnit) {
         String key = "blacklist:jti:" + jti;
         redisService.save(key, jti, expireTime, TimeUnit.MINUTES);
@@ -96,7 +60,7 @@ public class SessionServiceImpl implements SessionService {
     }
 
     @Override
-    public void logout(String role) {
+    public void logout() {
         JwtAuthentication authentication;
 
         try {
@@ -106,16 +70,9 @@ public class SessionServiceImpl implements SessionService {
         }
 
         if (authentication != null && authentication.getDetails() != null) {
-            try {
-                JwtTokenClaims jwtTokenClaims = (JwtTokenClaims) authentication.getDetails();
-                long jti = jwtTokenClaims.getJti();
-                Thread.startVirtualThread(() -> {
-                    this.killRefreshToken(jti, role);
-                    this.addBlacklistJti(jti,30, TimeUnit.MINUTES);
-                });
-            } catch (Exception e) {
-                log.error(e.getMessage());
-            }
+            JwtTokenClaims jwtTokenClaims = (JwtTokenClaims) authentication.getDetails();
+            long jti = jwtTokenClaims.getJti();
+            this.addBlacklistJti(jti,30, TimeUnit.MINUTES);
         }
     }
 
@@ -140,7 +97,7 @@ public class SessionServiceImpl implements SessionService {
     }
 
     @Override
-    public void invalidateToken(Long id) {
+    public void invalidateUserToken(Long id) {
         String key = "invalid:" + id;
         redisService.save(key, DateTimeHelper.currentTimeMillis(), 31, TimeUnit.MINUTES);
     }

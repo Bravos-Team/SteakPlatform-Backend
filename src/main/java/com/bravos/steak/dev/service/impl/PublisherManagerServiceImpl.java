@@ -639,22 +639,11 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
     }
 
     private void invalidatePublisherAccountToken(List<Long> accountIds) {
-        Map<String,Long> invalidatedKeys = accountIds.stream()
-                .collect(Collectors.toMap(
-                        id -> "lock_by_change_role:" + id,
-                        id -> DateTimeHelper.currentTimeMillis()
-                ));
-        invalidatedKeys.forEach((key, value) ->
-                redisService.save(key, value, 30, TimeUnit.MINUTES));
+        accountIds.forEach(sessionService::invalidateUserToken);
     }
 
     private void invalidatePublisherAccountToken(Long accountId) {
-        if (accountId == null) {
-            throw new BadRequestException("Account ID cannot be null.");
-        }
-        String key = "lock_by_change_role:" + accountId;
-        Long lockTime = DateTimeHelper.currentTimeMillis();
-        redisService.save(key, lockTime, 30, TimeUnit.MINUTES);
+        sessionService.invalidateUserToken(accountId);
     }
 
 }

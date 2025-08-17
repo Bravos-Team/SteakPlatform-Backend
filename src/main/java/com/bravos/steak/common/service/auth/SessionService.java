@@ -14,19 +14,17 @@ public interface SessionService {
 
     String getUserIpAddress();
 
-    void killRefreshToken(long jti, String role);
-
     void addBlacklistJti(long jti, long expireTime, TimeUnit timeUnit);
 
     boolean isTokenBlacklisted(long jti);
 
-    void logout(String role);
+    void logout();
 
     Cookie getCookie(String name);
 
     void addCookie(ResponseCookie cookie);
 
-    void invalidateToken(Long id);
+    void invalidateUserToken(Long id);
 
     boolean isInvalidToken(Long id, Long iat);
 

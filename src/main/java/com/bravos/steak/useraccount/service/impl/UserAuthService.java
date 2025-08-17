@@ -47,7 +47,6 @@ public class UserAuthService extends AuthService {
     private final UserAccountRepository userAccountRepository;
     private final SnowflakeGenerator snowflakeGenerator;
     private final UserRefreshTokenRepository userRefreshTokenRepository;
-    private final SessionService sessionService;
     private final OAuth20Service googleOauthService;
     private final ObjectMapper objectMapper;
     private final UserOauth2AccountRepository userOauth2AccountRepository;
@@ -61,14 +60,13 @@ public class UserAuthService extends AuthService {
     public UserAuthService(RedisService redisService, PasswordEncoder passwordEncoder, JwtService jwtService,
                            HttpServletResponse httpServletResponse,
                            UserAccountRepository userAccountRepository, SnowflakeGenerator snowflakeGenerator,
-                           UserRefreshTokenRepository userRefreshTokenRepository, SessionService sessionService,
-                           OAuth20Service googleOauthService, ObjectMapper objectMapper, UserOauth2AccountRepository userOauth2AccountRepository,
-                           UserProfileRepository userProfileRepository, OAuth20Service githubOauthService) {
+                           UserRefreshTokenRepository userRefreshTokenRepository, OAuth20Service googleOauthService,
+                           ObjectMapper objectMapper, UserOauth2AccountRepository userOauth2AccountRepository,
+                           UserProfileRepository userProfileRepository, OAuth20Service githubOauthService, SessionService sessionService) {
         super(redisService, passwordEncoder, jwtService, httpServletResponse, sessionService);
         this.userAccountRepository = userAccountRepository;
         this.snowflakeGenerator = snowflakeGenerator;
         this.userRefreshTokenRepository = userRefreshTokenRepository;
-        this.sessionService = sessionService;
         this.googleOauthService = googleOauthService;
         this.objectMapper = objectMapper;
         this.userOauth2AccountRepository = userOauth2AccountRepository;
@@ -121,11 +119,6 @@ public class UserAuthService extends AuthService {
     }
 
     @Override
-    public void logout() {
-        sessionService.logout("USER");
-    }
-
-    @Override
     @Transactional
     public Account oauthLogin(OauthLoginRequest oauthLoginRequest) {
         if(!oauthLoginRequest.getDeviceId().equals(getDeviceIdFromOAuth2State(oauthLoginRequest.getState()))) {
@@ -139,6 +132,19 @@ public class UserAuthService extends AuthService {
                 return githubOauthLogin(oauthLoginRequest);
             }
             case null, default -> throw new BadRequestException("Invalid OAuth provider: " + oauthLoginRequest.getProvider());
+        }
+    }
+
+    @Override
+    public void logout() {
+        super.logout();
+        String refreshToken = this.getRefreshToken();
+        if(refreshToken != null && !refreshToken.isBlank()) {
+            UserRefreshToken userRefreshToken = userRefreshTokenRepository.findByToken(refreshToken);
+            if(userRefreshToken != null) {
+                userRefreshToken.setRevoked(true);
+                userRefreshTokenRepository.save(userRefreshToken);
+            }
         }
     }
 

@@ -6,4 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface AdminRefreshTokenRepository extends JpaRepository<AdminRefreshToken, Long> {
     RefreshToken findByTokenAndDeviceId(String token, String deviceId);
+
+    AdminRefreshToken findByToken(String token);
 }

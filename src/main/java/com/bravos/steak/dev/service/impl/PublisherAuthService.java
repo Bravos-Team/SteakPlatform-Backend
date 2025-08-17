@@ -31,7 +31,6 @@ public class PublisherAuthService extends AuthService {
     private final PublisherAccountRepository publisherAccountRepository;
     private final SnowflakeGenerator snowflakeGenerator;
     private final PublisherRefreshTokenRepository publisherRefreshTokenRepository;
-    private final SessionService sessionService;
 
     @Autowired
     public PublisherAuthService(RedisService redisService, PasswordEncoder passwordEncoder, JwtService jwtService,
@@ -42,7 +41,6 @@ public class PublisherAuthService extends AuthService {
         this.publisherAccountRepository = publisherAccountRepository;
         this.snowflakeGenerator = snowflakeGenerator;
         this.publisherRefreshTokenRepository = publisherRefreshTokenRepository;
-        this.sessionService = sessionService;
     }
 
     @Override
@@ -105,7 +103,15 @@ public class PublisherAuthService extends AuthService {
 
     @Override
     public void logout() {
-        sessionService.logout("PUBLISHER");
+        super.logout();
+        String refreshToken = this.getRefreshToken();
+        if (refreshToken != null) {
+            PublisherRefreshToken publisherRefreshToken = publisherRefreshTokenRepository.findByToken(refreshToken);
+            if (publisherRefreshToken != null) {
+                publisherRefreshToken.setRevoked(true);
+                publisherRefreshTokenRepository.save(publisherRefreshToken);
+            }
+        }
     }
 
     @Override
