@@ -21,16 +21,9 @@ public class OauthConfiguration {
 
     @Bean(name = "googleOauthService")
     public OAuth20Service googleOauthService() {
-        String profile = System.getProperty("spring.profiles.active");
-        String clientId = profile.equals("dev") ?
-                System.getProperty("GOOGLE_CLIENT_ID") : keyVaultService.getSecretKey(System.getProperty("GOOGLE_CLIENT_ID"));
-        String apiSecret = profile.equals("dev") ?
-                System.getProperty("GOOGLE_API_SECRET") : keyVaultService.getSecretKey(System.getProperty("GOOGLE_API_SECRET"));
-        String callbackUrl = profile.equals("dev") ?
-                System.getProperty("GOOGLE_CALLBACK_URL") : keyVaultService.getSecretKey(System.getProperty("GOOGLE_CALLBACK_URL"));
-        log.info("Google OAuth Service initialized with clientId: {}", clientId);
-        log.info("Google OAuth Service initialized with callbackUrl: {}", callbackUrl);
-        log.info("Google OAuth Service initialized with apiSecret: {}", apiSecret);
+        String clientId = keyVaultService.getSecretKey(System.getProperty("GOOGLE_CLIENT_ID"));
+        String apiSecret = keyVaultService.getSecretKey(System.getProperty("GOOGLE_API_SECRET"));
+        String callbackUrl = keyVaultService.getSecretKey(System.getProperty("GOOGLE_CALLBACK_URL"));
         return new ServiceBuilder(clientId)
                 .apiSecret(apiSecret)
                 .callback(callbackUrl)
@@ -40,16 +33,9 @@ public class OauthConfiguration {
 
     @Bean(name = "githubOauthService")
     public OAuth20Service gihubOauthService() {
-        String profile = System.getProperty("spring.profiles.active");
-        String clientId = profile.equals("dev") ?
-                System.getProperty("GITHUB_CLIENT_ID") : keyVaultService.getSecretKey(System.getProperty("GITHUB_CLIENT_ID"));
-        String apiSecret = profile.equals("dev") ?
-                System.getProperty("GITHUB_API_SECRET") : keyVaultService.getSecretKey(System.getProperty("GITHUB_API_SECRET"));
-        String callbackUrl = profile.equals("dev") ?
-                System.getProperty("GITHUB_CALLBACK_URL") : keyVaultService.getSecretKey(System.getProperty("GITHUB_CALLBACK_URL"));
-        log.info("GitHub OAuth Service initialized with clientId: {}", clientId);
-        log.info("GitHub OAuth Service initialized with callbackUrl: {}", callbackUrl);
-        log.info("GitHub OAuth Service initialized with apiSecret: {}", apiSecret);
+        String clientId = keyVaultService.getSecretKey(System.getProperty("GITHUB_CLIENT_ID"));
+        String apiSecret = keyVaultService.getSecretKey(System.getProperty("GITHUB_API_SECRET"));
+        String callbackUrl = keyVaultService.getSecretKey(System.getProperty("GITHUB_CALLBACK_URL"));
         return new ServiceBuilder(clientId)
                 .apiSecret(apiSecret)
                 .callback(callbackUrl)
