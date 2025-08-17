@@ -52,7 +52,7 @@ public class AdminUserServiceImpl implements AdminUserService {
         try {
             int changed = userAccountRepository.updateStatusById(accountStatus, userId);
             if (changed != 0) {
-                sessionService.invalidateToken(userId);
+                sessionService.invalidateUserToken(userId);
             }
         } catch (Exception e) {
             log.error("Failed to update user status for userId: {}, status: {}", userId, status, e);

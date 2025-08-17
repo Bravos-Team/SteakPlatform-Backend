@@ -33,6 +33,8 @@ public class DatabaseConfiguration {
         dataSource.setJdbcUrl(keyVaultService.getSecretKey(System.getProperty("DATABASE_JDBC_URL")));
         dataSource.setUsername(keyVaultService.getSecretKey(System.getProperty("DATABASE_USERNAME")));
         dataSource.setPassword(keyVaultService.getSecretKey(System.getProperty("DATABASE_PASSWORD")));
+        dataSource.setMinimumIdle(10);
+        dataSource.setMaximumPoolSize(50);
         log.info("Using prod datasource");
         return dataSource;
     }

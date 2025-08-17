@@ -7,4 +7,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface PublisherRefreshTokenRepository extends JpaRepository<PublisherRefreshToken, Long> {
   PublisherRefreshToken findByTokenAndDeviceId(String token, String deviceId);
+
+    PublisherRefreshToken findByToken(String token);
 }

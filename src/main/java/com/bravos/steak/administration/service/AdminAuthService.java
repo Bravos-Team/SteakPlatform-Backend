@@ -93,7 +93,15 @@ public class AdminAuthService extends AuthService {
 
     @Override
     public void logout() {
-        sessionService.logout("ADMIN");
+        super.logout();
+        String refreshToken = this.getRefreshToken();
+        if (refreshToken != null) {
+            AdminRefreshToken adminRefreshToken = adminRefreshTokenRepository.findByToken(refreshToken);
+            if (adminRefreshToken != null) {
+                adminRefreshToken.setRevoked(true);
+                adminRefreshTokenRepository.save(adminRefreshToken);
+            }
+        }
     }
 
     @Override

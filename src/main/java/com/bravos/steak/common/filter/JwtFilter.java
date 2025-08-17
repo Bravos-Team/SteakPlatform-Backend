@@ -35,7 +35,6 @@ public class JwtFilter extends OncePerRequestFilter {
 
     private final SessionService sessionService;
     private final JwtService jwtService;
-    private final RedisService redisService;
 
     @Override
     protected void doFilterInternal(
@@ -50,7 +49,7 @@ public class JwtFilter extends OncePerRequestFilter {
             return;
         }
 
-        String token = getTokenFromRequest(request);
+        String token = getTokenFromRequest();
         JwtTokenClaims tokenClaims = null;
 
         if(token == null || token.isBlank()) {
@@ -66,7 +65,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         if(tokenClaims == null ||
                 sessionService.isTokenBlacklisted(tokenClaims.getJti()) ||
-                isLockByChangeRole(tokenClaims) || sessionService.isInvalidToken(tokenClaims.getId(), tokenClaims.getIat())) {
+                sessionService.isInvalidToken(tokenClaims.getId(), tokenClaims.getIat())) {
             filterChain.doFilter(request,response);
             return;
         }
@@ -79,20 +78,9 @@ public class JwtFilter extends OncePerRequestFilter {
 
     }
 
-    private String getTokenFromRequest(HttpServletRequest request) {
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            Cookie jwtCookie = Arrays.stream(request.getCookies()).filter(cookie ->
-                    cookie.getName().equals("access_token")).findFirst().orElse(null);
-            return jwtCookie != null ? jwtCookie.getValue() : null;
-        }
-        return null;
-    }
-
-    private boolean isLockByChangeRole(JwtTokenClaims claims) {
-        String key = "lock_by_change_role:" + claims.getId();
-        Long lockTime = redisService.get(key, Long.class);
-        return lockTime != null && claims.getIat() <= lockTime;
+    private String getTokenFromRequest() {
+        Cookie cookie = sessionService.getCookie("access_token");
+        return cookie != null ? cookie.getValue() : null;
     }
 
 
