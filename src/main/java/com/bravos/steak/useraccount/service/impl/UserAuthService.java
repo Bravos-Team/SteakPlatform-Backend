@@ -36,12 +36,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 
 @Slf4j
 @Service("userAuthService")
@@ -159,7 +155,7 @@ public class UserAuthService extends AuthService {
             }
             return handleOauth2Login(oauthLoginRequest, "google", googleOauthResponse.getSub(),
                     googleOauthResponse.getName(), googleOauthResponse.getEmail(), googleOauthResponse.getPicture());
-        } catch (IOException | InterruptedException | ExecutionException e) {
+        } catch (Exception e) {
             log.error("Error during Google OAuth login: ", e);
             throw new BadRequestException("Error during Google OAuth login: " + e.getMessage());
         }
@@ -177,7 +173,7 @@ public class UserAuthService extends AuthService {
             }
             return handleOauth2Login(oauthLoginRequest, "github", String.valueOf(githubOauthResponse.getId()),
                     githubOauthResponse.getLogin(), githubOauthResponse.getEmail(), githubOauthResponse.getAvatar_url());
-        } catch (IOException | ExecutionException | InterruptedException e) {
+        } catch (Exception e) {
             log.error("Error during GitHub OAuth login: ", e);
             throw new BadRequestException("Error during GitHub OAuth login: " + e.getMessage());
         }
