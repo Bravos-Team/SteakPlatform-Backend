@@ -145,7 +145,11 @@ public class UserAuthService extends AuthService {
     private Account googleOauthLogin(OauthLoginRequest oauthLoginRequest) {
         try {
             String code = oauthLoginRequest.getCode();
+            log.info(googleOauthService.getAuthorizationUrl());
+            log.info(googleOauthService.getApiKey());
+            log.info(googleOauthService.getApiSecret());
             OAuth2AccessToken accessToken = googleOauthService.getAccessToken(code);
+            log.info("Access token: {}",accessToken.getAccessToken());
             OAuthRequest request = new OAuthRequest(Verb.GET, GOOGLE_OAUTH_LOGIN_URL);
             googleOauthService.signRequest(accessToken, request);
             String response = googleOauthService.execute(request).getBody();
