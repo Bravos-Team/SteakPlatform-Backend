@@ -21,7 +21,7 @@ public class OauthConfiguration {
 
     @Bean(name = "googleOauthService")
     public OAuth20Service googleOauthService() {
-        String profile = System.getProperty("spring.profiles.active", "dev");
+        String profile = System.getProperty("spring.profiles.active");
         String clientId = profile.equals("dev") ?
                 System.getProperty("GOOGLE_CLIENT_ID") : keyVaultService.getSecretKey(System.getProperty("GOOGLE_CLIENT_ID"));
         String apiSecret = profile.equals("dev") ?
@@ -40,7 +40,7 @@ public class OauthConfiguration {
 
     @Bean(name = "githubOauthService")
     public OAuth20Service gihubOauthService() {
-        String profile = System.getProperty("spring.profiles.active", "dev");
+        String profile = System.getProperty("spring.profiles.active");
         String clientId = profile.equals("dev") ?
                 System.getProperty("GITHUB_CLIENT_ID") : keyVaultService.getSecretKey(System.getProperty("GITHUB_CLIENT_ID"));
         String apiSecret = profile.equals("dev") ?
