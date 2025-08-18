@@ -3,9 +3,10 @@ package com.bravos.steak.store.specifications;
 import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.exceptions.BadRequestException;
 import com.bravos.steak.store.entity.Game;
+import com.bravos.steak.store.entity.UserGame;
 import com.bravos.steak.store.model.enums.GameStatus;
 import com.bravos.steak.store.model.request.FilterQuery;
-import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.*;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.ArrayList;
@@ -14,8 +15,8 @@ import java.util.Set;
 
 public class GameSpecification {
 
-    private static final List<String> allowedSortFields = List.of(
-            "name", "price"
+    public static final Set<String> SORT_AVAILABLE = Set.of(
+            "releaseDate", "name", "buyerCount"
     );
 
     public static Specification<Game> withoutFilters(Long cursor) {
@@ -49,6 +50,7 @@ public class GameSpecification {
             long currentTime = DateTimeHelper.currentTimeMillis();
 
             predicates.add(cb.lessThanOrEqualTo(root.get("releaseDate"), currentTime));
+            predicates.add(cb.equal(root.get("status"), GameStatus.OPENING));
 
             if(filterQuery.getKeyword() != null && !filterQuery.getKeyword().isEmpty()) {
                 predicates.add(cb.like(cb.lower(root.get("name")), "%" + filterQuery.getKeyword().toLowerCase() + "%"));
@@ -67,20 +69,28 @@ public class GameSpecification {
             }
             if (filterQuery.getSortBy() != null && !filterQuery.getSortBy().isEmpty()) {
                 String[] sortParts = filterQuery.getSortBy().split(",");
-                String sortField = sortParts[0].trim();
-
-                if (allowedSortFields.contains(sortField)) {
-                    String sortDirection = sortParts.length > 1 ? sortParts[1].trim() : "desc";
-
-                    if ("asc".equalsIgnoreCase(sortDirection)) {
-                        query.orderBy(cb.asc(root.get(sortField)));
+                String sortType = sortParts[0].trim();
+                String sortDirection = sortParts.length > 1 ? sortParts[1].trim() : "desc";
+                if (SORT_AVAILABLE.contains(sortType)) {
+                    Expression<Long> sortExpression;
+                    if(sortType.equalsIgnoreCase("buyerCount")) {
+                        Subquery<Long> subquery = query.subquery(Long.class);
+                        Root<UserGame> userGameRoot = subquery.from(UserGame.class);
+                        subquery.select(cb.count(userGameRoot.get("id")))
+                                .where(cb.equal(userGameRoot.get("game").get("id"), root.get("id")));
+                        sortExpression = subquery.getSelection();
                     } else {
-                        query.orderBy(cb.desc(root.get(sortField)));
+                        sortExpression = root.get(sortType);
                     }
+                    if ("desc".equalsIgnoreCase(sortDirection)) {
+                        query.orderBy(cb.desc(sortExpression));
+                    } else {
+                        query.orderBy(cb.asc(sortExpression));
+                    }
+                } else {
+                    throw new BadRequestException("Invalid sort field: " + sortType);
                 }
             }
-
-            predicates.add(cb.equal(root.get("status"), GameStatus.OPENING));
 
             return cb.and(predicates.toArray(new Predicate[0]));
         };

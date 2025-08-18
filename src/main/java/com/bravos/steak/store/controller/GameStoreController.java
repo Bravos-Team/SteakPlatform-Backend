@@ -2,7 +2,6 @@ package com.bravos.steak.store.controller;
 
 import com.bravos.steak.store.model.request.FilterQuery;
 import com.bravos.steak.store.service.GameService;
-import jakarta.validation.Valid;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -27,8 +26,8 @@ public class GameStoreController {
         return ResponseEntity.ok(gameService.getGameStoreList(cursor.orElse(null), pageSize));
     }
 
-    @GetMapping("/filter")
-    public ResponseEntity<?> getGameListStoreWithFilters(@RequestBody @Valid FilterQuery filterQuery) {
+    @PostMapping("/filter")
+    public ResponseEntity<?> getGameListStoreWithFilters(@RequestBody(required = false) FilterQuery filterQuery) {
         return ResponseEntity.ok(gameService.getFilteredGames(filterQuery));
     }
 

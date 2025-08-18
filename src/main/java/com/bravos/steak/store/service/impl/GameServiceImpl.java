@@ -76,6 +76,9 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public CustomPage<GameListItem> getFilteredGames(FilterQuery filterQuery) {
+        if(filterQuery == null) {
+            return getNewestGames(1,15);
+        }
         if(filterQuery.getMinPrice() != null && filterQuery.getMaxPrice() != null
                 && filterQuery.getMinPrice() > filterQuery.getMaxPrice()) {
             double temp = filterQuery.getMinPrice();

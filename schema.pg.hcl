@@ -1292,6 +1292,56 @@ table "playing_count_record" {
     columns = [column.game_id]
   }
   index "idx_playing_count_record_record_at" {
-    columns = [column.game_id,column.record_at]
+    columns = [column.game_id, column.record_at]
+  }
+}
+table "top_50_monthly_trending" {
+  schema = schema.public
+  column "year" {
+    null = false
+    type = integer
+  }
+  column "month" {
+    null = false
+    type = integer
+  }
+  column "rank" {
+    null = false
+    type = integer
+  }
+  column "game_id" {
+    null = false
+    type = bigint
+  }
+  column "peak_concurrent" {
+    null = false
+    type = bigint
+  }
+  column "avg_concurrent" {
+    null = false
+    type = numeric(12, 2)
+  }
+  column "growth_rate" {
+    null = false
+    type = numeric(6, 2)
+  }
+  column "trending_score" {
+    null = false
+    type = numeric(12, 2)
+  }
+  primary_key {
+    columns = [column.year, column.month, column.rank]
+  }
+  foreign_key "top_50_monthly_trending_game_id_fkey" {
+    columns     = [column.game_id]
+    ref_columns = [table.game.column.id]
+    on_update   = NO_ACTION
+    on_delete   = NO_ACTION
+  }
+  index "idx_top_50_monthly_trending_game_id" {
+    columns = [column.game_id]
+  }
+  index "idx_top_50_monthly_trending_year_month" {
+    columns = [column.year, column.month]
   }
 }

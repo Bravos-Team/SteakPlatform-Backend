@@ -1,6 +1,5 @@
 package com.bravos.steak.store.model.request;
 
-import jakarta.validation.constraints.Min;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -28,12 +27,8 @@ public class FilterQuery {
 
     String sortBy;
 
-    @Min(1)
-    @Builder.Default
     Integer page = 1;
 
-    @Min(1)
-    @Builder.Default
     Integer pageSize = 10;
 
     @Override
