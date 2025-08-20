@@ -396,7 +396,7 @@ public class GameServiceImpl implements GameService {
         for (TrendingStatistic statistic : trendingStatistics) {
             GameRankingListItem item = gameRankingMap.get(statistic.getGameId());
             if (item != null) {
-                item.setGrowthRate(statistic.getGrowthRate());
+                item.setGrowthRate(statistic.getGrowthRate().doubleValue());
                 rankingListItems.add(item);
             }
         }

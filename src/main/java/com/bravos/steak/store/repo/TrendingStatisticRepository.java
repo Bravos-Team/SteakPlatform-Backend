@@ -59,8 +59,8 @@ public class TrendingStatisticRepository {
     }
 
     private List<TrendingStatistic> queryTrendingStatistics(String sql, LocalDateTime asTime) {
-        Query query = entityManager.createNativeQuery(sql, "TrendingStatisticMapping");
-        query.setParameter(0, asTime);
+        Query query = entityManager.createNativeQuery(sql, TrendingStatistic.class);
+        query.setParameter(1, asTime);
         return objectMapper.convertValue(query.getResultList(),
                 objectMapper.getTypeFactory().constructCollectionType(List.class, TrendingStatistic.class));
     }

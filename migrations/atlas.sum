@@ -1,4 +1,4 @@
-h1:KW3cF1078MEiBCtzmJLqbXUX13J/37B4V3+yvmTcH8M=
+h1:eN/pvioTtg98/sYtYlLaGo/iy26dfnTCc0JcCzrTLJY=
 20250706170756_migrate-datetime-to-bigint.sql h1:5JrcN/MgdPa3aItd1d1933e6qfnTW8l6qRWiXP76nQQ=
 20250706170919_add-game-default-created-at.sql h1:8EqGnGq3gsxGa0YGT0c1Q9yxTXsUglQe9fSKYUP96Bo=
 20250706170931.sql h1:VdBUOWMkg+Ua82QGrSeIZ2luY6+z7Wr0LHjCTE1A5So=
@@ -18,3 +18,4 @@ h1:KW3cF1078MEiBCtzmJLqbXUX13J/37B4V3+yvmTcH8M=
 20250817105908_trending-procedure.sql h1:+CuBwpAM250J1GSuvThwEEZvMnDzVIVxM4XGwuJudss=
 20250817112238_add-trending-record-table.sql h1:g8DT998GUu+W5F5/rg5muyXm+bL3fuER4tvmaZ+bzUg=
 20250820192021_update-trending-proc.sql h1:5I572Sbb7fu+/kbWuFmVJiaPmtfOwJcFOgjTBY1zVFo=
+20250820210911_fix-trending-proc.sql h1:bdmT/SUyLNxxCGDy1HeaqOVS4hKZPGL5V4n5P7S62tI=

@@ -34,20 +34,25 @@ public class TrendingTrackingJob {
 
     @Scheduled(cron = "0 0 0 * * Mon", zone = "GMT+7")
     public void updateWeeklyTrending() {
+        log.info("Updating weekly trending records...");
+        long startTime = System.currentTimeMillis();
         List<TrendingStatistic> trendingStatistics = trendingStatisticRepository.getWeeklyTrendingStatistics();
         redisService.save("weeklyTrending", trendingStatistics);
-        log.info("Weekly trending records updated");
+        long endTime = System.currentTimeMillis();
+        log.info("Weekly trending records updated in {} ms", endTime - startTime);
     }
 
     @Scheduled(cron = "0 0 0 1 * ?", zone = "GMT+7")
     @Transactional
     public void updateMonthlyTrending() {
+        log.info("Updating monthly trending records...");
+        long startTime = System.currentTimeMillis();
         List<TrendingStatistic> trendingStatistics = trendingStatisticRepository.getMonthlyTrendingStatistics();
         redisService.save("monthlyTrending", trendingStatistics);
         int currentMonth = LocalDate.now().getMonth().getValue();
         int currentYear = LocalDate.now().getYear();
 
-        if(!topMonthlyGameRepository.existsByTime(currentMonth, currentYear)) {
+        if (!topMonthlyGameRepository.existsByTime(currentMonth, currentYear)) {
             List<Top50MonthlyTrendingRecord> results = new ArrayList<>(50);
             int rank = 1;
             for (TrendingStatistic statistic : trendingStatistics) {
@@ -59,9 +64,9 @@ public class TrendingTrackingJob {
                                 .build())
                         .game(Game.builder().id(statistic.getGameId()).build())
                         .peakConcurrent(statistic.getPeakConcurrent())
-                        .avgConcurrent(statistic.getAvgConcurrent())
-                        .growthRate(statistic.getGrowthRate())
-                        .trendingScore(statistic.getTrendingScore())
+                        .avgConcurrent(statistic.getAvgConcurrent().doubleValue())
+                        .growthRate(statistic.getGrowthRate().doubleValue())
+                        .trendingScore(statistic.getTrendingScore().doubleValue())
                         .build();
                 results.add(record);
             }
@@ -71,15 +76,19 @@ public class TrendingTrackingJob {
                 log.error("Failed to update monthly trending records", e);
                 throw new RuntimeException("Failed to update monthly trending records", e);
             }
-            log.info("Monthly trending records updated for {}/{}", currentMonth, currentYear);
         }
+        long endTime = System.currentTimeMillis();
+        log.info("Monthly trending records updated in {} ms for {}/{}", endTime - startTime, currentMonth, currentYear);
     }
 
     @Scheduled(cron = "0 0 0 * * *", zone = "GMT+7")
     public void updateDailyTrending() {
+        log.info("Updating daily trending records...");
+        long startTime = System.currentTimeMillis();
         List<TrendingStatistic> trendingStatistics = trendingStatisticRepository.getDailyTrendingStatistics();
         redisService.save("dailyTrending", trendingStatistics);
-        log.info("Daily trending records updated");
+        long endTime = System.currentTimeMillis();
+        log.info("Daily trending records updated in {} ms", endTime - startTime);
     }
 
 }
