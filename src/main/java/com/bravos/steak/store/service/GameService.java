@@ -38,10 +38,10 @@ public interface GameService {
 
     List<TrendingStatistic> getDailyTrendingStatistics();
 
-    List<GameRankingListItem> getCurrentDayGameRankingList(int page, int pageSize);
+    List<GameRankingListItem> getCurrentDayGameRankingList();
 
-    List<GameRankingListItem> getCurrentWeekGameRankingList(int page, int pageSize);
+    List<GameRankingListItem> getCurrentWeekGameRankingList();
 
-    List<GameRankingListItem> getCurrentMonthGameRankingList(int page, int pageSize);
+    List<GameRankingListItem> getCurrentMonthGameRankingList();
 
 }

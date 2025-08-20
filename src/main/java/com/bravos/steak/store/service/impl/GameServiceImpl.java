@@ -6,7 +6,6 @@ import com.bravos.steak.common.model.RedisCacheEntry;
 import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.common.service.redis.RedisService;
-import com.bravos.steak.dev.model.GameThumbnail;
 import com.bravos.steak.exceptions.ForbiddenException;
 import com.bravos.steak.exceptions.ResourceNotFoundException;
 import com.bravos.steak.exceptions.UnauthorizeException;
@@ -38,6 +37,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 @Slf4j
 @Service
@@ -332,39 +332,56 @@ public class GameServiceImpl implements GameService {
 
     @Override
     public List<TrendingStatistic> getDailyTrendingStatistics() {
-        return redisService.get("dailyTrending", objectMapper.getTypeFactory().constructCollectionType(List.class, TrendingStatistic.class));
+        String key = "dailyTrending";
+        return redisService.get(key, objectMapper.getTypeFactory().constructCollectionType(List.class, TrendingStatistic.class));
     }
 
     @Override
-    public List<GameRankingListItem> getCurrentDayGameRankingList(int page, int pageSize) {
-        int maxItems = 50;
-        List<TrendingStatistic> dailyTrending = getDailyTrendingStatistics();
-        return buildRankingListItems(dailyTrending, page, pageSize, maxItems);
+    public List<GameRankingListItem> getCurrentDayGameRankingList() {
+        String cacheKey = "gameDailyTrendingItems";
+        return getRankingListItemsWithCache(cacheKey, () -> {
+            List<TrendingStatistic> dailyTrending = getDailyTrendingStatistics();
+            return buildRankingListItems(dailyTrending);
+        });
     }
 
     @Override
-    public List<GameRankingListItem> getCurrentWeekGameRankingList(int page, int pageSize) {
-        int maxItems = 50;
-        List<TrendingStatistic> weeklyTrending = getWeeklyTrendingStatistics();
-        return buildRankingListItems(weeklyTrending, page, pageSize, maxItems);
+    public List<GameRankingListItem> getCurrentWeekGameRankingList() {
+        String cacheKey = "gameWeeklyTrendingItems";
+        return getRankingListItemsWithCache(cacheKey, () -> {
+            List<TrendingStatistic> weeklyTrending = getWeeklyTrendingStatistics();
+            return buildRankingListItems(weeklyTrending);
+        });
     }
 
     @Override
-    public List<GameRankingListItem> getCurrentMonthGameRankingList(int page, int pageSize) {
-        int maxItems = 50;
-        List<TrendingStatistic> monthlyTrending = getMonthlyTrendingStatistics();
-        return buildRankingListItems(monthlyTrending, page, pageSize, maxItems);
+    public List<GameRankingListItem> getCurrentMonthGameRankingList() {
+        String cacheKey = "gameMonthlyTrendingItems";
+        return getRankingListItemsWithCache(cacheKey, () -> {
+            List<TrendingStatistic> monthlyTrending = getMonthlyTrendingStatistics();
+            return buildRankingListItems(monthlyTrending);
+        });
     }
 
-    private List<GameRankingListItem> buildRankingListItems(List<TrendingStatistic> trendingStatistics,
-                                                            int page, int pageSize, int maxItems) {
+    private List<GameRankingListItem> getRankingListItemsWithCache(String key, Supplier<List<GameRankingListItem>> fallbackFunction) {
+        RedisCacheEntry<List<GameRankingListItem>> cacheEntry = RedisCacheEntry.<List<GameRankingListItem>>builder()
+                .key(key)
+                .fallBackFunction(fallbackFunction)
+                .keyTimeout(5)
+                .keyTimeUnit(TimeUnit.MINUTES)
+                .lockTimeout(1000)
+                .lockTimeUnit(TimeUnit.MILLISECONDS)
+                .retryTime(3)
+                .build();
+        return redisService.getWithLock(cacheEntry,
+                objectMapper.getTypeFactory().constructCollectionType(List.class, GameRankingListItem.class));
+    }
+
+    private List<GameRankingListItem> buildRankingListItems(List<TrendingStatistic> trendingStatistics) {
         if(trendingStatistics == null || trendingStatistics.isEmpty()) {
             return List.of();
         }
-        int startIndex = (page - 1) * pageSize;
-        int endIndex = Math.min(startIndex + pageSize, trendingStatistics.size());
-        trendingStatistics = trendingStatistics.subList(startIndex, endIndex);
-        List<GameRankingListItem> rankingListItems = new ArrayList<>(Math.min(pageSize, maxItems));
+        List<GameRankingListItem> rankingListItems = new ArrayList<>(Math.min(50, trendingStatistics.size()));
         List<CartGameInfo> gameDetails = gameDetailsRepository.findByIdIn(
                 trendingStatistics.stream().map(TrendingStatistic::getGameId).toList());
         Map<Long, GameRankingListItem> gameRankingMap = new HashMap<>(gameDetails.size());
