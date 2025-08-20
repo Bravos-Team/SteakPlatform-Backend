@@ -4,11 +4,10 @@ import com.bravos.steak.common.model.CustomPage;
 import com.bravos.steak.store.entity.Genre;
 import com.bravos.steak.store.entity.Tag;
 import com.bravos.steak.store.model.request.FilterQuery;
-import com.bravos.steak.store.model.response.CursorResponse;
-import com.bravos.steak.store.model.response.DownloadResponse;
-import com.bravos.steak.store.model.response.GameListItem;
-import com.bravos.steak.store.model.response.GameStoreDetail;
+import com.bravos.steak.store.model.response.*;
+import com.bravos.steak.store.repo.injection.TrendingStatistic;
 
+import java.util.List;
 import java.util.Set;
 
 public interface GameService {
@@ -32,5 +31,17 @@ public interface GameService {
     Set<Tag> getAllTags();
 
     GameStoreDetail invalidateAndGetGameStoreDetails(Long gameId);
+
+    List<TrendingStatistic> getWeeklyTrendingStatistics();
+
+    List<TrendingStatistic> getMonthlyTrendingStatistics();
+
+    List<TrendingStatistic> getDailyTrendingStatistics();
+
+    List<GameRankingListItem> getCurrentDayGameRankingList(int page, int pageSize);
+
+    List<GameRankingListItem> getCurrentWeekGameRankingList(int page, int pageSize);
+
+    List<GameRankingListItem> getCurrentMonthGameRankingList(int page, int pageSize);
 
 }
