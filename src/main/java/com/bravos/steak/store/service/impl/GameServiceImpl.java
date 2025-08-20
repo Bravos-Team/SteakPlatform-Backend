@@ -6,6 +6,7 @@ import com.bravos.steak.common.model.RedisCacheEntry;
 import com.bravos.steak.common.service.auth.SessionService;
 import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.common.service.redis.RedisService;
+import com.bravos.steak.dev.model.GameThumbnail;
 import com.bravos.steak.exceptions.ForbiddenException;
 import com.bravos.steak.exceptions.ResourceNotFoundException;
 import com.bravos.steak.exceptions.UnauthorizeException;
@@ -15,12 +16,10 @@ import com.bravos.steak.store.entity.Genre;
 import com.bravos.steak.store.entity.Tag;
 import com.bravos.steak.store.entity.details.GameDetails;
 import com.bravos.steak.store.model.request.FilterQuery;
-import com.bravos.steak.store.model.response.CursorResponse;
-import com.bravos.steak.store.model.response.DownloadResponse;
-import com.bravos.steak.store.model.response.GameListItem;
-import com.bravos.steak.store.model.response.GameStoreDetail;
+import com.bravos.steak.store.model.response.*;
 import com.bravos.steak.store.repo.*;
 import com.bravos.steak.store.repo.injection.CartGameInfo;
+import com.bravos.steak.store.repo.injection.TrendingStatistic;
 import com.bravos.steak.store.service.DownloadGameService;
 import com.bravos.steak.store.service.GameService;
 import com.bravos.steak.store.service.UserGameService;
@@ -317,6 +316,74 @@ public class GameServiceImpl implements GameService {
         String key = "game:store:detail:" + gameId;
         redisService.delete(key);
         return getGameStoreDetails(gameId);
+    }
+
+    @Override
+    public List<TrendingStatistic> getWeeklyTrendingStatistics() {
+        String key = "weeklyTrending";
+        return redisService.get(key, objectMapper.getTypeFactory().constructCollectionType(List.class, TrendingStatistic.class));
+    }
+
+    @Override
+    public List<TrendingStatistic> getMonthlyTrendingStatistics() {
+        String key = "monthlyTrending";
+        return redisService.get(key, objectMapper.getTypeFactory().constructCollectionType(List.class, TrendingStatistic.class));
+    }
+
+    @Override
+    public List<TrendingStatistic> getDailyTrendingStatistics() {
+        return redisService.get("dailyTrending", objectMapper.getTypeFactory().constructCollectionType(List.class, TrendingStatistic.class));
+    }
+
+    @Override
+    public List<GameRankingListItem> getCurrentDayGameRankingList(int page, int pageSize) {
+        int maxItems = 50;
+        List<TrendingStatistic> dailyTrending = getDailyTrendingStatistics();
+        return buildRankingListItems(dailyTrending, page, pageSize, maxItems);
+    }
+
+    @Override
+    public List<GameRankingListItem> getCurrentWeekGameRankingList(int page, int pageSize) {
+        int maxItems = 50;
+        List<TrendingStatistic> weeklyTrending = getWeeklyTrendingStatistics();
+        return buildRankingListItems(weeklyTrending, page, pageSize, maxItems);
+    }
+
+    @Override
+    public List<GameRankingListItem> getCurrentMonthGameRankingList(int page, int pageSize) {
+        int maxItems = 50;
+        List<TrendingStatistic> monthlyTrending = getMonthlyTrendingStatistics();
+        return buildRankingListItems(monthlyTrending, page, pageSize, maxItems);
+    }
+
+    private List<GameRankingListItem> buildRankingListItems(List<TrendingStatistic> trendingStatistics,
+                                                            int page, int pageSize, int maxItems) {
+        if(trendingStatistics == null || trendingStatistics.isEmpty()) {
+            return List.of();
+        }
+        int startIndex = (page - 1) * pageSize;
+        int endIndex = Math.min(startIndex + pageSize, trendingStatistics.size());
+        trendingStatistics = trendingStatistics.subList(startIndex, endIndex);
+        List<GameRankingListItem> rankingListItems = new ArrayList<>(Math.min(pageSize, maxItems));
+        List<CartGameInfo> gameDetails = gameDetailsRepository.findByIdIn(
+                trendingStatistics.stream().map(TrendingStatistic::getGameId).toList());
+        Map<Long, GameRankingListItem> gameRankingMap = new HashMap<>(gameDetails.size());
+        gameDetails.forEach(detail -> {
+            GameRankingListItem item = GameRankingListItem.builder()
+                    .id(detail.getId())
+                    .name(detail.getTitle())
+                    .thumbnail(detail.getThumbnail())
+                    .build();
+            gameRankingMap.put(detail.getId(), item);
+        });
+        for (TrendingStatistic statistic : trendingStatistics) {
+            GameRankingListItem item = gameRankingMap.get(statistic.getGameId());
+            if (item != null) {
+                item.setGrowthRate(statistic.getGrowthRate());
+                rankingListItems.add(item);
+            }
+        }
+        return rankingListItems;
     }
 
     private Set<Genre> getAllGenresFromDatabase() {

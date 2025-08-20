@@ -1,0 +1,26 @@
+package com.bravos.steak.store.repo.injection;
+
+import lombok.*;
+import lombok.experimental.FieldDefaults;
+
+import static lombok.AccessLevel.PRIVATE;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@FieldDefaults(level = PRIVATE)
+public class TrendingStatistic {
+
+    Long gameId;
+
+    Long peakConcurrent;
+
+    Double avgConcurrent;
+
+    Double growthRate;
+
+    Double trendingScore;
+
+}

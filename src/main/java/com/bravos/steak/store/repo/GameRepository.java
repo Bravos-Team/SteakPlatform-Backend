@@ -5,9 +5,11 @@ import com.bravos.steak.store.entity.Game;
 import com.bravos.steak.store.model.enums.GameStatus;
 import com.bravos.steak.store.repo.injection.GameIdStatusPrice;
 import com.bravos.steak.store.repo.injection.GamePrice;
+import com.bravos.steak.store.repo.injection.TrendingStatistic;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.*;
+import org.springframework.data.jpa.repository.query.Procedure;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -81,4 +83,14 @@ public interface GameRepository extends JpaRepository<Game, Long>, JpaSpecificat
     Long countByPublisherIdAndStatusNot(Long publisherId, GameStatus status);
 
     Game findByIdAndPublisherId(Long id, Long publisherId);
+
+    @Procedure(procedureName = "proc_weekly_trending")
+    List<TrendingStatistic> getWeeklyTrendingStatistics();
+
+    @Procedure(procedureName = "proc_monthly_trending")
+    List<TrendingStatistic> getMonthlyTrendingStatistics();
+
+    @Procedure(procedureName = "proc_daily_trending")
+    List<TrendingStatistic> getDailyTrendingStatistics();
+
 }
