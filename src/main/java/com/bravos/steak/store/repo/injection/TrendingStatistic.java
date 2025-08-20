@@ -6,6 +6,8 @@ import jakarta.persistence.SqlResultSetMapping;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.math.BigDecimal;
+
 import static lombok.AccessLevel.PRIVATE;
 
 @Getter
@@ -19,11 +21,11 @@ import static lombok.AccessLevel.PRIVATE;
         classes = @ConstructorResult(
                 targetClass = TrendingStatistic.class,
                 columns = {
-                        @ColumnResult(name = "gameId", type = Long.class),
-                        @ColumnResult(name = "peakConcurrent", type = Long.class),
-                        @ColumnResult(name = "avgConcurrent", type = Double.class),
-                        @ColumnResult(name = "growthRate", type = Double.class),
-                        @ColumnResult(name = "trendingScore", type = Double.class)
+                        @ColumnResult(name = "game_id", type = Long.class),
+                        @ColumnResult(name = "peak_concurrent", type = Long.class),
+                        @ColumnResult(name = "avg_concurrent", type = BigDecimal.class),
+                        @ColumnResult(name = "growth_rate", type = BigDecimal.class),
+                        @ColumnResult(name = "trending_score", type = BigDecimal.class)
                 }
         )
 )
@@ -33,10 +35,10 @@ public class TrendingStatistic {
 
     Long peakConcurrent;
 
-    Double avgConcurrent;
+    BigDecimal avgConcurrent;
 
-    Double growthRate;
+    BigDecimal growthRate;
 
-    Double trendingScore;
+    BigDecimal trendingScore;
 
 }

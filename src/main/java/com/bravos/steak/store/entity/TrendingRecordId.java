@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 import static lombok.AccessLevel.PRIVATE;
 
@@ -22,5 +23,17 @@ public class TrendingRecordId implements Serializable {
     Integer month;
 
     Integer rank;
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        TrendingRecordId that = (TrendingRecordId) o;
+        return Objects.equals(year, that.year) && Objects.equals(month, that.month) && Objects.equals(rank, that.rank);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(year, month, rank);
+    }
 
 }
