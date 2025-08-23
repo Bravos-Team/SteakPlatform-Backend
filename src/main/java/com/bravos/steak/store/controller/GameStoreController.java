@@ -77,4 +77,19 @@ public class GameStoreController {
         return ResponseEntity.ok(gameService.getTopMostPlayedGames(page, pageSize));
     }
 
+    @GetMapping("/daily-trending")
+    public ResponseEntity<?> getDailyTrendingGames() {
+        return ResponseEntity.ok(gameService.getCurrentDayGameRankingList());
+    }
+
+    @GetMapping("/monthly-trending")
+    public ResponseEntity<?> getMonthlyTrendingGames() {
+        return ResponseEntity.ok(gameService.getCurrentMonthGameRankingList());
+    }
+
+    @GetMapping("/weekly-trending")
+    public ResponseEntity<?> getWeeklyTrendingGames() {
+        return ResponseEntity.ok(gameService.getCurrentWeekGameRankingList());
+    }
+
 }

@@ -340,7 +340,7 @@ public class GameServiceImpl implements GameService {
     public List<GameRankingListItem> getCurrentDayGameRankingList() {
         String cacheKey = "gameDailyTrendingItems";
         return getRankingListItemsWithCache(cacheKey, () -> {
-            List<TrendingStatistic> dailyTrending = getDailyTrendingStatistics();
+            List<TrendingStatistic> dailyTrending = new ArrayList<>(getDailyTrendingStatistics());
             return buildRankingListItems(dailyTrending);
         });
     }
@@ -349,7 +349,7 @@ public class GameServiceImpl implements GameService {
     public List<GameRankingListItem> getCurrentWeekGameRankingList() {
         String cacheKey = "gameWeeklyTrendingItems";
         return getRankingListItemsWithCache(cacheKey, () -> {
-            List<TrendingStatistic> weeklyTrending = getWeeklyTrendingStatistics();
+            List<TrendingStatistic> weeklyTrending = new ArrayList<>(getWeeklyTrendingStatistics());
             return buildRankingListItems(weeklyTrending);
         });
     }
@@ -358,7 +358,7 @@ public class GameServiceImpl implements GameService {
     public List<GameRankingListItem> getCurrentMonthGameRankingList() {
         String cacheKey = "gameMonthlyTrendingItems";
         return getRankingListItemsWithCache(cacheKey, () -> {
-            List<TrendingStatistic> monthlyTrending = getMonthlyTrendingStatistics();
+            List<TrendingStatistic> monthlyTrending = new ArrayList<>(getMonthlyTrendingStatistics());
             return buildRankingListItems(monthlyTrending);
         });
     }
@@ -385,6 +385,7 @@ public class GameServiceImpl implements GameService {
         List<CartGameInfo> gameDetails = gameDetailsRepository.findByIdIn(
                 trendingStatistics.stream().map(TrendingStatistic::getGameId).toList());
         Map<Long, GameRankingListItem> gameRankingMap = new HashMap<>(gameDetails.size());
+        trendingStatistics.sort(Comparator.comparing(TrendingStatistic::getTrendingScore).reversed());
         gameDetails.forEach(detail -> {
             GameRankingListItem item = GameRankingListItem.builder()
                     .id(detail.getId())
@@ -393,13 +394,13 @@ public class GameServiceImpl implements GameService {
                     .build();
             gameRankingMap.put(detail.getId(), item);
         });
-        for (TrendingStatistic statistic : trendingStatistics) {
-            GameRankingListItem item = gameRankingMap.get(statistic.getGameId());
-            if (item != null) {
-                item.setGrowthRate(statistic.getGrowthRate().doubleValue());
-                rankingListItems.add(item);
+        trendingStatistics.forEach(item -> {
+            GameRankingListItem rankingItem = gameRankingMap.get(item.getGameId());
+            if(rankingItem != null) {
+                rankingItem.setGrowthRate(item.getGrowthRate().doubleValue());
+                rankingListItems.add(rankingItem);
             }
-        }
+        });
         return rankingListItems;
     }
 
