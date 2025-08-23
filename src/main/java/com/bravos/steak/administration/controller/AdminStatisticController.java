@@ -30,7 +30,7 @@ public class AdminStatisticController {
     }
 
     @GetMapping("/monthly-revenue")
-    public ResponseEntity<?> getRevenueStatisticByMonth(@RequestParam(value = "year") Integer year) {
+    public ResponseEntity<?> getRevenueStatisticByMonth(@RequestParam Integer year) {
         if (year == null || year < 2000 || year > 2100) {
             year = LocalDate.now().getYear();
         }
@@ -39,8 +39,8 @@ public class AdminStatisticController {
 
     @GetMapping("/daily-revenue")
     public ResponseEntity<?> getRevenueStatisticByDay(
-            @RequestParam(value = "month") Integer month,
-            @RequestParam(value = "year") Integer year) {
+            @RequestParam Integer month,
+            @RequestParam Integer year) {
         if (month == null || month < 1 || month > 12) {
             month = LocalDate.now().getMonthValue();
         }
