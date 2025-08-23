@@ -42,7 +42,7 @@ public class AdminStatisticRepository {
         for (Object obj : result) {
             Object[] arr = (Object[]) obj;
             StatisticResponse statisticResponse = StatisticResponse.builder()
-                    .name((String) arr[0])
+                    .name(String.valueOf(arr[0]))
                     .value(arr[1])
                     .build();
             res.add(statisticResponse);
