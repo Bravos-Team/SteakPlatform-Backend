@@ -6,6 +6,13 @@ server:
     enabled: true
     mime-types: application/json,application/xml,text/html,text/xml,text/plain
     min-response-size: 2048
+  tomcat:
+    threads:
+      max: 500
+      min-spare: 50
+    accept-count: 2000
+    max-connections: 12000
+    connection-timeout: 20000
 spring:
   application:
     name: steak-platform
