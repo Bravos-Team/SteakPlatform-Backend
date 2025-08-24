@@ -30,7 +30,6 @@ public class AdminAuthService extends AuthService {
     private final AdminAccountRepository adminAccountRepository;
     private final SnowflakeGenerator snowflakeGenerator;
     private final AdminRefreshTokenRepository adminRefreshTokenRepository;
-    private final SessionService sessionService;
 
     @Autowired
     public AdminAuthService(RedisService redisService, PasswordEncoder passwordEncoder, JwtService jwtService,
@@ -41,7 +40,6 @@ public class AdminAuthService extends AuthService {
         this.adminAccountRepository = adminAccountRepository;
         this.snowflakeGenerator = snowflakeGenerator;
         this.adminRefreshTokenRepository = adminRefreshTokenRepository;
-        this.sessionService = sessionService;
     }
 
     @Override
@@ -72,7 +70,7 @@ public class AdminAuthService extends AuthService {
                 .token(UUID.randomUUID().toString())
                 .deviceId(deviceId)
                 .deviceInfo(deviceInfo)
-                .expiresAt(DateTimeHelper.from(DateTimeHelper.now()))
+                .expiresAt(DateTimeHelper.from(DateTimeHelper.now().plusDays(30)))
                 .revoked(false)
                 .build();
 
