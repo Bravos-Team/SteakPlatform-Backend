@@ -11,6 +11,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class GameSpecification {
@@ -61,12 +62,18 @@ public class GameSpecification {
             if (filterQuery.getTagIds() != null && filterQuery.getTagIds().length > 0) {
                 predicates.add(root.join("tags").get("id").in((Object[]) filterQuery.getTagIds()));
             }
-            if (filterQuery.getMinPrice() != null) {
-                predicates.add(cb.greaterThanOrEqualTo(root.get("price"), filterQuery.getMinPrice()));
+
+            if (!Objects.equals(filterQuery.getMinPrice(), filterQuery.getMaxPrice())) {
+                if (filterQuery.getMinPrice() != null) {
+                    predicates.add(cb.greaterThanOrEqualTo(root.get("price"), filterQuery.getMinPrice()));
+                }
+                if (filterQuery.getMaxPrice() != null) {
+                    predicates.add(cb.lessThanOrEqualTo(root.get("price"), filterQuery.getMaxPrice()));
+                }
+            } else if (filterQuery.getMinPrice() != null) {
+                predicates.add(cb.equal(root.get("price"), filterQuery.getMinPrice()));
             }
-            if (filterQuery.getMaxPrice() != null) {
-                predicates.add(cb.lessThanOrEqualTo(root.get("price"), filterQuery.getMaxPrice()));
-            }
+
             if (filterQuery.getSortBy() != null && !filterQuery.getSortBy().isEmpty()) {
                 String[] sortParts = filterQuery.getSortBy().split(",");
                 String sortType = sortParts[0].trim();
