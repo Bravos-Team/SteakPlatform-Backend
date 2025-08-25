@@ -22,6 +22,8 @@ public interface GameService {
 
     CustomPage<GameListItem> getTopMostPlayedGames(int page, int pageSize);
 
+    List<GameListItem> getGameListByIds(List<Long> gameIds);
+
     GameStoreDetail getGameStoreDetails(Long gameId);
 
     DownloadResponse getGameDownloadUrl(Long gameId);

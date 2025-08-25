@@ -65,9 +65,10 @@ public class GameServiceImpl implements GameService {
                 .fallBackFunction(() -> getGamesFromDb(cursor, pageSize))
                 .keyTimeout(5)
                 .keyTimeUnit(TimeUnit.MINUTES)
-                .lockTimeout(30000)
+                .lockTimeout(1000)
                 .lockTimeUnit(TimeUnit.MILLISECONDS)
                 .retryTime(3)
+                .retryWait(200)
                 .build();
         Object value = redisService.getWithLock(cacheEntry, Object.class);
         return objectMapper.convertValue(value, new TypeReference<>() {});
@@ -151,6 +152,12 @@ public class GameServiceImpl implements GameService {
                 .build();
         Object value = redisService.getWithLock(cacheEntry, Object.class);
         return objectMapper.convertValue(value, new TypeReference<>() {});
+    }
+
+    @Override
+    public List<GameListItem> getGameListByIds(List<Long> gameIds) {
+        Specification<Game> spec = GameSpecification.withGameIds(gameIds);
+        return getGameListItemsBySpec(spec, 1, gameIds.size()).getContent();
     }
 
     private CustomPage<GameListItem> getTopMostPlayedGamesFromDb(int page, int pageSize) {

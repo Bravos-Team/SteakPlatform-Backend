@@ -223,18 +223,20 @@ public abstract class AuthService {
     }
 
     private void addRefreshTokenCookie(RefreshToken refreshToken) {
-        ResponseCookie refreshCookie = ResponseCookie.from(REFRESH_TOKEN_NAME, refreshToken.getToken())
-                .httpOnly(true)
-                .secure(true)
-                .path(refreshPath())
+        refreshPath().forEach(path -> {
+            ResponseCookie refreshCookie = ResponseCookie.from(REFRESH_TOKEN_NAME, refreshToken.getToken())
+                    .httpOnly(true)
+                    .secure(true)
+                    .path(path)
 //                .domain(System.getProperty("COOKIE_DOMAIN"))
-                .sameSite("None")
-                .maxAge(Duration.ofDays(30))
-                .build();
-        httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+                    .sameSite("None")
+                    .maxAge(Duration.ofDays(30))
+                    .build();
+            httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+        });
     }
 
-    protected abstract String refreshPath();
+    protected abstract List<String> refreshPath();
 
     protected abstract Account getAccountByUsername(String username);
 
@@ -259,14 +261,16 @@ public abstract class AuthService {
                     .build();
             httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
         }
-        ResponseCookie refreshCookie = ResponseCookie.from(REFRESH_TOKEN_NAME, "")
-                .httpOnly(true)
-                .secure(true)
-                .path(refreshPath())
-                .sameSite("None")
-                .maxAge(Duration.ZERO)
-                .build();
-        httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+        for (String path : refreshPath()) {
+            ResponseCookie refreshCookie = ResponseCookie.from(REFRESH_TOKEN_NAME, "")
+                    .httpOnly(true)
+                    .secure(true)
+                    .path(path)
+                    .sameSite("None")
+                    .maxAge(Duration.ZERO)
+                    .build();
+            httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
+        }
         sessionService.logout();
     }
 

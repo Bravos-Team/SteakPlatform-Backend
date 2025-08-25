@@ -110,7 +110,7 @@ public class PublisherRegistrationServiceImpl implements PublisherRegistrationSe
                 .templateID(EmailTemplate.VERIFICATE_EMAIL)
                 .param("verification_link",verificationUrl)
                 .build();
-        emailService.sendEmailUsingTemplate(emailPayload);
+        emailService.sendEmail(emailPayload);
     }
 
     @Transactional

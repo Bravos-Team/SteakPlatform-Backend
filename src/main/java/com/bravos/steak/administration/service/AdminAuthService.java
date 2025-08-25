@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -48,8 +49,11 @@ public class AdminAuthService extends AuthService {
     }
 
     @Override
-    protected String refreshPath() {
-        return "/api/v1/admin/auth/refresh";
+    protected List<String> refreshPath() {
+        return List.of(
+                "/api/v1/admin/auth/refresh",
+                "/api/v1/admin/auth/logout"
+        );
     }
 
     @Override

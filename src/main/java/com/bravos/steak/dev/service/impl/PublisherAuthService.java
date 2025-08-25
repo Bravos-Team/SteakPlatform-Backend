@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -49,8 +50,11 @@ public class PublisherAuthService extends AuthService {
     }
 
     @Override
-    protected String refreshPath() {
-        return "/api/v1/dev/auth/refresh";
+    protected List<String> refreshPath() {
+        return List.of(
+                "/api/v1/dev/auth/refresh",
+                "/api/v1/dev/auth/logout"
+        );
     }
 
     @Override
