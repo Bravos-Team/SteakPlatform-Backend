@@ -192,6 +192,8 @@ public class Generator {
             generateOrderData(userId, games, year2025, LocalDateTime.now());
         }
         log.info("Generated revenue data for year 2025");
+
+        log.info("Finished generating revenue data");
     }
 
     public void generateOrderData(Long userId, List<Game> games, LocalDateTime startTime, LocalDateTime endTime) {
