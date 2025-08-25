@@ -36,7 +36,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -81,10 +80,10 @@ public class UserAuthService extends AuthService {
     }
 
     @Override
-    protected List<String> refreshPath() {
-        return List.of(
+    protected Set<String> refreshPath() {
+        return Set.of(
                 "/api/v1/user/auth/refresh",
-                "/api/v1/store/auth/logout"
+                "/api/v1/user/auth/logout"
         );
     }
 

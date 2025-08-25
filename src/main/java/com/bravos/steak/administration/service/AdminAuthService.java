@@ -49,8 +49,8 @@ public class AdminAuthService extends AuthService {
     }
 
     @Override
-    protected List<String> refreshPath() {
-        return List.of(
+    protected Set<String> refreshPath() {
+        return Set.of(
                 "/api/v1/admin/auth/refresh",
                 "/api/v1/admin/auth/logout"
         );
