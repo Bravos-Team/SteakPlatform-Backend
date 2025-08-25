@@ -1,6 +1,7 @@
 package com.bravos.steak.useraccount.entity;
 
 import com.mongodb.lang.NonNull;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
