@@ -2,13 +2,9 @@ server:
   port: ${SERVER_PORT}
   error:
     include-binding-errors: on_param
-  compression:
-    enabled: true
-    mime-types: application/json,application/xml,text/html,text/xml,text/plain
-    min-response-size: 2048
   tomcat:
     threads:
-      max: 500
+      max: 250
       min-spare: 50
     accept-count: 2000
     max-connections: 12000
@@ -19,12 +15,12 @@ spring:
   datasource:
     hikari:
       auto-commit: true
-      connection-timeout: 250
+      connection-timeout: 1000
       max-lifetime: 600000
       maximum-pool-size: 20
       minimum-idle: 10
       pool-name: master
-      idle-timeout: 30000
+      idle-timeout: 300000
       transaction-isolation: 1
   jpa:
     hibernate:

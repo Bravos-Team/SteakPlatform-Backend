@@ -32,7 +32,7 @@ public class EmailServiceImpl implements EmailService {
     }
 
     @Override
-    public void sendEmailUsingTemplate(EmailPayload emailPayload) {
+    public void sendEmail(EmailPayload emailPayload) {
         this.emailPayloads.add(emailPayload);
     }
 
@@ -42,7 +42,7 @@ public class EmailServiceImpl implements EmailService {
             if (emailPayloads.size() == 1) {
                 EmailPayload emailPayload = emailPayloads.removeFirst();
                 if (emailPayload != null && !emailPayload.getTemplateID().isBlank()) {
-                    this.sendEmail(emailPayload).subscribe();
+                    this.sendSingleEmail(emailPayload).subscribe();
                 }
             } else {
                 List<EmailPayload> payloadsToSend = new ArrayList<>(50);
@@ -57,22 +57,30 @@ public class EmailServiceImpl implements EmailService {
         }
     }
 
-    private Mono<String> sendEmail(EmailPayload emailPayload) {
-        if (emailPayload == null || emailPayload.getTemplateID().isBlank()) {
-            log.warn("Email payload is null or template ID is blank, skipping email send.");
+    private Mono<String> sendSingleEmail(EmailPayload emailPayload) {
+        RequestBody requestBody;
+        if(emailPayload.getTemplateID() != null && !emailPayload.getTemplateID().isBlank()) {
+            Message message = new TemplateMessage(
+                    new From(emailPayload.getFrom(), "Steak"),
+                    List.of(new To(emailPayload.getTo())),
+                    emailPayload.getSubject(),
+                    Integer.parseInt(emailPayload.getTemplateID()),
+                    true,
+                    emailPayload.getParams()
+            );
+            requestBody = new RequestBody(List.of(message));
+        } else if(emailPayload.getHtmlPart() != null && !emailPayload.getHtmlPart().isBlank()) {
+            Message message = new HTMLMessage(
+                    new From(emailPayload.getFrom(), "Steak"),
+                    List.of(new To(emailPayload.getTo())),
+                    emailPayload.getSubject(),
+                    emailPayload.getHtmlPart()
+            );
+            requestBody = new RequestBody(List.of(message));
+        } else {
+            log.warn("Email payload does not have a valid template ID or HTML part, skipping email send.");
             return Mono.empty();
         }
-
-        RequestBody requestBody = new RequestBody(
-                List.of(new Message(
-                        new From(emailPayload.getFrom(), "Steak"),
-                        List.of(new To(emailPayload.getTo())),
-                        Integer.parseInt(emailPayload.getTemplateID()),
-                        true,
-                        emailPayload.getSubject(),
-                        emailPayload.getParams()
-                ))
-        );
 
         return emailSenderWebClient.post()
                 .header("Content-Type", "application/json")
@@ -94,15 +102,25 @@ public class EmailServiceImpl implements EmailService {
         List<Message> messages = new ArrayList<>(50);
 
         for (EmailPayload payload : payloads) {
-            if (payload != null && !payload.getTemplateID().isBlank()) {
-                messages.add(new Message(
-                        new From(payload.getFrom(), "Steak"),
-                        List.of(new To(payload.getTo())),
-                        Integer.parseInt(payload.getTemplateID()),
-                        true,
-                        payload.getSubject(),
-                        payload.getParams()
-                ));
+            if(payload != null) {
+                if(payload.getTemplateID() != null && !payload.getTemplateID().isBlank()) {
+                    messages.add(new TemplateMessage(
+                            new From(payload.getFrom(), "Steak"),
+                            List.of(new To(payload.getTo())),
+                            payload.getSubject(),
+                            Integer.parseInt(payload.getTemplateID()),
+                            true,
+                            payload.getParams()
+
+                    ));
+                } else if(payload.getHtmlPart() != null && !payload.getHtmlPart().isBlank()) {
+                    messages.add(new HTMLMessage(
+                            new From(payload.getFrom(), "Steak"),
+                            List.of(new To(payload.getTo())),
+                            payload.getSubject(),
+                            payload.getHtmlPart()
+                    ));
+                }
             }
         }
 
@@ -125,13 +143,7 @@ public class EmailServiceImpl implements EmailService {
                 );
     }
 
-    @Getter
-    private static class RequestBody {
-        private final List<Message> Messages;
-
-        public RequestBody(List<Message> messages) {
-            this.Messages = messages;
-        }
+    private record RequestBody(List<Message> messages) {
     }
 
     @Getter
@@ -139,19 +151,40 @@ public class EmailServiceImpl implements EmailService {
     private static class Message {
         private final From From;
         private final List<To> To;
+        private final String Subject;
+
+        private Message(From from, List<To> tos, String subject) {
+            From = from;
+            To = tos;
+            Subject = subject;
+        }
+    }
+
+    @Getter
+    @Setter
+    private static class TemplateMessage extends Message {
         private final Integer TemplateID;
         private final boolean TemplateLanguage;
-        private final String Subject;
         private final Map<String, Object> Variables;
 
-        public Message(From from, List<To> to, Integer templateID, boolean templateLanguage,
-                       String subject, Map<String, Object> variables) {
-            this.From = from;
-            this.To = to;
+        private TemplateMessage(From from, List<To> tos, String subject,
+                                Integer templateID, boolean templateLanguage,
+                                Map<String, Object> variables) {
+            super(from, tos, subject);
             this.TemplateID = templateID;
             this.TemplateLanguage = templateLanguage;
-            this.Subject = subject;
             this.Variables = variables;
+        }
+    }
+
+    @Getter
+    @Setter
+    private static class HTMLMessage extends Message {
+        private final String HTMLPart;
+
+        private HTMLMessage(From from, List<To> tos, String subject, String htmlPart) {
+            super(from, tos, subject);
+            this.HTMLPart = htmlPart;
         }
     }
 

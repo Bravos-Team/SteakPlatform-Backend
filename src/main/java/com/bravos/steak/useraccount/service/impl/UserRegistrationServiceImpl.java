@@ -92,7 +92,7 @@ public class UserRegistrationServiceImpl implements UserRegistrationService {
                 .templateID(EmailTemplate.VERIFICATE_EMAIL)
                 .param("verification_link",verificationUrl)
                 .build();
-        emailService.sendEmailUsingTemplate(emailPayload);
+        emailService.sendEmail(emailPayload);
     }
 
     @Override

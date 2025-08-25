@@ -164,4 +164,12 @@ public class GameSpecification {
         };
     }
 
+    public static Specification<Game> withGameIds(List<Long> gameIds) {
+        return (root, query, cb) -> {
+            if (gameIds == null || gameIds.isEmpty()) {
+                return cb.conjunction();
+            }
+            return root.get("id").in(gameIds);
+        };
+    }
 }

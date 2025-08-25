@@ -1,5 +1,6 @@
 package com.bravos.steak.dev.service;
 
+import com.bravos.steak.administration.entity.review.ReviewReply;
 import com.bravos.steak.dev.entity.gamesubmission.GameSubmission;
 import com.bravos.steak.dev.entity.gamesubmission.GameSubmissionStatus;
 import com.bravos.steak.dev.model.GameSubmissionListItem;
@@ -7,6 +8,8 @@ import com.bravos.steak.dev.model.request.PublisherReviewReplyRequest;
 import com.bravos.steak.dev.model.request.SaveProjectRequest;
 import com.bravos.steak.dev.model.request.UpdatePreBuildRequest;
 import org.springframework.data.domain.Page;
+
+import java.util.List;
 
 public interface GameSubmissionService {
 
@@ -34,4 +37,5 @@ public interface GameSubmissionService {
 
     void deleteGameSubmission(Long submissionId);
 
+    List<ReviewReply> getAllResponses(Long projectId);
 }

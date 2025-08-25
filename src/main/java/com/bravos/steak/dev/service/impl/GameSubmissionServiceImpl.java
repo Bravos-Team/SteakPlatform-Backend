@@ -37,6 +37,8 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -411,6 +413,14 @@ public class GameSubmissionServiceImpl implements GameSubmissionService {
             log.error("Error when deleting project: {}", e.getMessage(), e);
             throw new RuntimeException("Error when deleting project");
         }
+    }
+
+    @Override
+    public List<ReviewReply> getAllResponses(Long projectId) {
+        checkProjectOwnership(projectId);
+        List<ReviewReply> replies = new ArrayList<>(reviewReplyRepository.findByGameSubmissionId(projectId));
+        replies.sort(Comparator.comparingLong(ReviewReply::getRepliedAt));
+        return replies;
     }
 
     private CustomGameSubmissionRepository.PublisherIdAndStatus checkProjectOwnership(long projectId) {

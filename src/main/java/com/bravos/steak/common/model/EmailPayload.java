@@ -14,14 +14,13 @@ public class EmailPayload {
     @Builder.Default
     private String from = "no-reply@steak.io.vn";
 
-    @NonNull
     private String to;
 
-    @NonNull
     private String subject;
 
-    @NonNull
     private String templateID;
+
+    private String htmlPart;
 
     @Singular
     private Map<String, Object> params;

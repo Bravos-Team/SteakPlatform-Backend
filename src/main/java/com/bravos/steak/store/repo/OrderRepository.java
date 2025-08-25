@@ -10,7 +10,7 @@ import org.springframework.stereotype.Repository;
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
     @EntityGraph(type = EntityGraph.EntityGraphType.FETCH,
-            attributePaths = {"orderDetails"})
+            attributePaths = {"orderDetails, userAccount"})
     @Query("SELECT o FROM Order o WHERE o.id = :id ")
     Order getFullOrderDetailsById(Long id);
 

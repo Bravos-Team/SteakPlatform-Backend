@@ -63,10 +63,16 @@ public class PublisherProjectController {
     }
 
     @HasAuthority({PublisherAuthority.CREATE_GAME})
-    @PostMapping("/re-submit")
+    @PostMapping("/resubmit")
     public ResponseEntity<?> reSubmit(@RequestBody @Valid PublisherReviewReplyRequest publisherReviewReplyRequest) {
         gameSubmissionService.reSubmitGameSubmission(publisherReviewReplyRequest);
         return ResponseEntity.ok().build();
+    }
+
+    @HasAuthority({PublisherAuthority.CREATE_GAME})
+    @GetMapping("/responses/{projectId}")
+    public ResponseEntity<?> getResponses(@PathVariable Long projectId) {
+        return ResponseEntity.ok(gameSubmissionService.getAllResponses(projectId));
     }
 
     @GetMapping("/list")
