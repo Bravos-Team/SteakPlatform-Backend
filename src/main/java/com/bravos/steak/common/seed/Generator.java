@@ -12,7 +12,6 @@ import com.bravos.steak.useraccount.entity.UserProfile;
 import com.bravos.steak.useraccount.model.enums.AccountStatus;
 import com.bravos.steak.useraccount.repo.UserAccountRepository;
 import com.bravos.steak.useraccount.repo.UserProfileRepository;
-import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -90,7 +89,6 @@ public class Generator {
         return firstName + " " + middleName + " " + lastName;
     }
 
-    @Transactional
     public List<Long> generateUserAccount(int count) {
         List<UserAccount> userAccounts = new ArrayList<>(count);
         List<UserProfile> userProfiles = new ArrayList<>(count);
@@ -120,7 +118,7 @@ public class Generator {
             int endIndex = Math.min(batchSize, userAccounts.size());
             List<UserAccount> subList = userAccounts.subList(0, endIndex);
             List<UserProfile> subProfileList = userProfiles.subList(0, endIndex);
-            userAccountRepository.saveAll(subList);
+            userAccountRepository.saveAllAndFlush(subList);
             userProfileRepository.saveAll(subProfileList);
             userAccounts.removeAll(subList);
             userProfiles.removeAll(subProfileList);
@@ -130,74 +128,79 @@ public class Generator {
         return ids;
     }
 
-    @Transactional
-    @Scheduled(cron = "0 0 */2 * * *")
+    private void saveRevenueData(List<Long> userIds, List<Game> games,
+                                 LocalDateTime startTime, LocalDateTime endTime) {
+        final int batchSize = 200;
+        List<Order> orders = new ArrayList<>(1500);
+        List<UserGame> userGames = new ArrayList<>(1500);
+        for (Long userId : userIds) {
+            OrderUserGamePair pair = generateOrderData(userId, games, startTime, endTime);
+            orders.addAll(pair.orders());
+            userGames.addAll(pair.userGames());
+            if (orders.size() >= batchSize) {
+                orderRepository.saveAllAndFlush(orders);
+                userGameRepository.saveAllAndFlush(userGames);
+                orders.clear();
+                userGames.clear();
+                log.info("Inserted {} orders and user games", batchSize);
+            }
+        }
+        if (!orders.isEmpty()) {
+            orderRepository.saveAllAndFlush(orders);
+            userGameRepository.saveAllAndFlush(userGames);
+            orders.clear();
+            userGames.clear();
+            log.info("Inserted remaining {} orders and user games", orders.size());
+        }
+    }
+
+    @Scheduled(cron = "0 30 */1 * * *")
     public void generateRevenueData() {
         List<Game> games = gameRepository.findAll();
 
         LocalDateTime year2020 = LocalDateTime.of(2020, 1, 1, 0, 0);
-        List<Long> userIds = generateUserAccount(RANDOM.nextInt(500, 1000) + 200);
-        log.info("Generated {} user accounts", userIds.size());
-        log.info("Starting to generate revenue data for year 2020");
-        for (Long userId : userIds) {
-            generateOrderData(userId, games, year2020, null);
-        }
+        List<Long> userIds = generateUserAccount(RANDOM.nextInt(500, 1500) + 200);
+        this.saveRevenueData(userIds, games, year2020, null);
+
         log.info("Generated revenue data for year 2020");
 
         LocalDateTime year2021 = year2020.plusYears(1);
-        userIds = generateUserAccount(RANDOM.nextInt(500, 1000) + 200);
-        log.info("Generated {} user accounts", userIds.size());
-        log.info("Starting to generate revenue data for year 2021");
-        for (Long userId : userIds) {
-            generateOrderData(userId, games, year2021, null);
-        }
+        userIds = generateUserAccount(RANDOM.nextInt(500, 1500) + 200);
+        this.saveRevenueData(userIds, games, year2021, null);
+
         log.info("Generated revenue data for year 2021");
 
         LocalDateTime year2022 = year2021.plusYears(1);
-        userIds = generateUserAccount(RANDOM.nextInt(500, 1000) + 200);
-        log.info("Generated {} user accounts", userIds.size());
-        log.info("Starting to generate revenue data for year 2022");
+        userIds = generateUserAccount(RANDOM.nextInt(500, 1500) + 200);
+        this.saveRevenueData(userIds, games, year2022, null);
 
-        for (Long userId : userIds) {
-            generateOrderData(userId, games, year2022, null);
-        }
         log.info("Generated revenue data for year 2022");
 
         LocalDateTime year2023 = year2022.plusYears(1);
-        userIds = generateUserAccount(RANDOM.nextInt(500, 1000) + 200);
-        log.info("Generated {} user accounts", userIds.size());
-        log.info("Starting to generate revenue data for year 2023");
+        userIds = generateUserAccount(RANDOM.nextInt(500, 1500) + 200);
+        this.saveRevenueData(userIds, games, year2023, null);
 
-        for (Long userId : userIds) {
-            generateOrderData(userId, games, year2023, null);
-        }
         log.info("Generated revenue data for year 2023");
 
         LocalDateTime year2024 = year2023.plusYears(1);
-        userIds = generateUserAccount(RANDOM.nextInt(500, 1000) + 200);
+        userIds = generateUserAccount(RANDOM.nextInt(500, 1500) + 200);
+        this.saveRevenueData(userIds, games, year2024, null);
 
-        log.info("Generated {} user accounts", userIds.size());
-        log.info("Starting to generate revenue data for year 2024");
-
-        for (Long userId : userIds) {
-            generateOrderData(userId, games, year2024, null);
-        }
         log.info("Generated revenue data for year 2024");
 
         LocalDateTime year2025 = year2024.plusYears(1);
-        userIds = generateUserAccount(RANDOM.nextInt(500, 1000) + 200);
-        log.info("Generated {} user accounts", userIds.size());
-        log.info("Starting to generate revenue data for year 2025");
-        for (Long userId : userIds) {
-            generateOrderData(userId, games, year2025, LocalDateTime.now());
-        }
+        userIds = generateUserAccount(RANDOM.nextInt(500, 1500) + 200);
+        this.saveRevenueData(userIds, games, year2025, LocalDateTime.now());
+
         log.info("Generated revenue data for year 2025");
 
         log.info("Finished generating revenue data");
     }
 
-    public void generateOrderData(Long userId, List<Game> games, LocalDateTime startTime, LocalDateTime endTime) {
-        Set<Long> randomGameIds = new HashSet<>(25);
+    public OrderUserGamePair generateOrderData(Long userId, List<Game> games,
+                                               LocalDateTime startTime, LocalDateTime endTime) {
+        int maxGamesWillBuy = RANDOM.nextInt(10, 26);
+        Set<Long> randomGameIds = new HashSet<>(maxGamesWillBuy);
         List<Game> availableGames = new ArrayList<>(games);
         UserAccount userAccount = UserAccount.builder().id(userId).build();
         List<Order> orders = new ArrayList<>();
@@ -208,7 +211,7 @@ public class Generator {
             gameMap.put(game.getId(), game);
         }
 
-        while (randomGameIds.size() < 25) {
+        while (randomGameIds.size() < maxGamesWillBuy) {
             int randomIndex = RANDOM.nextInt(0, availableGames.size() - 1);
             randomGameIds.add(availableGames.remove(randomIndex).getId());
         }
@@ -218,7 +221,7 @@ public class Generator {
         int startMonth = startTime.getMonthValue();
         int endMonth = endTime != null ? endTime.getMonth().getValue() - 1 : 12;
         while (!randomGameIds.isEmpty() && startMonth <= endMonth) {
-            int randomQuantity = Math.min(RANDOM.nextInt(1, 3), randomGameIds.size());
+            int randomQuantity = Math.min(RANDOM.nextInt(1, 4), randomGameIds.size());
             Set<Long> randomGameIdsForOrder = new HashSet<>(randomQuantity);
             while (randomGameIdsForOrder.size() < randomQuantity && !randomGameIds.isEmpty()) {
                 int randomIndex = RANDOM.nextInt(0, randomGameIds.size());
@@ -267,12 +270,9 @@ public class Generator {
         }
         log.info("Generated {} orders for user {}", orders.size(), userId);
 
-        log.info("Saving orders and user games for user {}", userId);
-
-        orderRepository.saveAllAndFlush(orders);
-        userGameRepository.saveAllAndFlush(userGames);
-
-        log.info("Saved orders and user games for user {}", userId);
+        return new OrderUserGamePair(orders, userGames);
     }
+
+    public record OrderUserGamePair(List<Order> orders, List<UserGame> userGames) {}
 
 }
