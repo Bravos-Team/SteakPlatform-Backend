@@ -154,7 +154,7 @@ public class Generator {
         }
     }
 
-    @Scheduled(cron = "0 0 */1 * * *")
+    @Scheduled(cron = "0 30 */1 * * *")
     public void generateRevenueData() {
         List<Game> games = gameRepository.findAll();
 
@@ -199,7 +199,8 @@ public class Generator {
 
     public OrderUserGamePair generateOrderData(Long userId, List<Game> games,
                                                LocalDateTime startTime, LocalDateTime endTime) {
-        Set<Long> randomGameIds = new HashSet<>(25);
+        int maxGamesWillBuy = RANDOM.nextInt(10, 26);
+        Set<Long> randomGameIds = new HashSet<>(maxGamesWillBuy);
         List<Game> availableGames = new ArrayList<>(games);
         UserAccount userAccount = UserAccount.builder().id(userId).build();
         List<Order> orders = new ArrayList<>();
@@ -210,7 +211,7 @@ public class Generator {
             gameMap.put(game.getId(), game);
         }
 
-        while (randomGameIds.size() < 25) {
+        while (randomGameIds.size() < maxGamesWillBuy) {
             int randomIndex = RANDOM.nextInt(0, availableGames.size() - 1);
             randomGameIds.add(availableGames.remove(randomIndex).getId());
         }
