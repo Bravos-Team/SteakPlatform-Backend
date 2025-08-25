@@ -81,13 +81,7 @@ public abstract class AuthService {
 
     protected void generateAndAttachCredentials(Account accountInfo, String deviceId, String deviceInfo) {
         RefreshToken refreshToken = createRefreshToken(accountInfo, deviceId, deviceInfo);
-        String jwt = generateJwtToken(accountInfo, refreshToken.getId());
-
-        Set<String> paths = getCookiePaths();
-        for (String path : paths) {
-            this.addAccessTokenCookie(jwt, path);
-        }
-        this.addRefreshTokenCookie(refreshToken);
+        addCredentialsToCookie(refreshToken, accountInfo);
     }
 
     private void validateAccount(Account accountInfo, String rawPassword, String deviceId) {
@@ -155,15 +149,22 @@ public abstract class AuthService {
 
         this.validateRefreshToken(account, accountRefreshToken);
 
+        this.addCredentialsToCookie(accountRefreshToken, account);
+
+        return account;
+    }
+
+    private void addCredentialsToCookie(RefreshToken accountRefreshToken, Account account) {
         String token = generateJwtToken(account, accountRefreshToken.getId());
 
         Set<String> paths = getCookiePaths();
         for (String path : paths) {
             this.addAccessTokenCookie(token, path);
-            this.addRefreshTokenCookie(accountRefreshToken);
         }
-
-        return account;
+        paths = refreshPath();
+        for (String path : paths) {
+            this.addRefreshTokenCookie(accountRefreshToken.getToken(), path);
+        }
     }
 
     protected abstract Set<String> getCookiePaths();
@@ -222,21 +223,19 @@ public abstract class AuthService {
         httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
     }
 
-    private void addRefreshTokenCookie(RefreshToken refreshToken) {
-        refreshPath().forEach(path -> {
-            ResponseCookie refreshCookie = ResponseCookie.from(REFRESH_TOKEN_NAME, refreshToken.getToken())
-                    .httpOnly(true)
-                    .secure(true)
-                    .path(path)
+    private void addRefreshTokenCookie(String token, String path) {
+        ResponseCookie refreshCookie = ResponseCookie.from(REFRESH_TOKEN_NAME,token)
+                .httpOnly(true)
+                .secure(true)
+                .path(path)
 //                .domain(System.getProperty("COOKIE_DOMAIN"))
-                    .sameSite("None")
-                    .maxAge(Duration.ofDays(30))
-                    .build();
-            httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
-        });
+                .sameSite("None")
+                .maxAge(Duration.ofDays(30))
+                .build();
+        httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
     }
 
-    protected abstract List<String> refreshPath();
+    protected abstract Set<String> refreshPath();
 
     protected abstract Account getAccountByUsername(String username);
 
