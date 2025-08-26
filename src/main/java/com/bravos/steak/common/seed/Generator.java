@@ -199,7 +199,7 @@ public class Generator {
 
     public OrderUserGamePair generateOrderData(Long userId, List<Game> games,
                                                LocalDateTime startTime, LocalDateTime endTime) {
-        int maxGamesWillBuy = RANDOM.nextInt(10, 26);
+        int maxGamesWillBuy = RANDOM.nextInt(20, 26);
         Set<Long> randomGameIds = new HashSet<>(maxGamesWillBuy);
         List<Game> availableGames = new ArrayList<>(games);
         UserAccount userAccount = UserAccount.builder().id(userId).build();
@@ -219,7 +219,7 @@ public class Generator {
         log.info("Generating order data for user {} with {} games", userId, randomGameIds.size());
 
         int startMonth = startTime.getMonthValue();
-        int endMonth = endTime != null ? endTime.getMonth().getValue() : 12;
+        int endMonth = endTime != null ? endTime.getMonth().getValue() - 1 : 12;
         while (!randomGameIds.isEmpty() && startMonth <= endMonth) {
             int randomQuantity = Math.min(RANDOM.nextInt(1, 4), randomGameIds.size());
             Set<Long> randomGameIdsForOrder = new HashSet<>(randomQuantity);
