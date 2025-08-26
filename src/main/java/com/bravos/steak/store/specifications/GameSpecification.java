@@ -63,8 +63,12 @@ public class GameSpecification {
             }
 
             if (filterQuery.getMinPrice() != null && filterQuery.getMaxPrice() != null) {
-                predicates.add(cb.greaterThanOrEqualTo(root.get("price"), filterQuery.getMinPrice()));
-                predicates.add(cb.lessThanOrEqualTo(root.get("price"), filterQuery.getMaxPrice()));
+                if (filterQuery.getMinPrice().equals(0.0) && filterQuery.getMaxPrice().equals(0.0)) {
+                    predicates.add(cb.equal(root.get("price"), 0.0));
+                } else {
+                    predicates.add(cb.greaterThanOrEqualTo(root.get("price"), filterQuery.getMinPrice()));
+                    predicates.add(cb.lessThanOrEqualTo(root.get("price"), filterQuery.getMaxPrice()));
+                }
             } else if (filterQuery.getMinPrice() != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("price"), filterQuery.getMinPrice()));
             } else if (filterQuery.getMaxPrice() != null) {
