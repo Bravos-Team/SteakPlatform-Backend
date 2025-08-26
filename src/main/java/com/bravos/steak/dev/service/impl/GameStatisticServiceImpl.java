@@ -19,10 +19,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 @Service
 public class GameStatisticServiceImpl implements GameStatisticService {
@@ -89,9 +89,11 @@ public class GameStatisticServiceImpl implements GameStatisticService {
 
         List<Long> gameIds = result.stream().map(GameStatisticItem::getGameId).toList();
         List<GameThumbnail> thumbnails = gameDetailsRepository.findThumbnailsByIdIn(gameIds);
-        Map<Long, GameStatisticItem> resultMap = result.stream().collect(
-                Collectors.toMap(GameStatisticItem::getGameId, item -> item)
-        );
+
+        Map<Long, GameStatisticItem> resultMap = new LinkedHashMap<>(gameIds.size());
+        for(GameStatisticItem item : result) {
+            resultMap.put(item.getGameId(), item);
+        }
 
         for(GameThumbnail thumbnail : thumbnails) {
             GameStatisticItem item = resultMap.get(thumbnail.getId());

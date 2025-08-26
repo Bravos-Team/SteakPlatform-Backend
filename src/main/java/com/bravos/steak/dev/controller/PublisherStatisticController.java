@@ -1,6 +1,8 @@
 package com.bravos.steak.dev.controller;
 
+import com.bravos.steak.common.annotation.HasAuthority;
 import com.bravos.steak.common.annotation.PublisherController;
+import com.bravos.steak.dev.model.PublisherAuthority;
 import com.bravos.steak.dev.service.GameStatisticService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,6 +22,7 @@ public class PublisherStatisticController {
     }
 
     @GetMapping("/games/revenue")
+    @HasAuthority({PublisherAuthority.READ_REVENUE_STATISTIC})
     public ResponseEntity<?> getGameStatisticsRevenue(@RequestParam(required = false) Integer month,
                                                       @RequestParam(required = false) Integer year,
                                                       @RequestParam(defaultValue = "1") int page,
