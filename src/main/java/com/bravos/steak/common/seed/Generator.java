@@ -4,9 +4,7 @@ import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
 import com.bravos.steak.store.entity.*;
 import com.bravos.steak.store.model.enums.OrderStatus;
-import com.bravos.steak.store.repo.GameRepository;
-import com.bravos.steak.store.repo.OrderRepository;
-import com.bravos.steak.store.repo.UserGameRepository;
+import com.bravos.steak.store.repo.*;
 import com.bravos.steak.useraccount.entity.UserAccount;
 import com.bravos.steak.useraccount.entity.UserProfile;
 import com.bravos.steak.useraccount.model.enums.AccountStatus;
@@ -49,16 +47,20 @@ public class Generator {
     private final UserProfileRepository userProfileRepository;
     private final GameRepository gameRepository;
     private final UserGameRepository userGameRepository;
+    private final TrendingStatisticRepository trendingStatisticRepository;
+    private final PlayingCountRecordRepository playingCountRecordRepository;
 
     public Generator(SnowflakeGenerator snowflakeGenerator, UserAccountRepository userAccountRepository,
                      UserProfileRepository userProfileRepository, GameRepository gameRepository,
-                     OrderRepository orderRepository, UserGameRepository userGameRepository) {
+                     OrderRepository orderRepository, UserGameRepository userGameRepository, TrendingStatisticRepository trendingStatisticRepository, PlayingCountRecordRepository playingCountRecordRepository) {
         this.snowflakeGenerator = snowflakeGenerator;
         this.userAccountRepository = userAccountRepository;
         this.userProfileRepository = userProfileRepository;
         this.gameRepository = gameRepository;
         this.orderRepository = orderRepository;
         this.userGameRepository = userGameRepository;
+        this.trendingStatisticRepository = trendingStatisticRepository;
+        this.playingCountRecordRepository = playingCountRecordRepository;
     }
 
     private String generateRandomUsername() {
@@ -271,6 +273,17 @@ public class Generator {
         log.info("Generated {} orders for user {}", orders.size(), userId);
 
         return new OrderUserGamePair(orders, userGames);
+    }
+
+    @Scheduled(cron = "0 0 3 * * *")
+    public void generateGameLeaderboard() {
+        log.info("Generating game leaderboard data...");
+        List<PlayingCountRecord> records = playingCountRecordRepository.findAll();
+        for (PlayingCountRecord record : records) {
+            record.setCount((long) RANDOM.nextInt(100, 50000));
+        }
+        playingCountRecordRepository.saveAllAndFlush(records);
+        log.info("Finished generating game leaderboard data.");
     }
 
     public record OrderUserGamePair(List<Order> orders, List<UserGame> userGames) {}
