@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/dev/manager")
-@PublisherController
 public class PublisherManagerController {
 
     private final PublisherManagerService publisherManagerService;
@@ -54,7 +53,6 @@ public class PublisherManagerController {
     }
 
     @GetMapping("/me")
-    @HasAuthority({PublisherAuthority.READ_MEMBERS})
     public ResponseEntity<?> myAccountDetail() {
         return ResponseEntity.ok(publisherManagerService.myAccountDetail());
     }

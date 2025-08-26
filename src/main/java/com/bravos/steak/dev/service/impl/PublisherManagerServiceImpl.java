@@ -4,7 +4,6 @@ import com.bravos.steak.common.model.RedisCacheEntry;
 import com.bravos.steak.common.security.JwtAuthentication;
 import com.bravos.steak.common.security.JwtTokenClaims;
 import com.bravos.steak.common.service.auth.SessionService;
-import com.bravos.steak.common.service.helper.DateTimeHelper;
 import com.bravos.steak.common.service.redis.RedisService;
 import com.bravos.steak.common.service.snowflake.SnowflakeGenerator;
 import com.bravos.steak.dev.entity.*;
@@ -242,10 +241,13 @@ public class PublisherManagerServiceImpl implements PublisherManagerService {
     }
 
     private PublisherAccountDetail getPublisherAccountDetailById(PublisherAccount account) {
-        List<PublisherAccountDetail.RoleAndId> roles = account.getRoles().stream()
-                .map(role ->
-                        new PublisherAccountDetail.RoleAndId(role.getName(), role.getId()))
-                .toList();
+        List<PublisherAccountDetail.RoleAndId> roles = null;
+        if(account.getRoles() != null && !account.getRoles().isEmpty()) {
+            roles = account.getRoles().stream()
+                    .map(role ->
+                            new PublisherAccountDetail.RoleAndId(role.getName(), role.getId()))
+                    .toList();
+        }
         return PublisherAccountDetail.builder()
                 .id(account.getId())
                 .username(account.getUsername())
