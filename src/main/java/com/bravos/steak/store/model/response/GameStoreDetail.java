@@ -30,6 +30,8 @@ public class GameStoreDetail {
 
     private Boolean isOwned;
 
+    private Long releaseDate;
+
     private String latestVersionName;
 
 }
