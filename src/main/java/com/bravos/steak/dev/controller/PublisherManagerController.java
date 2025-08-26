@@ -1,7 +1,6 @@
 package com.bravos.steak.dev.controller;
 
 import com.bravos.steak.common.annotation.HasAuthority;
-import com.bravos.steak.common.annotation.PublisherController;
 import com.bravos.steak.dev.model.PublisherAuthority;
 import com.bravos.steak.dev.model.request.CreateCustomRoleRequest;
 import com.bravos.steak.dev.model.request.CreatePublisherAccountRequest;
