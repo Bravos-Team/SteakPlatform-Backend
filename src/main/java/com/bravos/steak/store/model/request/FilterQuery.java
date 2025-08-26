@@ -17,9 +17,9 @@ public class FilterQuery {
 
     String keyword;
 
-    Long[] genreIds;
+    Long[] genreIds = new Long[0];
 
-    Long[] tagIds;
+    Long[] tagIds = new Long[0];
 
     Double minPrice;
 
