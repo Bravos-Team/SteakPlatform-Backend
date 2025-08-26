@@ -19,7 +19,7 @@ public class CustomPageInfo implements Serializable {
 
     int number;
 
-    int totalElements;
+    long totalElements;
 
     int totalPages;
 

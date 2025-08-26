@@ -41,14 +41,14 @@ public class EmailServiceImpl implements EmailService {
         if (!emailPayloads.isEmpty()) {
             if (emailPayloads.size() == 1) {
                 EmailPayload emailPayload = emailPayloads.removeFirst();
-                if (emailPayload != null && !emailPayload.getTemplateID().isBlank()) {
+                if (emailPayload != null) {
                     this.sendSingleEmail(emailPayload).subscribe();
                 }
             } else {
                 List<EmailPayload> payloadsToSend = new ArrayList<>(50);
                 while (!emailPayloads.isEmpty() && payloadsToSend.size() < 50) {
                     EmailPayload emailPayload = emailPayloads.removeFirst();
-                    if (emailPayload != null && !emailPayload.getTemplateID().isBlank()) {
+                    if (emailPayload != null) {
                         payloadsToSend.add(emailPayload);
                     }
                 }
