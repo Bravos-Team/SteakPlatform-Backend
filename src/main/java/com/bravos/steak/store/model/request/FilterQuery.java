@@ -4,6 +4,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.util.Arrays;
+import java.util.Objects;
 
 import static lombok.AccessLevel.PRIVATE;
 
@@ -33,16 +34,24 @@ public class FilterQuery {
 
     @Override
     public int hashCode() {
-        if (genreIds != null && genreIds.length > 0) {
-            Arrays.sort(genreIds);
+        Long[] sortedGenreIds = genreIds != null ? genreIds.clone() : null;
+        Long[] sortedTagIds = tagIds != null ? tagIds.clone() : null;
+        if (sortedGenreIds != null && sortedGenreIds.length > 0) {
+            Arrays.sort(sortedGenreIds);
         }
-        if (tagIds != null && tagIds.length > 0) {
-            Arrays.sort(tagIds);
+        if (sortedTagIds != null && sortedTagIds.length > 0) {
+            Arrays.sort(sortedTagIds);
         }
-        return Arrays.hashCode(new Object[]{
-                keyword, Arrays.hashCode(genreIds), Arrays.hashCode(tagIds),
-                minPrice, maxPrice, sortBy, page, pageSize
-        });
+        return Objects.hash(
+                keyword,
+                Arrays.hashCode(sortedGenreIds),
+                Arrays.hashCode(sortedTagIds),
+                minPrice,
+                maxPrice,
+                sortBy,
+                page,
+                pageSize
+        );
     }
 
     @Override
