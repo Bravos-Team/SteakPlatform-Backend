@@ -86,6 +86,7 @@ public class GameServiceImpl implements GameService {
             filterQuery.setMaxPrice(temp);
         }
         int hashCode = filterQuery.hashCode();
+        log.info("Filter query hash code: {}", hashCode);
 
         String key = "game:filter:" + hashCode;
         RedisCacheEntry<Object> cacheEntry = RedisCacheEntry.builder()

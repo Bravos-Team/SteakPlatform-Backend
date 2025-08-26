@@ -63,15 +63,17 @@ public class GameSpecification {
                 predicates.add(root.join("tags").get("id").in((Object[]) filterQuery.getTagIds()));
             }
 
-            if (!Objects.equals(filterQuery.getMinPrice(), filterQuery.getMaxPrice())) {
-                if (filterQuery.getMinPrice() != null) {
+            if (filterQuery.getMinPrice() != null && filterQuery.getMaxPrice() != null) {
+                if (!Objects.equals(filterQuery.getMinPrice(), filterQuery.getMaxPrice())) {
                     predicates.add(cb.greaterThanOrEqualTo(root.get("price"), filterQuery.getMinPrice()));
-                }
-                if (filterQuery.getMaxPrice() != null) {
                     predicates.add(cb.lessThanOrEqualTo(root.get("price"), filterQuery.getMaxPrice()));
+                } else {
+                    predicates.add(cb.equal(root.get("price"), filterQuery.getMinPrice()));
                 }
             } else if (filterQuery.getMinPrice() != null) {
-                predicates.add(cb.equal(root.get("price"), filterQuery.getMinPrice()));
+                predicates.add(cb.greaterThanOrEqualTo(root.get("price"), filterQuery.getMinPrice()));
+            } else if (filterQuery.getMaxPrice() != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("price"), filterQuery.getMaxPrice()));
             }
 
             if (filterQuery.getSortBy() != null && !filterQuery.getSortBy().isEmpty()) {
