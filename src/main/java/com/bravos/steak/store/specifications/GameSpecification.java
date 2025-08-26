@@ -11,7 +11,6 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 public class GameSpecification {
@@ -64,12 +63,8 @@ public class GameSpecification {
             }
 
             if (filterQuery.getMinPrice() != null && filterQuery.getMaxPrice() != null) {
-                if (!Objects.equals(filterQuery.getMinPrice(), filterQuery.getMaxPrice())) {
-                    predicates.add(cb.greaterThanOrEqualTo(root.get("price"), filterQuery.getMinPrice()));
-                    predicates.add(cb.lessThanOrEqualTo(root.get("price"), filterQuery.getMaxPrice()));
-                } else {
-                    predicates.add(cb.equal(root.get("price"), filterQuery.getMinPrice()));
-                }
+                predicates.add(cb.greaterThanOrEqualTo(root.get("price"), filterQuery.getMinPrice()));
+                predicates.add(cb.lessThanOrEqualTo(root.get("price"), filterQuery.getMaxPrice()));
             } else if (filterQuery.getMinPrice() != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("price"), filterQuery.getMinPrice()));
             } else if (filterQuery.getMaxPrice() != null) {
