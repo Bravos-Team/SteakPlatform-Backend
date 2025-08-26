@@ -199,7 +199,7 @@ public class Generator {
 
     public OrderUserGamePair generateOrderData(Long userId, List<Game> games,
                                                LocalDateTime startTime, LocalDateTime endTime) {
-        int maxGamesWillBuy = RANDOM.nextInt(10, 26);
+        int maxGamesWillBuy = RANDOM.nextInt(20, 26);
         Set<Long> randomGameIds = new HashSet<>(maxGamesWillBuy);
         List<Game> availableGames = new ArrayList<>(games);
         UserAccount userAccount = UserAccount.builder().id(userId).build();
