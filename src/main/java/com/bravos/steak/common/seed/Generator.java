@@ -156,7 +156,7 @@ public class Generator {
         }
     }
 
-    @Scheduled(cron = "0 30 */1 * * *")
+//    @Scheduled(cron = "0 30 */1 * * *")
     public void generateRevenueData() {
         List<Game> games = gameRepository.findAll();
 

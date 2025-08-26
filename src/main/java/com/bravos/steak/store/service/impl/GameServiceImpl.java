@@ -77,7 +77,7 @@ public class GameServiceImpl implements GameService {
     @Override
     public CustomPage<GameListItem> getFilteredGames(FilterQuery filterQuery) {
         if(filterQuery == null) {
-            return getNewestGames(1,15);
+            return getNewestGames(1,12);
         }
         if(filterQuery.getMinPrice() != null && filterQuery.getMaxPrice() != null
                 && filterQuery.getMinPrice() > filterQuery.getMaxPrice()) {
@@ -92,7 +92,7 @@ public class GameServiceImpl implements GameService {
         RedisCacheEntry<Object> cacheEntry = RedisCacheEntry.builder()
                 .key(key)
                 .fallBackFunction(() -> getFilteredGamesFromDb(filterQuery))
-                .keyTimeout(5)
+                .keyTimeout(1)
                 .keyTimeUnit(TimeUnit.MINUTES)
                 .lockTimeout(2000)
                 .lockTimeUnit(TimeUnit.MILLISECONDS)
