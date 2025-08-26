@@ -42,12 +42,16 @@ public class FilterQuery {
         if (sortedTagIds != null && sortedTagIds.length > 0) {
             Arrays.sort(sortedTagIds);
         }
+
+        int minPriceHash = (minPrice != null) ? minPrice.hashCode() : -1;
+        int maxPriceHash = (maxPrice != null) ? maxPrice.hashCode() : -1;
+
         return Objects.hash(
                 keyword,
                 Arrays.hashCode(sortedGenreIds),
                 Arrays.hashCode(sortedTagIds),
-                minPrice,
-                maxPrice,
+                minPriceHash,
+                maxPriceHash,
                 sortBy,
                 page,
                 pageSize
