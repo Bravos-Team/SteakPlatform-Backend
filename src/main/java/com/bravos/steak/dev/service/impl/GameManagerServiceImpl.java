@@ -154,8 +154,6 @@ public class GameManagerServiceImpl implements GameManagerService {
 
             }
             return gameService.invalidateAndGetGameStoreDetails(gameId);
-        } catch (RuntimeException e) {
-            throw new RuntimeException(e);
         } finally {
             invalidateFullGameDetailsCache(request.getGameId());
         }
