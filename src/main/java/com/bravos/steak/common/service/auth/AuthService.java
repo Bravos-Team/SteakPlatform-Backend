@@ -128,7 +128,7 @@ public abstract class AuthService {
         String refreshToken = getRefreshToken();
 
         if (refreshToken == null || refreshToken.isBlank()) {
-            this.recordFailedLoginAttempt(refreshRequest.getDeviceId());
+//            this.recordFailedLoginAttempt(refreshRequest.getDeviceId());
             throw new UnauthorizeException("Refresh token is invalid");
         }
 
@@ -137,12 +137,8 @@ public abstract class AuthService {
         RefreshToken accountRefreshToken = getRefreshToken(refreshToken, deviceId);
 
         if (accountRefreshToken == null) {
-            this.recordFailedLoginAttempt(deviceId);
+//            this.recordFailedLoginAttempt(deviceId);
             throw new UnauthorizeException("Refresh token is invalid");
-        }
-
-        if (!accountRefreshToken.getDeviceId().equals(deviceId)) {
-            throw new UnauthorizeException("Refresh token is invalid for this device");
         }
 
         Account account = accountRefreshToken.getAccount();
