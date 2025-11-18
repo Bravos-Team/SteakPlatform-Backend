@@ -7,6 +7,9 @@ target/
 *.pem
 secret-script.sh
 *.log
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
 
 ### STS ###
 .apt_generated
